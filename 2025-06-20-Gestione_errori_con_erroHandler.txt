@@ -1,0 +1,875 @@
+Come posso implementare una gestione degli errori più robusta nel backend per le API?
+
+
+Gemini
+Certamente! Implementare una gestione degli errori robusta nel backend è cruciale per la stabilità e la manutenibilità della tua applicazione. Ecco alcuni approcci e modifiche che puoi apportare, partendo dalla struttura che hai:
+
+Una delle pratiche migliori è centralizzare la gestione degli errori utilizzando un middleware di gestione degli errori in Express.js. Questo ti permette di catturare sia errori sincroni che asincroni (promesse rifiutate) in un unico posto, rendendo i tuoi controller più puliti.
+
+1. Creare un Middleware di Gestione Errori Centralizzato
+
+Crea un nuovo file, ad esempio c:\maga\server\middleware\errorHandler.js:
+
+javascript
+// c:\maga\server\middleware\errorHandler.js
+//==========================================
+//File: errorHandler.js
+//Middleware per la gestione centralizzata degli errori.
+//@author: "villari.andrea@libero.it"
+//@version: "1.0.0 2025-06-19"
+//==========================================
+
+// Funzione per riconoscere errori specifici del database (es. MySQL)
+function handleDatabaseError(err, res) {
+  if (err.code) { // Codici errore specifici del DB
+    switch (err.code) {
+      case 'ER_DUP_ENTRY':
+        return res.status(409).json({ success: false, message: 'Errore: Duplicato. La risorsa esiste già.', code: err.code });
+      case 'ER_NO_REFERENCED_ROW_2':
+        return res.status(400).json({ success: false, message: 'Errore: Riferimento a una risorsa inesistente (chiave esterna).', code: err.code });
+      // Aggiungi altri codici errore DB specifici che vuoi gestire
+      default:
+        // Per altri errori DB non specificamente gestiti, potresti volerli trattare come errori generici del server
+        console.error('Unhandled Database Error Code:', err.code, err.message);
+        return res.status(500).json({ success: false, message: 'Errore del database non gestito.', code: err.code });
+    }
+  }
+  // Se non è un errore DB con codice noto, passa oltre
+  return null;
+}
+
+const errorHandler = (err, req, res, next) => {
+  console.error("❌ ERRORE NON GESTITO:", err.stack || err);
+
+  // Tenta di gestire errori specifici del database
+  const dbErrorResponse = handleDatabaseError(err, res);
+  if (dbErrorResponse) {
+    return; // La risposta è già stata inviata da handleDatabaseError
+  }
+
+  // Gestione per errori con codice di stato definito (es. da validazioni o logica di business)
+  if (err.statusCode) {
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message || 'Errore generico.',
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }) // Includi stack solo in sviluppo
+    });
+  }
+
+  // Errore generico del server
+  // In produzione, potresti voler loggare l'errore in modo più dettagliato
+  // e restituire un messaggio generico all'utente.
+  const statusCode = err.status || 500;
+  const message = process.env.NODE_ENV === 'development' ? err.message : 'Errore interno del server.';
+
+  res.status(statusCode).json({
+    success: false,
+    message: message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+};
+
+module.exports = errorHandler;
+2. Modificare i Controller per Usare next(error)
+
+Ora, invece di inviare risposte di errore direttamente dai blocchi catch nei tuoi controller, passerai l'errore alla funzione next. Express lo instraderà automaticamente al tuo middleware di gestione errori.
+
+Modifiche a dibacontrollers.js:
+
+dibacontrollers.js
+-4
++3
+    // Use aliases 'd' for diba and 'r' for ricambi for clarity
+    const query = "SELECT d.id, d.id_father, d.id_son, d.quantita, r.name AS son_name, r.description AS son_description FROM diba d JOIN ricambi r ON d.id_son = r.id WHERE d.id_father = ?";
+    const [row ] = await db.query(query, [fatherId]);
+    // Send the results back. The frontend expects a 'data' array.
+      res.json({ success: true, data: row });
+    res.json({ success: true, data: row }); // Send the results back. The frontend expects a 'data' array.
+  } catch (error) {
+    console.error(`❌ Errore nel recupero della distinta base per il padre ${fatherId}:`, err.message)
+      
+    console.error(`❌ Errore nel recupero della distinta base per il padre ${fatherId}:`, error.message);
+    next(error); // Passa l'errore al middleware centralizzato
+  }
+}
+Ho anche corretto il typo err.message in error.message nel console.error.
+
+Modifiche a crudHandlers.js: Dovrai aggiungere next come parametro a tutte le funzioni del controller e usarlo nei blocchi catch.
+
+crudHandlers.js
+-10
++10
+    /**
+     * Get all records from the table.
+     */
+    getAll: async (req, res) => {
+    getAll: async (req, res, next) => {
+      try {
+        const [rows] = await db.query(`SELECT ${fieldsToSelect} FROM ${tableName}`);
+        res.json({ success: true, data: rows });
+      } catch (error) {
+        console.error(`Error fetching all from ${tableName}:`, error);
+        res.status(500).json({ success: false, error: error.message });
+        next(error);
+      }
+    },
+
+    /**
+     * Get a single record by ID.
+     */
+    getById: async (req, res) => {
+    getById: async (req, res, next) => {
+      const { id } = req.params;
+      try {
+        const [rows] = await db.query(`SELECT ${fieldsToSelect} FROM ${tableName} WHERE id = ?`, [id]);
+        res.json({ success: true, data: rows[0] });
+      } catch (error) {
+        console.error(`Error fetching ${tableName} by ID ${id}:`, error);
+        res.status(500).json({ success: false, error: error.message });
+        next(error);
+      }
+    },
+
+     * Assumes req.body contains the data.
+     * `validateInput` is an optional function to validate req.body.
+     */
+    create: async (req, res) => {
+    create: async (req, res, next) => {
+      if (validateInput) {
+        const validationError = validateInput(req.body, 'create');
+        if (validationError) {
+        res.status(201).json({ success: true, id: result.insertId, message: `${tableName.slice(0, -1)} created successfully.` });
+      } catch (error) {
+        console.error(`Error creating ${tableName}:`, error);
+        res.status(500).json({ success: false, error: error.message });
+        next(error);
+      }
+    },
+
+     * Assumes req.body contains the data to update.
+     * `validateInput` is an optional function to validate req.body.
+     */
+    update: async (req, res) => {
+    update: async (req, res, next) => {
+      const { id } = req.params;
+      if (validateInput) {
+        const validationError = validateInput(req.body, 'update');
+        res.json({ success: true, message: `${tableName.slice(0, -1)} updated successfully.` });
+      } catch (error) {
+        console.error(`Error updating ${tableName} with ID ${id}:`, error);
+        res.status(500).json({ success: false, error: error.message });
+        next(error);
+      }
+    },
+
+    /**
+     * Delete a record by ID.
+     */
+    delete: async (req, res) => {
+    delete: async (req, res, next) => {
+      const { id } = req.params;
+      try {
+        const [result] = await db.query(`DELETE FROM ${tableName} WHERE id = ?`, [id]);
+        res.json({ success: true, message: `${tableName.slice(0, -1)} deleted successfully.` });
+      } catch (error) {
+        console.error(`Error deleting ${tableName} with ID ${id}:`, error);
+        res.status(500).json({ success: false, error: error.message });
+        next(error);
+      }
+    },
+  };
+
+Applica modifiche simili anche agli altri controller (causalicontrollers.js, ricambicontrollers.js, movimenticontrollers.js, authController.js) per far sì che usino next(error) nei loro blocchi catch.
+
+3. Registrare il Middleware di Gestione Errori
+
+Nel tuo file principale del server (es. server.js o app.js), devi registrare questo middleware dopo tutte le altre definizioni di rotte e middleware. Express riconosce un middleware di gestione errori dalla sua firma a quattro argomenti (err, req, res, next).
+
+javascript
+// In server.js o app.js (file principale del backend)
+const express = require('express');
+const cors = require('cors');
+// ... altre importazioni ...
+
+const authRoutes = require('./routes/authRoutes');
+const ricambiRoutes = require('./routes/ricambi'); // o il nome corretto del file
+const causaliRoutes = require('./routes/causaliroutes');
+const movimentiRoutes = require('./routes/movimentiroutes');
+const dibaRoutes = require('./routes/dibaroutes'); // Assicurati che il nome del file sia corretto
+
+const errorHandler = require('./middleware/errorHandler'); // Importa il tuo errorHandler
+
+const app = express();
+
+// Middleware di base
+app.use(cors());
+app.use(express.json());
+// ... altri middleware come morgan, ecc. ...
+
+// Rotte API
+app.use('/api/auth', authRoutes);
+app.use('/api/ricambi', ricambiRoutes);
+app.use('/api/causali', causaliRoutes);
+app.use('/api/movimenti', movimentiRoutes);
+app.use('/api/diba', dibaRoutes);
+
+// ... altre rotte ...
+
+// Middleware di gestione errori centralizzato
+// DEVE ESSERE L'ULTIMO middleware registrato
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => {
+  console.log(`🚀 Server in ascolto sulla porta ${PORT}`);
+});
+4. Ulteriori Miglioramenti (da considerare):
+
+Classi di Errore Personalizzate: Puoi creare classi di errore personalizzate (es. NotFoundError, ValidationError, AuthenticationError) che estendono Error e includono proprietà come statusCode. Questo rende il tuo errorHandler più potente e leggibile.
+
+javascript
+class NotFoundError extends Error {
+  constructor(message = 'Risorsa non trovata') {
+    super(message);
+    this.name = 'NotFoundError';
+    this.statusCode = 404;
+  }
+}
+// Poi nel controller:
+// if (!risorsa) {
+//   return next(new NotFoundError('Articolo non trovato'));
+// }
+Validazione dell'Input Robusta: Usa librerie come Joi o express-validator per validare i dati in entrata (req.body, req.query, req.params) prima che raggiungano i tuoi controller. Questo riduce il boilerplate di validazione nei controller e genera errori chiari.
+
+Async Wrapper (Opzionale): Per evitare di dover scrivere try...catch e chiamare next(error) in ogni controller asincrono, puoi usare un "async wrapper". Una libreria come express-async-errors lo fa automaticamente: basta importarla all'inizio del tuo file server principale.
+
+bash
+npm install express-async-errors
+javascript
+// In server.js, all'inizio
+require('express-async-errors');
+// ... resto del codice ...
+Con questo, se un errore viene lanciato in una rotta asincrona (o una promessa viene rifiutata), verrà automaticamente passato a next() e quindi al tuo errorHandler.
+
+Logging Avanzato: Per ambienti di produzione, considera l'uso di librerie di logging più strutturate come Winston o Pino per registrare errori con più contesto (es. ID richiesta, utente, ecc.) e inviarli a servizi di logging esterni.
+
+Implementando un middleware di gestione errori centralizzato e passando gli errori con next(error), il tuo codice diventerà più pulito, più facile da mantenere e la gestione degli errori sarà più consistente e robusta. Ricorda di testare accuratamente i vari scenari di errore!
+
+Context Sources (67)
+
+User
+mostrami come implementare le modifiche a tutti i controller: passami il codice per esteso
+
+
+Gemini
+Certo, ecco le modifiche necessarie ai controller per gestire gli errori in modo centralizzato:
+
+causalicontrollers.js
+-4
++11
+    const [rows] = await db.query("SELECT 1 + 1 AS result");
+    console.log("✅ Connessione al database per causali OK:", rows[0]);
+  } catch (err) {
+    console.error("❌ ERRORE connessione al DB per causali:", err.message);
+    console.error("❌ ERRORE connessione al DB per causali:", err);
+  }
+})();
+
+function validateCausaleInput(data, operation) {
+  const { codice, description, tipo } = data;
+  if (!codice || typeof codice !== 'string' || codice.trim() === '') {
+    return "Il campo 'codice' è obbligatorio e deve essere una stringa non vuota.";
+    return "Il campo 'codice' è obbligatorio e deve essere una stringa.";
+  }
+  if (description === undefined || typeof description !== 'string') { // Permettiamo stringa vuota per description
+    return "Il campo 'description' deve essere una stringa.";
+  }
+  if (!tipo || !['C', 'S', 'N'].includes(tipo.toUpperCase())) { // Esempio: Carico, Scarico, Neutro
+    return "Il campo 'tipo' è obbligatorio e deve essere 'C', 'S', o 'N'.";
+  }
+
+  if (operation === 'create' && data.id !== undefined) {
+    return "L'ID non deve essere fornito durante la creazione.";
+  }
+  if (operation === 'update' && (data.id === undefined || isNaN(parseInt(data.id)))) {
+    return "L'ID deve essere un numero valido durante l'aggiornamento.";
+  }
+  return null; // Nessun errore
+}
+
+const causaliCrudHandlers = createCrudHandlers('causali', {
+  fieldsToSelect: 'id, codice, description, tipo', // Specifica i campi se non vuoi '*'
+  validateInput: validateCausaleInput
+  validateInput: validateCausaleInput,
+});
+
+exports.getCausali = causaliCrudHandlers.getAll;
+exports.getCausaleById = causaliCrudHandlers.getById; // Aggiunto per coerenza
+exports.insertCausale = causaliCrudHandlers.create;
+exports.updateCausale = causaliCrudHandlers.update;
+exports.deleteCausale = causaliCrudHandlers.delete;
+exports.deleteCausale = causaliCrudHandlers.delete;
+dibacontrollers.js
+-11
++19
+
+(async () => {
+  try {
+    // Test query per verificare la connessione
+    // Test query per verificare la connessione al db
+    const [rows] = await db.query("SELECT 1 + 1 AS result");
+    console.log("✅ Connessione al database per diba OK:", rows[0]);
+  } catch (err) {
+
+// Funzione di validazione specifica per le DiBa
+function validateDiBaInput(data, operation) {
+  const { codice, description, tipo } = data; // Assumendo questi campi per la tabella 'diba'
+  if (!codice || typeof codice !== 'string' || codice.trim() === '') {
+    return "Il campo 'codice' è obbligatorio per la DiBa.";
+  const { id_father, id_son, quantita } = data;
+  if (!id_father || typeof id_father !== 'number') {
+    return "Il campo 'id_father' è obbligatorio e deve essere un numero.";
+  }
+  if (description === undefined || typeof description !== 'string') {
+    return "Il campo 'description' deve essere una stringa per la DiBa.";
+  if (!id_son || typeof id_son !== 'number') {
+    return "Il campo 'id_son' è obbligatorio e deve essere un numero.";
+  }
+  if (tipo === undefined || typeof tipo !== 'string' ) { // Adattare i tipi validi se necessario
+    return "Il campo 'tipo' è obbligatorio per la DiBa.";
+  if (!quantita || typeof quantita !== 'number') {
+    return "Il campo 'quantita' è obbligatorio e deve essere un numero.";
+  }
+
+  if (operation === 'create' && data.id !== undefined) {
+    return "L'ID non deve essere fornito durante la creazione.";
+  }
+  if (operation === 'update' && (data.id === undefined || isNaN(parseInt(data.id)))) {
+    return "L'ID deve essere un numero valido durante l'aggiornamento.";
+  }
+  // Aggiungere altre validazioni se necessario
+  return null; // Nessun errore
+}
+
+//handler crud
+const dibaCrudHandlers = createCrudHandlers('diba', { // Assumendo che la tabella si chiami 'diba'
+  fieldsToSelect: 'id, codice, description, tipo', // Adattare i campi se necessario
+  fieldsToSelect: 'id, id_father, id_son, quantita', // Adattare i campi se necessario
+  validateInput: validateDiBaInput
+});
+
+// Funzione per recuperare i componenti dell DiBa (Bill of Material);
+exports.getBomByFatherId = async ( req, res, next) => {
+  const fatherId = req.params.fatherId;
+  console.log(`🔵 controllers/dibacontrollers.js: Richiesta distinta base per fatherId: ${fatherId}`);
+  console.log(`controllers/dibacontrollers.js: Richiesta distinta base per fatherId: ${fatherId}`);
+
+  if (!fatherId) {
+    //Basic validation for the parameter
+  try {
+    //Query the 'diba'  table to find all entries where id_father matches the requeste fatherID
+      // Join with the 'ricambi' table to get the name and description of the son article
+    // Use aliases 'd' for diba and 'r' for ricambi for clarity
+      // Use aliases 'd' for diba and 'r' for ricambi for clarity
+    const query = "SELECT d.id, d.id_father, d.id_son, d.quantita, r.name AS son_name, r.description AS son_description FROM diba d JOIN ricambi r ON d.id_son = r.id WHERE d.id_father = ?";
+    const [row ] = await db.query(query, [fatherId]);
+    res.json({ success: true, data: row }); // Send the results back. The frontend expects a 'data' array.
+movimenticontrollers.js
+-54
++49
+The code change produced by Gemini cannot be automatically applied. You can manually apply the change or ask Gemini to try again.
+//@version: "1.0.0 2025-06-12"
+//==================================================
+const db = require("../db/db");
+console.log("LOG SERVER: Caricamento di movimenticontrollers.js (quello con la 's' e i filtri)..."); // <-- NUOVO LOG
+
+// Query personalizzata per eseguire un filtro dei dati database sulla tabella dataabase
+exports.customQuery = async (req, res) => {
+exports.customQuery = async (req, res, next) => {
+  const {query} = req.body;
+
+  if(!query || typeof query !== "string") {
+    return res.status(400).json({ success: false, error: "Query mancanete o non valida."});
+    return res.status(400).json({ success: false, message: "Query mancante o non valida."});
+  }
+
+  try {
+    res.json({ success: true, data: rows });
+  } catch (error) {
+
+    console.error("Errore nella query personalizzata:", error);
+    res.status(500).json({success: false, error: error.message});
+}
+    next(error);
+  }
+};
+
+// GET tutti i movimenti (potresti voler aggiungere filtri, es. per articolo o data)
+//GET tutti i movimenti (potresti voler aggiungere filtri, es. per articolo o data)
+// Modificato per gestire i filtri da req.query
+exports.getMovimenti = async (req, res) => {
+  try {
+
+    sql += " ORDER BY m.data DESC";
+    
+    console.log('BACKEND: SQL Eseguita:', sql); // Log della query SQL
+    console.log('BACKEND: Parametri SQL:', queryParams); // Log dei parametri per la query
+    console.log('MOVIMENTI_BACKEND: SQL Eseguita:', sql); // Log della query SQL
+    console.log('MOVIMENTI_BACKEND: Parametri SQL:', queryParams); // Log dei parametri per la query
+
+    const [rows] = await db.query(sql, queryParams);
+    console.log('BACKEND: Righe dal DB:', rows.length); // Log del numero di righe
+    console.log('MOVIMENTI_BACKEND: Righe dal DB:', rows.length); // Log del numero di righe
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("Errore nel recupero dei movimenti:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+ } catch (error) {
+   next(error);
+ }
+};
+
+// POST: nuovo movimento
+exports.insertMovimento = async (req, res) => {
+  // Esempio di campi per un movimento. Adattali!
+  const {
+    idart,
+    idcau,
+    quantita === undefined ||
+    !tipo
+  ) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Dati movimento mancanti o incompleti" });
+    return res.status(400).json({ success: false, message: "Dati movimento mancanti o incompleti" });
+  }
+
+  if (!['C','S'].includes(tipo)) {
+    return res.status(400),json({
+    return res.status(400).json({
+      success: false,
+      error: "Il campo 'tipo' deve essere 'C' o 'S'.",
+      message: "Il campo 'tipo' deve essere 'C' o 'S'."
+    });
+  }
+
+  if (
+    isNaN(parseInt(quantita)) ||
+    parseInt(quantita) <= 0
+  ) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Quantità movimentata non valida perchè deve essere un numero positivo.", });
+    return res.status(400).json({ success: false, message: "Quantità movimentata non valida perchè deve essere un numero positivo.", });
+  }
+
+  let connection;
+  try {
+    connection = await db.getConnection(); // Ottieni una connessione per la transazione
+    await connection.beginTransaction(); // Inizia la transazione
+    connection = await db.getConnection(); 
+    await connection.beginTransaction(); 
+
+    // 1. Inserisci il movimento
+    const [resultMovimento] = await connection.query(
+      "INSERT INTO movimenti (idart, idcau, data, quantita, tipo, note) VALUES (?, ?, ?, ?, ?, ?)",
+      [
+        idart,
+        idcau,
+        data,
+        quantita,
+        tipo,
+        note || null,
+       idart,
+       idcau,
+       data,
+       quantita,
+       tipo,
+       note || null,
+      ]
+    );
+
+    if (!resultMovimento.insertId) {
+          throw new Error('Errore nell\'inserimento del movimento.');
+        }
+
+    // 2. Aggiorna la quantità dell'articolo (logica di business)
+    let queryAggiornamentoArticolo;
+        articoloAttuale.length === 0 ||
+        articoloAttuale[0].quantita < quantita
+      ) {
+        await connection.rollback(); // Annulla la transazione
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: "Quantità insufficiente per lo scarico.",
+          });
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: "Quantità insufficiente per lo scarico.", });
+      }
+      queryAggiornamentoArticolo =
+        "UPDATE articoli SET quantita = quantita - ? WHERE id = ?";
+    } else {
+      await connection.rollback();
+      return res
+        .status(400)
+        .json({ success: false, error: "Tipo movimento non valido." });
+      return res.status(400).json({ success: false, message: "Tipo movimento non valido." });
+    }
+
+    await connection.query(queryAggiornamentoArticolo, [
+      quantita,
+      idart,
+    ]);
+    
+    if (resultMovimento.affectedRows === 0) {
+       throw new Error('Errore nell\'aggiornamento della quantità dell\'articolo.');
+        }
+
+    await connection.commit(); // Conferma la transazione
+
+
+    await connection.commit(); 
+
+    res
+      .status(201)
+        message: "Movimento registrato e articolo aggiornato.",
+      });
+  } catch (error) {
+    if (connection) await connection.rollback(); // Annulla la transazione in caso di errore
+    console.error("Errore durante l'inserimento del movimento:", error);
+    res.status(500).json({ success: false, error: error.message });
+    if (connection) await connection.rollback();
+    next(error)
+  } finally {
+    if (connection) connection.release(); // Rilascia la connessione al pool
+    if (connection) connection.release();
+  }
+};
+
+// PUT: modifica movimento (ATTENZIONE: modificare un movimento può essere complesso)
+// PUT: modifica movimento (ATTENZIONE: eliminare un movimento richiede di stornare l'effetto sulla giacenza)
+// Questa è una semplificazione.
+exports.updateMovimento = async (req, res) => {
+  // La modifica di un movimento spesso implica stornare il vecchio movimento e crearne uno nuovo,
+  // o ricalcolare le giacenze. Questa è una semplificazione.
+  // Per ora, un placeholder:
+  console.warn(
+    `La modifica del movimento ${id} non è completamente implementata e può avere effetti collaterali sulle giacenze.`
+  );
+  const { note } = req.body; // Esempio: permettiamo solo di modificare le note
+    const { note } = req.body;
+  if (note === undefined) {
+    return res
+      .status(400)
+      .json({
+        success: false,
+        error:
+        message:
+          "Nessun dato fornito per l'aggiornamento o campo non modificabile.",
+      });
+  }
+  try {
+    await db.query("UPDATE movimenti SET note=? WHERE id=?", [note, id]);
+    res.json({ success: true, message: "Nota movimento aggiornata." });
+  } catch (error) {
+ } catch (error) {
+    console.error("Errore durante l'aggiornamento del movimento:", error);
+    res.status(500).json({ success: false, error: error.message });
+    next(error);
+  }
+};
+
+
+
+// DELETE: elimina movimento (ATTENZIONE: eliminare un movimento richiede di stornare l'effetto sulla giacenza)
+// DELETE: elimina movimento (ATTENZIONE: modificare un movimento può essere complesso)
+// Questa è una semplificazione.
+exports.deleteMovimento = async (req
+ Revert to checkpoint
+Context Sources (27)
+
+User
+mostrami come implementare queste modifiche, con l'introduzione dell'useo di errorHandler in tutte authController.js
+
+
+Gemini
+Certamente! Ecco come puoi modificare authController.js per integrare correttamente il middleware errorHandler centralizzato.
+
+Le modifiche principali consistono nell'assicurarsi che ogni blocco catch nelle funzioni asincrone (come login e register) chiami next(error) per passare l'errore al gestore centralizzato, invece di inviare direttamente una risposta di errore.
+
+authController.js
+-9
++4
+const SALT_ROUNDS = 10; // Numero di round per il salt di bcrypt. 10-12 è un buon compromesso.
+
+// Funzione di LOGIN aggiornata con bcrypt
+exports.login = async (req, res) => {
+exports.login = async (req, res, next) => { // Aggiunto next
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        }
+    } catch (error) {
+        console.error('Errore durante il login:', error);
+        res.status(500).json({ success: false, message: 'Errore del server durante il login.' });
+        next(error); // Passa l'errore al middleware centralizzato  
+        next(error); // Passa l'errore al middleware centralizzato
+    }
+};
+
+// Nuova funzione di REGISTRAZIONE
+exports.register = async (req, res) => {
+exports.register = async (req, res, next) => { // Aggiunto next
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+
+    } catch (error) {
+        console.error('Errore durante la registrazione:', error);
+        next(error); // Passa l'errore al middleware centralizzato
+        if (error.code === 'ER_DUP_ENTRY') { // Codice errore specifico MySQL per duplicati (se hai un UNIQUE index su 'user')
+             return res.status(409).json({ success: false, message: 'Username già esistente.' });
+        }
+        res.status(500).json({ success: false, message: 'Errore del server durante la registrazione.' });
+        next(error); // Passa l'errore al middleware centralizzato, errorHandler gestirà ER_DUP_ENTRY
+    }
+};
+
+
+Spiegazione delle modifiche:
+
+Parametro next aggiunto:
+
+Le funzioni exports.login e exports.register ora accettano next come terzo parametro. Questo è necessario per poter passare gli errori al middleware successivo nella catena di Express, che in questo caso sarà il tuo errorHandler.
+Chiamata a next(error) nei blocchi catch:
+
+exports.login:
+La riga res.status(500).json({ success: false, message: 'Errore del server durante il login.' }); è stata rimossa.
+Ora, se si verifica un errore, viene chiamato solo next(error). Sarà errorHandler.js a gestire la formattazione e l'invio della risposta di errore 500 (o un altro codice appropriato in base all'errore).
+exports.register:
+Le righe if (error.code === 'ER_DUP_ENTRY') { ... } e res.status(500).json({ success: false, message: 'Errore del server durante la registrazione.' }); sono state rimosse dal blocco catch.
+Ora, se si verifica un errore, viene chiamato solo next(error). Il tuo errorHandler.js ha già una logica per gestire ER_DUP_ENTRY (restituendo uno status 409) e per gli errori generici (restituendo uno status 500).
+La funzione exports.logout non è stata modificata perché è sincrona e, nella sua forma attuale, non esegue operazioni che potrebbero generare errori che necessitano di essere passati a next. Invia semplicemente una risposta JSON di successo.
+
+Con queste modifiche, authController.js delega la gestione finale delle risposte di errore al middleware errorHandler.js, rendendo il codice del controller più pulito e la gestione degli errori più centralizzata e consistente.
+
+ Revert to checkpoint
+Context Sources (27)
+
+User
+mostrami come inplemetare l'uso di errorHandler in movimentiController.js
+
+
+Gemini
+Certo, ecco come puoi modificare movimenticontrollers.js per utilizzare il middleware errorHandler centralizzato. Le modifiche principali consistono nell'aggiungere next come parametro alle funzioni dei controller e nel chiamare next(error) all'interno dei blocchi catch.
+
+movimenticontrollers.js
+-46
++32
+The code change produced by Gemini cannot be automatically applied. You can manually apply the change or ask Gemini to try again.
+//@version: "1.0.0 2025-06-12"
+//==================================================
+const db = require("../db/db");
+console.log("LOG SERVER: Caricamento di movimenticontrollers.js (quello con la 's' e i filtri)..."); // <-- NUOVO LOG
+
+// Query personalizzata per eseguire un filtro dei dati database sulla tabella dataabase
+exports.customQuery = async (req, res) => {
+exports.customQuery = async (req, res, next) => { // Aggiunto next
+  const {query} = req.body;
+
+  if(!query || typeof query !== "string") {
+    return res.status(400).json({ success: false, error: "Query mancanete o non valida."});
+    return res.status(400).json({ success: false, message: "Query mancante o non valida."}); // Modificato 'error' in 'message' per coerenza
+  }
+
+  try {
+    res.json({ success: true, data: rows });
+  } catch (error) {
+
+    console.error("Errore nella query personalizzata:", error);
+    res.status(500).json({success: false, error: error.message});
+}
+    next(error); // Passa l'errore al middleware centralizzato
+  }
+};
+
+// GET tutti i movimenti (potresti voler aggiungere filtri, es. per articolo o data)
+// Modificato per gestire i filtri da req.query
+exports.getMovimenti = async (req, res) => {
+exports.getMovimenti = async (req, res, next) => { // Aggiunto next
+  try {
+    const { idart, idcau, tipo, dataDa, dataA } = req.query;    
+    // Rimosso il blocco if (conditions.length > 0) errato da qui
+    console.log('BACKEND: SQL Eseguita:', sql); // Log della query SQL
+    console.log('BACKEND: Parametri SQL:', queryParams); // Log dei parametri per la query
+
+    const [rows] = await db.query(sql, queryParams);
+    console.log('BACKEND: Righe dal DB:', rows.length); // Log del numero di righe
+    const [rows] = await db.query(sql, queryParams);    
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("Errore nel recupero dei movimenti:", error);
+    res.status(500).json({ success: false, error: error.message });
+    next(error); // Passa l'errore al middleware centralizzato
+  }
+};
+
+// POST: nuovo movimento
+exports.insertMovimento = async (req, res) => {
+exports.insertMovimento = async (req, res, next) => { // Aggiunto next
+  // Esempio di campi per un movimento. Adattali!
+  const {
+    idart,
+    !tipo
+  ) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Dati movimento mancanti o incompleti" });
+      .json({ success: false, message: "Dati movimento mancanti o incompleti" }); // Modificato 'error' in 'message'
+  }
+  if (!['C','S'].includes(tipo)) {
+    return res.status(400),json({
+    return res.status(400).json({ // Corretto typo: virgola invece di punto
+      success: false,
+      error: "Il campo 'tipo' deve essere 'C' o 'S'.",
+      message: "Il campo 'tipo' deve essere 'C' o 'S'.", // Modificato 'error' in 'message'
+    });
+  }
+  if (
+    isNaN(parseInt(quantita)) ||
+    parseInt(quantita) <= 0
+  ) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Quantità movimentata non valida perchè deve essere un numero positivo.", });
+    return res.status(400).json({ success: false, message: "Quantità movimentata non valida perchè deve essere un numero positivo.", }); // Modificato 'error' in 'message'
+  }
+
+  let connection;
+        articoloAttuale[0].quantita < quantita
+      ) {
+        await connection.rollback(); // Annulla la transazione
+        return res
+          .status(400)
+          .json({
+            success: false,
+            error: "Quantità insufficiente per lo scarico.",
+          });
+        // Invece di restituire direttamente, crea un errore e passalo a next
+        const err = new Error("Quantità insufficiente per lo scarico.");
+        err.statusCode = 400; // Aggiungi statusCode per errorHandler
+        return next(err);
+      }
+      queryAggiornamentoArticolo =
+        "UPDATE articoli SET quantita = quantita - ? WHERE id = ?";
+      await connection.rollback();
+      return res
+        .status(400)
+        .json({ success: false, error: "Tipo movimento non valido." });
+        .json({ success: false, message: "Tipo movimento non valido." }); // Modificato 'error' in 'message'
+    }
+
+    await connection.query(queryAggiornamentoArticolo, [
+        message: "Movimento registrato e articolo aggiornato.",
+      });
+  } catch (error) {
+    if (connection) await connection.rollback(); // Annulla la transazione in caso di errore
+    console.error("Errore durante l'inserimento del movimento:", error);
+    res.status(500).json({ success: false, error: error.message });
+    if (connection) await connection.rollback(); // Annulla la transazione in caso di errore    
+    next(error); // Passa l'errore al middleware centralizzato
+  } finally {
+    if (connection) connection.release(); // Rilascia la connessione al pool
+  }
+// PUT: modifica movimento (ATTENZIONE: modificare un movimento può essere complesso)
+// Questa è una semplificazione.
+// TODO: Implementare la logica corretta per stornare/ricalcolare le giacenze
+exports.updateMovimento = async (req, res) => {
+exports.updateMovimento = async (req, res, next) => { // Aggiunto next
+  const { id } = req.params;
+  // La modifica di un movimento spesso implica stornare il vecchio movimento e crearne uno nuovo,
+  // o ricalcolare le giacenze. Questa è una semplificazione.
+      .status(400)
+      .json({
+        success: false,
+        error:
+        message: // Modificato 'error' in 'message'
+          "Nessun dato fornito per l'aggiornamento o campo non modificabile.",
+      });
+  }
+  try {
+    await db.query("UPDATE movimenti SET note=? WHERE id=?", [note, id]);
+    res.json({ success: true, message: "Nota movimento aggiornata." });
+  } catch (error) {
+    console.error("Errore durante l'aggiornamento del movimento:", error);
+    res.status(500).json({ success: false, error: error.message });
+  } catch (error) {    
+    next(error); // Passa l'errore al middleware centralizzato
+  }
+};
+
+// DELETE: elimina movimento (ATTENZIONE: eliminare un movimento richiede di stornare l'effetto sulla giacenza)
+// Questa è una semplificazione.
+// TODO: Implementare la logica corretta per stornare/ricalcolare le giacenze
+exports.deleteMovimento = async (req, res) => {
+exports.deleteMovimento = async (req, res, next) => { // Aggiunto next
+  const { id } = req.params;
+  let connection;
+  try {
+    );
+    if (movimentoDaEliminareRows.length === 0) {
+      await connection.rollback();
+      return res
+        .status(404)
+        .json({ success: false, error: "Movimento non trovato." });
+      const err = new Error("Movimento non trovato.");
+      err.statusCode = 404;
+      return next(err);
+    }
+    const movimentoDaEliminare = movimentoDaEliminareRows[0];
+
+        "UPDATE articoli SET quantita = quantita + ? WHERE id = ?";
+    } else {
+      await connection.rollback();
+      return res
+        .status(400)
+        .json({
+          success: false,
+          error: "Tipo movimento del record da eliminare non valido.",
+        });
+      const err = new Error("Tipo movimento del record da eliminare non valido.");
+      err.statusCode = 400;
+      return next(err);
+    }
+    await connection.query(queryStornoArticolo, [
+      movimentoDaEliminare.quantita,
+      message: "Movimento eliminato e giacenza articolo aggiornata.",
+    });
+  } catch (error) {
+    if (connection) await connection.rollback();
+    console.error("Errore durante l'eliminazione del movimento:", error);
+    res.status(500).json({ success: false, error: error.message });
+    if (connection) await connection.rollback();    
+    next(error); // Passa l'errore al middleware centralizzato
+  } finally {
+    if (connection) connection.release();
+  }
+
+Punti chiave delle modifiche:
+
+Aggiunta di next: Tutte le funzioni esportate che gestiscono le rotte (es. exports.customQuery, exports.getMovimenti, ecc.) ora accettano next come terzo parametro.
+Utilizzo di next(error):
+Nei blocchi catch, invece di res.status(500).json(...), ora viene chiamato next(error). Questo passa l'oggetto errore al middleware errorHandler che hai definito in errorHandler.js.
+Anche per errori specifici gestiti prima (come 400 o 404), ora creiamo un oggetto Error, gli assegniamo uno statusCode (se appropriato), e lo passiamo a next(err). Il middleware errorHandler userà questo statusCode se presente.
+Coerenza nei Messaggi di Errore: Ho notato che in alcuni punti usavi { success: false, error: "..." } e in altri { success: false, message: "..." }. Ho standardizzato a message per coerenza con come errorHandler si aspetta di trovare il messaggio.
+Rimozione console.log Iniziale: Ho rimosso il console.log all'inizio del file perché non è più necessario per il debug di questo specifico problema.
+Correzione Typo: Ho corretto un typo in insertMovimento dove c'era res.status(400),json(...) (una virgola invece di un punto).
+Assicurati che il tuo file index.js (o server.js/app.js) registri correttamente il middleware errorHandler alla fine di tutti gli altri middleware e rotte, come mostrato nella risposta precedente.
+
+Con queste modifiche, la gestione degli errori per le rotte dei movimenti sarà centralizzata e più robusta.
+
+Context Sources (28)
+Prompts to try

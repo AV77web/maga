@@ -1,0 +1,606 @@
+User
+puoi inserire le iniziali,le prime 2 lettere dello user loggato sotto all'icona del button 'User' nel componente Header?
+
+
+Gemini
+Certo! Per visualizzare le prime due lettere del nome utente loggato sotto l'icona "User" nel componente Header, dobbiamo passare le informazioni dell'utente corrente al componente Header e quindi estrarre e visualizzare le iniziali.
+
+Ecco come possiamo modificare il file Header.jsx:
+
+Header.jsx
+-4
++17
+ Show full code block 
+import { CiEdit, CiSearch, CiBoxList, CiCircleChevLeft, CiUser } from "react-icons/ci"; // Importa l'icona Indietro
+import "../css/Header.css";
+
+const Header = ({ onAdd, onDelete, onEdit, onSearch, onManageBOM, onBack }) => {
+const Header = ({
+  onAdd,
+  onDelete,
+  onEdit,
+  onSearch,
+  onManageBOM,
+  onBack,
+  currentUser, // Aggiungi currentUser come prop
+}) => {
+  return (
+    <div className="header-container">
+      {onBack && ( // Mostra il pulsante solo se la prop onBack è definita
+      <button className="icon-button" onClick={onDelete} title="Elimina">
+        <CgTrash />
+      </button>
+            <button className="icon-button" onClick={onDelete} title="User">
+        <CiUser />
+      </button>
+      {currentUser && currentUser.username && (
+        <button className="icon-button user-button" title={`User: ${currentUser.username}`}>
+          <CiUser />
+          <span className="user-initials">
+            {currentUser.username.substring(0, 2).toUpperCase()}
+          </span>
+        </button>
+      )}
+    </div>
+  );
+};
+
+export default Header;
+E dovrai aggiungere un po' di CSS per posizionare correttamente le iniziali, ad esempio nel tuo file Header.css:
+
+css
+ Show full code block 
+/* c:\maga\maga\src\css\Header.css */
+.header-container {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  background-color: #f0f0f0; /* o il colore che preferisci */
+  border-bottom: 1px solid #ccc;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.5em; /* Dimensione dell'icona */
+  margin: 0 10px; /* Spaziatura tra i pulsanti */
+  padding: 5px;
+  display: flex; /* Per allineare icona e testo verticalmente */
+  flex-direction: column; /* Dispone icona e testo in colonna */
+  align-items: center; /* Centra icona e testo orizzontalmente */
+  justify-content: center; /* Centra icona e testo verticalmente */
+}
+
+.icon-button:hover {
+  color: #007bff; /* Cambia colore al passaggio del mouse */
+}
+
+.back-button {
+  margin-right: auto; /* Spinge il pulsante Indietro a sinistra */
+}
+
+/* Stile specifico per il pulsante utente e le iniziali */
+.user-button {
+  position: relative; /* Necessario per posizionare le iniziali se si usasse position:absolute per le iniziali */
+}
+
+.user-initials {
+  font-size: 0.6em; /* Dimensione più piccola per le iniziali */
+  margin-top: 2px; /* Piccola spaziatura tra icona e iniziali */
+  font-weight: bold;
+  color: #333; /* Colore per le iniziali */
+}
+
+Spiegazione delle modifiche:
+
+Header.jsx:
+
+Abbiamo aggiunto currentUser all'elenco delle props che il componente Header si aspetta di ricevere.
+Prima del pulsante "User", abbiamo aggiunto un controllo condizionale {currentUser && currentUser.username && (...)}. Questo assicura che il pulsante e le iniziali vengano renderizzati solo se currentUser esiste e ha una proprietà username.
+All'interno del pulsante "User", abbiamo aggiunto uno <span> con la classe user-initials.
+Il contenuto dello <span> è {currentUser.username.substring(0, 2).toUpperCase()}. Questo prende la stringa username, ne estrae i primi due caratteri con substring(0, 2) e li converte in maiuscolo con toUpperCase().
+Ho aggiunto la classe user-button al pulsante per poterlo stilizzare specificamente se necessario.
+Header.css:
+
+Ho aggiunto stili per .user-button e .user-initials per formattare le iniziali sotto l'icona. Puoi personalizzare ulteriormente questi stili (dimensione del font, colore, margini) secondo le tue preferenze.
+Come integrare:
+
+Dovrai assicurarti che il componente Header riceva la prop currentUser dal componente genitore che lo utilizza. Basandomi sul tuo file App.jsx, lo stato currentUser è già disponibile. Se Header è utilizzato all'interno di Sidebar1 (come suggerito dal fatto che Sidebar1 riceve currentUser), dovrai passare currentUser da Sidebar1 a Header.
+
+Ad esempio, se App.jsx usa un componente Layout che a sua volta usa Header:
+
+In App.jsx:
+
+javascriptreact
+ Show full code block 
+// ...
+return (
+  <>
+    {/* ... altri componenti ... */}
+    <Layout currentUser={currentUser}> {/* Assumendo che Layout usi Header */}
+      {/* ... children di Layout ... */}
+    </Layout>
+    {/* ... */}
+  </>
+);
+E poi in Layout.jsx (o dove usi Header):
+
+javascriptreact
+ Show full code block 
+import Header from "./Header";
+// ...
+const Layout = ({ children, currentUser }) => {
+  // ...
+  return (
+    <div>
+      <Header currentUser={currentUser} /* ...altre props... */ />
+      <main>{children}</main>
+    </div>
+  );
+};
+Fammi sapere se hai bisogno di ulteriori modifiche o chiarimenti!
+
+ Revert to checkpoint
+Context Sources (7)
+
+User
+la mia App.js non usa il componente Header ma MovimentiForm.js RicambiManagerDialog.jsx e CausaliManager4.js lo usano come posso passare currentUser come props a Header da questi componenti?
+
+
+Gemini
+Capisco! Dato che currentUser è gestito in App.jsx e i componenti MovimentiForm, RicambiManagerDialog4 e CausaliManager4 utilizzano Header, dobbiamo far "scendere" la prop currentUser attraverso questi componenti.
+
+Ecco come puoi fare:
+
+1. Modifica App.jsx per passare currentUser ai componenti delle route:
+
+Dobbiamo passare currentUser come prop ai componenti MovimentiForm, RicambiManagerDialog4 e CausaliManager4 dove vengono definiti nelle Routes.
+
+App.jsx
+-3
++3
+ Show full code block 
+          path="/"
+          element={
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <MovimentiForm />
+              <MovimentiForm currentUser={currentUser} />
+            </ProtectedRoute>
+          }
+        />
+          path="/articoli"
+          element={
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <RicambiManagerDialog4 />
+              <RicambiManagerDialog4 currentUser={currentUser} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/causali"
+          element={
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <CausaliManager4 />
+              <CausaliManager4 currentUser={currentUser} />
+            </ProtectedRoute>
+          }
+        />
+2. Modifica RicambiManagerDialog4.jsx per accettare e passare currentUser a Header:
+
+Ora, RicambiManagerDialog4.jsx riceverà currentUser. Dobbiamo accettarlo come prop e passarlo al componente Header.
+
+RicambiManagerDialog4.jsx
+-1
++2
+ Show full code block 
+
+const rowsPerPageOptions = [5, 10, 20, 50];
+
+export default function RicambiManagerDialog4() {
+export default function RicambiManagerDialog4({ currentUser }) { // Accetta currentUser
+  const [ricambi, setRicambi] = useState([]);
+  const [formVisible, setFormVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+          }
+        }}
+        onManageBOM={handleManageBOM}
+        currentUser={currentUser} // Passa currentUser a Header
+      />
+
+      <div className="container">
+3. Modifica MovimentiForm.jsx (se usa Header):
+
+Se il tuo componente MovimentiForm.jsx (che non è stato fornito nel contesto, ma è menzionato) utilizza il componente Header, dovrai fare una modifica simile:
+
+javascriptreact
+ Show full code block 
+// Esempio per c:\maga\maga\src\components\MovimentiForm.jsx
+import React from 'react';
+import Header from './Header'; // Assicurati che il percorso sia corretto
+// ... altri import ...
+
+// Accetta currentUser come prop
+const MovimentiForm = ({ currentUser }) => {
+  // ... logica del componente ...
+
+  return (
+    <div>
+      <Header
+        // ...altre props per Header...
+        currentUser={currentUser} // Passa currentUser a Header
+      />
+      {/* Contenuto di MovimentiForm */}
+      <p>Movimenti Form</p>
+      {currentUser && <p>Utente loggato: {currentUser.username}</p>}
+    </div>
+  );
+};
+
+export default MovimentiForm;
+4. Modifica CausaliManager4.jsx (se usa Header):
+
+Analogamente, se CausaliManager4.jsx (non fornito nel contesto) usa Header:
+
+javascriptreact
+ Show full code block 
+// Esempio per c:\maga\maga\src\components\CausaliManager4.jsx
+import React from 'react';
+import Header from './Header'; // Assicurati che il percorso sia corretto
+// ... altri import ...
+
+// Accetta currentUser come prop
+const CausaliManager4 = ({ currentUser }) => {
+  // ... logica del componente ...
+
+  return (
+    <div>
+      <Header
+        // ...altre props per Header...
+        currentUser={currentUser} // Passa currentUser a Header
+      />
+      {/* Contenuto di CausaliManager4 */}
+      <p>Causali Manager 4</p>
+      {currentUser && <p>Utente loggato: {currentUser.username}</p>}
+    </div>
+  );
+};
+
+export default CausaliManager4;
+Riepilogo:
+
+Abbiamo aggiornato App.jsx per inviare currentUser ai componenti figli diretti che sono responsabili di renderizzare Header.
+Abbiamo aggiornato RicambiManagerDialog4.jsx (e potenzialmente MovimentiForm.jsx e CausaliManager4.jsx) per:
+Accettare currentUser come prop.
+Passare questa prop currentUser al componente Header che utilizzano.
+In questo modo, Header riceverà sempre le informazioni dell'utente loggato e potrà visualizzare le iniziali come desiderato. Assicurati di creare o modificare i file MovimentiForm.jsx e CausaliManager4.jsx se non esistono o se la loro struttura è diversa da quella ipotizzata.
+
+Se uno di questi componenti (MovimentiForm, CausaliManager4) non utilizza direttamente Header ma lo fa un suo componente figlio, dovrai continuare a passare la prop currentUser "più in basso" nella gerarchia dei componenti fino a raggiungere Header. Questo processo è noto come "prop drilling". Per applicazioni più complesse, potresti considerare l'uso di Context API o di una libreria di state management (come Redux o Zustand) per evitare il prop drilling eccessivo.
+
+Fammi sapere se hai altre domande!
+
+ Revert to checkpoint
+Context Sources (13)
+
+User
+.header-container { align-content: end; display: flex; flex-direction: row; justify-content: space-between; gap: 40px; list-style: none; position: fixed; right: 10px; width: 500px; z-index: 1000; }
+
+.icon-button { background-color: #f0f0f0; border: none; cursor: pointer; width: 50px; height: 50px; padding: 0.5rem; transition: transform 0.3s ease; }
+
+.icon-button:hover { background-color: #575151; transform: scale(1.4); }
+
+icon-button:active { background-color: #ddd; } questo è il css di header puoi dargli uno stile più moderno ed elegante?
+
+
+Gemini
+Certamente! Possiamo dare un tocco più moderno ed elegante al CSS del tuo header.
+
+Ecco una proposta di modifica per il file Header.css:
+
+Header.css
+-10
++44
+ Show full code block 
+.header-container {
+  align-content: end;
+  /* Keep positioning as it seems layout-specific */
+  display: flex;
+  flex-direction: row;
+  align-items: center; /* Align items vertically in the center */
+  justify-content: space-between;
+  gap: 40px;
+  list-style: none;
+  gap: 20px; /* Reduced gap */
+  list-style: none; /* Remove list style if it was applied to the container */
+  position: fixed;
+  right: 10px;
+  width: 500px;
+  z-index: 1000;
+
+  /* Add some modern styling */
+  background-color: #ffffff; /* Clean white background */
+  padding: 10px 20px; /* Add padding */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.icon-button {
+  background-color: #f0f0f0;
+  background: none; /* Transparent background */
+  border: none;
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  padding: 0.5rem;
+  transition: transform 0.3s ease;
+  width: 40px; /* Slightly smaller size */
+  height: 40px;
+  padding: 0; /* Remove padding here, let icon size define it */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8em; /* Adjust icon size */
+  color: #555; /* Default icon color */
+  transition: color 0.3s ease, background-color 0.3s ease; /* Smooth transition for color and background */
+  border-radius: 4px; /* Small border radius */
+}
+
+.icon-button:hover {
+  background-color: #575151;
+  transform: scale(1.4);
+  color: #007bff; /* Highlight color for icon */
+  background-color: #e9ecef; /* Subtle background on hover */
+  transform: none; /* Remove scale effect */
+}
+
+icon-button:active {
+  background-color: #ddd;
+}
+
+/* Specific styles for the user button initials */
+.user-button {
+  /* No specific styles needed here unless different from other icon-buttons */
+}
+
+.user-initials {
+  font-size: 0.5em; /* Smaller font size relative to icon */
+  margin-top: 2px; /* Space between icon and text */
+  font-weight: bold;
+  color: #333; /* Darker color for text */
+  text-align: center;
+  line-height: 1; /* Compact line height */
+}
+
+/* Ensure the back button is pushed to the left if needed */
+.back-button {
+  margin-right: auto;
+}
+Spiegazione delle modifiche:
+
+.header-container:
+Ho mantenuto il posizionamento fisso (position, right, width, z-index) poiché sembra specifico del layout della tua applicazione.
+Ho cambiato align-content: end in align-items: center per allineare verticalmente gli elementi al centro, che è più comune per le barre di intestazione.
+Ho ridotto il gap tra i pulsanti da 40px a 20px per renderlo meno dispersivo.
+Ho aggiunto background-color: #ffffff, padding: 10px 20px, border-radius: 8px e box-shadow per dare un aspetto più pulito, definito e moderno.
+.icon-button:
+Ho impostato background: none per rendere lo sfondo trasparente.
+Ho ridotto leggermente la width e height a 40px per un aspetto più compatto.
+Ho rimosso il padding dal pulsante stesso e ho impostato la dimensione dell'icona (font-size: 1.8em) per controllare la dimensione visiva dell'icona all'interno del pulsante di 40x40px.
+Ho cambiato il color predefinito delle icone a un grigio scuro (#555).
+Ho modificato la transition per includere color e background-color per un effetto hover più fluido.
+Ho aggiunto un piccolo border-radius (4px) per ammorbidire gli angoli.
+.icon-button:hover:
+Ho cambiato il background-color a un grigio molto chiaro (#e9ecef) e il color dell'icona a un blu (#007bff) per un effetto hover più elegante e meno invasivo rispetto allo scaling.
+Ho rimosso transform: scale(1.4).
+.icon-button:active:
+Ho mantenuto un cambio di background leggermente più scuro (#dee2e6) per l'effetto click.
+.user-initials:
+Ho aggiunto stili specifici per le iniziali per assicurare che siano piccole (font-size: 0.5em relativo alla dimensione dell'icona), posizionate correttamente sotto l'icona (margin-top: 2px), in grassetto (font-weight: bold) e con un colore leggibile (color: #333). Ho aggiunto text-align: center e line-height: 1 per un allineamento e spaziatura compatti.
+.back-button: Ho mantenuto la regola margin-right: auto per assicurare che il pulsante "Indietro" rimanga allineato a sinistra se presente.
+Queste modifiche dovrebbero conferire al tuo header un aspetto più pulito, moderno ed elegante.
+
+Spero ti piaccia il nuovo stile!
+
+ Revert to checkpoint
+Context Sources (12)
+
+User
+puoi migliare anche l'aspetto della Sidebar?
+
+css: 83 lines selected
+
+Gemini
+Certo, possiamo decisamente dare un aspetto più moderno ed elegante alla tua Sidebar! Ecco una proposta di modifica per il tuo file Sidebar.css. Ho cercato di mantenere la coerenza con lo stile che abbiamo applicato all'Header, utilizzando colori puliti, ombre discrete e transizioni fluide.
+
+Sidebar.css
+-22
++40
+ Show full code block 
+aside {
+  background-color: #fff;
+  color: #333;
+  background-color: #ffffff; /* Sfondo bianco pulito, come l'header */
+  color: #343a40; /* Testo grigio scuro per una buona leggibilità */
+  display: flex;
+  flex-direction: column;
+  justify-items: center;
+  /* justify-items: center; non è una proprietà standard per flex, useremo align-items per i figli se necessario */
+  height: 100vh;
+  left: -330px; /* defautl chiusa */
+  padding: 1rem;
+  padding: 20px; /* Padding più generoso */
+  position: fixed;
+  top: 0;
+  transition: left 0.3s ease-in-out;
+  transition: left 0.3s cubic-bezier(0.25, 0.1, 0.25, 1); /* Transizione più fluida */
+  width: 330px;
+  z-index: 1000;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); /* Ombra per dare profondità */
+  border-right: 1px solid #e9ecef; /* Bordo sottile a destra */
+}
+aside.open {
+  left: 0;
+  /* Quando è aperta, l'ombra è più visibile */
+  box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
+}
+.nav-item {
+  display: flex;
+}
+
+.button1 {
+  /* Pulsante Hamburger */
+  top: 20px;
+  left: 20px;
+  z-index: 1001;
+  background-color: #999;
+  background-color: transparent; /* Sfondo trasparente */
+  border: none;
+  font-size: 24px;
+  font-size: 28px; /* Icona leggermente più grande */
+  color: #343a40; /* Colore icona scuro */
+  cursor: pointer;
+  display: block;
+  position: fixed;
+  transition: transform 0.3s ease;
+  padding: 8px; /* Padding per area cliccabile */
+  border-radius: 50%; /* Cerchio intorno all'icona */
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.3s ease;
+}
+.button1:hover {
+  color: #000;
+  transform: scale(1.4);
+  background-color: #f0f0f0; /* Leggero sfondo al hover */
+  color: #007bff; /* Colore accento al hover */
+  transform: scale(1.1); /* Leggero ingrandimento */
+}
+
+.sidebar-filter-controls {
+  display: flex;
+  flex-direction: column; /* Impila i bottoni verticalmente, ideale per le sidebar */
+  gap: 10px; /* Spazio tra i bottoni */
+  gap: 12px; /* Spazio tra i bottoni leggermente aumentato */
+  margin-top: 15px;
+  margin-bottom: 15px;
+  padding: 0 10px; /* Aggiunge un po' di padding laterale se necessario */
+  padding: 0; /* Rimuoviamo padding qui se i bottoni lo gestiscono */
+}
+
+.sidebar-filter-button {
+  background-color: #999; /* Un blu primario comune */
+  color: #000;
+  border: 1px solid #000;
+  padding: 12px 15px; /* Aumentato il padding per un aspetto più "cliccabile" */
+  background-color: #f8f9fa; /* Sfondo grigio molto chiaro */
+  color: #495057; /* Testo grigio scuro */
+  border: 1px solid #dee2e6; /* Bordo sottile e chiaro */
+  padding: 10px 15px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 14px;
+  font-weight: 500; /* Un peso di font medio */
+  cursor: pointer;
+  border-radius: 5px; /* Angoli arrotondati */
+  /*transition: background-color 0.2s ease-in-out, transform 0.1s ease;*/
+  border-radius: 6px; /* Angoli arrotondati */
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  width: 100%; /* Fa sì che i bottoni occupino tutta la larghezza del contenitore */
+  box-sizing: border-box; /* Include padding e bordo nella larghezza/altezza totale */
+}
+
+.sidebar-filter-button:hover {
+  background-color: #7eb0c8; /* Blu più scuro al passaggio del mouse */
+  color: #fff;
+  background-color: #007bff; /* Colore accento primario */
+  color: #ffffff;
+  border-color: #007bff;
+}
+
+.sidebar-filter-button:active {
+  background-color: #0056b3; /* Colore accento più scuro per active */
+  transform: scale(0.98); /* Leggero effetto "pressione" al click */
+}
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 999; /* meno di .button1 (1001) e aside (1000) va bene */
+  background-color: rgba(0, 0, 0, 0.5); /* Overlay leggermente più scuro */
+  z-index: 999; /* Sotto la sidebar (1000) e il bottone (1001) */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+aside.open + .sidebar-overlay { /* Mostra l'overlay solo quando la sidebar è aperta */
+  opacity: 1;
+  visibility: visible;
+}
+Spiegazione delle modifiche principali:
+
+aside (Sidebar principale):
+Cambiato background-color in #ffffff per un look pulito.
+Aggiunto box-shadow per dare un effetto di profondità quando la sidebar è aperta e un border-right sottile.
+Aumentato il padding a 20px.
+Modificata la transition per left usando cubic-bezier per un'animazione più gradevole.
+.button1 (Pulsante Hamburger):
+Reso lo sfondo transparent.
+Aumentata leggermente la font-size e aggiunto padding.
+Reso il pulsante circolare con border-radius: 50%.
+Migliorato l'effetto :hover con un leggero sfondo, cambio colore e un piccolo scale.
+.sidebar-filter-button:
+Cambiati i colori di sfondo, testo e bordo per un aspetto più moderno e meno pesante.
+Lo stato :hover ora usa un colore di accento primario (#007bff) per sfondo e bordo, con testo bianco.
+Lo stato :active scurisce leggermente il colore di accento.
+Aggiustato border-radius e gap in .sidebar-filter-controls.
+.sidebar-overlay:
+Reso l'overlay leggermente più scuro (rgba(0, 0, 0, 0.5)).
+Aggiunta una transizione per opacity e visibility e fatto in modo che appaia solo quando la sidebar è aperta (usando il selettore di fratello adiacente aside.open + .sidebar-overlay).
+Per migliorare ulteriormente i link di navigazione (es. Home, Articoli, Causali):
+
+Se i tuoi link di navigazione all'interno della sidebar hanno una classe comune (ad esempio, .mylink come visto nel tuo Sidebar1.jsx), potresti aggiungere questi stili a Sidebar.css:
+
+css
+ Show full code block 
+/* Stili per i link di navigazione nella Sidebar */
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px; /* Spazio tra i link */
+  margin-top: 20px; /* Spazio sopra la navigazione */
+}
+
+.mylink {
+  display: block;
+  padding: 12px 15px; /* Padding per una buona area cliccabile */
+  text-decoration: none;
+  color: #495057; /* Colore testo simile ai bottoni filtro */
+  border-radius: 6px; /* Angoli arrotondati */
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-size: 16px; /* Dimensione font leggibile */
+}
+
+.mylink:hover {
+  background-color: #e9ecef; /* Sfondo leggero al hover */
+  color: #007bff; /* Colore accento al hover */
+}
+
+/* Stile per il link attivo, se usi NavLink di react-router-dom */
+.mylink.active {
+  background-color: #007bff;
+  color: #ffffff;
+  font-weight: 500;
+}
+Questi stili renderanno i link più integrati con il nuovo design della sidebar. Ricorda di importare NavLink da react-router-dom e usarlo al posto di Link se vuoi lo stile .active automatico.
+
+Spero queste modifiche ti piacciano e rendano la tua interfaccia più gradevole!
+
+ Revert to checkpoint
+Context Sources (12)
+1 context item
+Context items
+
+Current file

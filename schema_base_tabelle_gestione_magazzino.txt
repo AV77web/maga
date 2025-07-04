@@ -1,0 +1,61 @@
+schema base delle  tabelle di gestione magazzino
+
+
+-- 📦 ARTICOLI
+CREATE TABLE articoli (
+    codice VARCHAR(50) PRIMARY KEY,
+    descrizione VARCHAR(255) NOT NULL,
+    um VARCHAR(10) DEFAULT 'PZ',
+    categoria VARCHAR(100),
+    prezzo DECIMAL(10,2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 📝 CAUSALI
+CREATE TABLE causali (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    codice VARCHAR(50) NOT NULL UNIQUE,
+    descrizione VARCHAR(255) NOT NULL,
+    tipo ENUM('CARICO', 'SCARICO') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 🏬 MAGAZZINI
+CREATE TABLE magazzini (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    ubicazione VARCHAR(255),
+    responsabile VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- 📊 MOVIMENTI
+CREATE TABLE movimenti (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    data DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    cod_articolo VARCHAR(50) NOT NULL,
+    quantita DECIMAL(10,2) NOT NULL,
+    um VARCHAR(10) DEFAULT 'PZ',
+    causale_id INT NOT NULL,
+    tipo_movimento ENUM('CARICO', 'SCARICO') NOT NULL,
+    id_magazzino INT,
+    lotto VARCHAR(50),
+    scadenza DATE,
+    operatore VARCHAR(100),
+    note TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    -- 🔗 FOREIGN KEYS
+    CONSTRAINT fk_articolo FOREIGN KEY (cod_articolo) REFERENCES articoli(codice) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_causale FOREIGN KEY (causale_id) REFERENCES causali(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    CONSTRAINT fk_magazzino FOREIGN KEY (id_magazzino) REFERENCES magazzini(id) ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+-- 🔎 INDICI UTILI
+CREATE INDEX idx_movimenti_data ON movimenti(data);
+CREATE INDEX idx_movimenti_articolo ON movimenti(cod_articolo);
+CREATE INDEX idx_movimenti_magazzino ON movimenti(id_magazzino);

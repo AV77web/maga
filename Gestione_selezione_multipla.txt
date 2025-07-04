@@ -1,0 +1,109 @@
+Perfetto! Per passare da una selezione singola a una selezione multipla, bisogna aggiornare:
+
+Lo stato selectedId → selectedIds (array di ID).
+
+I checkbox per riga → per gestire selezione multipla.
+
+Il checkbox nell'intestazione → per "seleziona/deseleziona tutti".
+
+La funzione handleDelete → per eliminare più righe.
+
+Ecco i passaggi concreti da fare nel tuo codice:
+
+🔁 1. Stato: da selectedId a selectedIds
+jsx
+Copia codice
+const [selectedIds, setSelectedIds] = useState([]);
+✅ 2. Checkbox intestazione (seleziona tutti)
+Sostituisci:
+
+jsx
+Copia codice
+<input
+  type="checkbox"
+  checked={currentTableData.every((row) => row.id === selectedId)}
+  onChange={() => setSelectedId(null)}
+  title="Deseleziona tutto"
+/>
+Con:
+
+jsx
+Copia codice
+<input
+  type="checkbox"
+  checked={
+    currentTableData.length > 0 &&
+    currentTableData.every((row) => selectedIds.includes(row.id))
+  }
+  onChange={(e) => {
+    if (e.target.checked) {
+      const newIds = currentTableData.map((row) => row.id);
+      setSelectedIds((prev) => [...new Set([...prev, ...newIds])]);
+    } else {
+      const currentIds = currentTableData.map((row) => row.id);
+      setSelectedIds((prev) => prev.filter((id) => !currentIds.includes(id)));
+    }
+  }}
+  title="Seleziona/Deseleziona tutto"
+/>
+📦 3. Checkbox per ogni riga
+Sostituisci:
+
+jsx
+Copia codice
+<input
+  type="checkbox"
+  checked={row.id === selectedId}
+  onChange={() =>
+    setSelectedId((prev) => (prev === row.id ? null : row.id))
+  }
+/>
+Con:
+
+jsx
+Copia codice
+<input
+  type="checkbox"
+  checked={selectedIds.includes(row.id)}
+  onChange={(e) => {
+    if (e.target.checked) {
+      setSelectedIds((prev) => [...prev, row.id]);
+    } else {
+      setSelectedIds((prev) => prev.filter((id) => id !== row.id));
+    }
+  }}
+/>
+E cambia anche:
+
+jsx
+Copia codice
+<tr className={row.id === selectedId ? "selected-row" : ""}>
+Con:
+
+jsx
+Copia codice
+<tr className={selectedIds.includes(row.id) ? "selected-row" : ""}>
+🗑️ 4. Modifica handleDelete per eliminare più ID
+Modifica l’uso di Header così:
+
+jsx
+Copia codice
+<Header
+  onAdd={handleNew}
+  onDelete={() => {
+    if (selectedIds.length === 0) {
+      alert("Seleziona almeno una riga da eliminare.");
+      return;
+    }
+    selectedIds.forEach((id) => handleDelete(id));
+    setSelectedIds([]); // reset selezione
+  }}
+/>
+✅ Riassunto
+selectedIds è un array (per selezioni multiple).
+
+I checkbox della tabella riflettono lo stato selectedIds.
+
+Il checkbox in testa seleziona o deseleziona tutti.
+
+handleDelete gestisce più ID.

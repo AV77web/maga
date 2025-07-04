@@ -1,0 +1,26 @@
+     drop if exists procedure FetchUser;
+     delimiter $$
+
+     CREATE PROCEDURE FetchUsers(
+    
+     IN p_id INT,
+         IN p_username VARCHAR(255)
+     )
+     BEGIN
+    
+         SELECT
+             id,
+             user AS username,
+             role
+         FROM
+             login
+         WHERE
+    
+             (p_id IS NULL OR id = p_id)
+         AND
+    
+             (p_username IS NULL OR user = p_username)
+         ORDER BY
+             username;
+     END $$
+

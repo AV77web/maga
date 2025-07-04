@@ -1,0 +1,72 @@
+.header-container {
+  /* Keep positioning as it seems layout-specific */
+  display: flex;
+  flex-direction: row;
+  align-items: center; /* Align items vertically in the center */
+  justify-content: space-between;
+  gap: 20px; /* Reduced gap */
+  list-style: none; /* Remove list style if it was applied to the container */
+  position: fixed;
+  right: 10px;
+  width: 500px;
+  z-index: 1000;
+
+  /* Add some modern styling */
+  background-color: #ffffff; /* Clean white background */
+  padding: 10px 20px; /* Add padding */
+  border-radius: 8px; /* Rounded corners */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.icon-button {
+  background: none; /* Transparent background */
+  border: none;
+  cursor: pointer;
+  width: 40px; /* Slightly smaller size */
+  height: 40px;
+  padding: 0; /* Remove padding here, let icon size define it */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8em; /* Adjust icon size */
+  color: #555; /* Default icon color */
+  transition: color 0.3s ease, background-color 0.3s ease; /* Smooth transition for color and background */
+  border-radius: 4px; /* Small border radius */
+}
+
+.icon-button:hover {
+  color: #007bff; /* Highlight color for icon */
+  background-color: #e9ecef; /* Subtle background on hover */
+  transform: none; /* Remove scale effect */
+}
+
+icon-button:active {
+  background-color: #ddd;
+}
+
+/* Specific styles for the user button initials */
+.user-button {
+  /* No specific styles needed here unless different from other icon-buttons */
+}
+
+.user-initials {
+  font-size: 0.5em; /* Smaller font size relative to icon */
+  margin-top: 2px; /* Space between icon and text */
+  font-weight: bold;
+  color: #333; /* Darker color for text */
+  text-align: center;
+  line-height: 1; /* Compact line height */
+}
+
+/* Ensure the back button is pushed to the left if needed */
+.back-button {
+  margin-right: auto;
+}
+
+/* Stili per i pulsanti disabilitati */
+.icon-button[disabled] {
+  opacity: 0.5; /* Rende il pulsante semi-trasparente */
+  cursor: not-allowed; /* Cambia il cursore per indicare che non è cliccabile */
+  background-color: #e0e0e0; /* Sfondo leggermente più scuro per maggiore contrasto */
+}

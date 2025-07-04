@@ -1,0 +1,15 @@
+Capisco la tua intenzione di voler inviare query SQL complete dal frontend al backend per le operazioni GET (filtrate), PUT e DELETE sui movimenti. Questo ti darebbe massima flessibilità nel frontend, ma è cruciale essere consapevoli di alcune implicazioni significative.
+
+Prima di mostrarti le modifiche al codice, considera attentamente i seguenti punti:
+
+Sicurezza (Rischio Elevato di SQL Injection):
+
+Inviare stringhe SQL grezze dal frontend al backend è una pratica altamente sconsigliata perché espone il tuo database a un rischio elevato di attacchi SQL Injection. Se un utente malintenzionato riuscisse a manipolare la query inviata, potrebbe leggere, modificare o cancellare dati arbitrari dal tuo database.
+L'approccio standard e più sicuro prevede che il backend riceva solo i parametri per la query, e sia il backend stesso a costruire la query SQL in modo sicuro (usando query parametrizzate/prepared statements).
+Logica di Business e Transazioni:
+
+Attualmente, le operazioni di inserimento (insertMovimento) e cancellazione (deleteMovimento) nel tuo controller gestiscono la logica di aggiornamento delle giacenze degli articoli e utilizzano transazioni per garantire l'atomicità (o tutto o niente).
+Se il frontend invia la query SQL completa per UPDATE o DELETE, questa logica transazionale e di aggiornamento delle giacenze presente nel backend verrebbe bypassata. La responsabilità di garantire la consistenza dei dati (es. aggiornare correttamente le giacenze quando un movimento viene modificato o eliminato) si sposterebbe interamente al frontend. Questo può rendere il codice frontend più complesso e aumentare il rischio di errori o inconsistenze nei dati.
+Standard API e Manutenibilità:
+
+Inviare query SQL complete come parametri di richieste GET o nel corpo di richieste PUT/DELETE non è una pratica REST standard. Può rendere l'API meno intuitiva e più difficile da manutenere e testare.

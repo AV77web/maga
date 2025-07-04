@@ -1,0 +1,92 @@
+.ricambi-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.ricambi-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 1001;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ricambi-dialog h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.ricambi-dialog input,
+.ricambi-dialog textarea {
+  padding: 10px 12px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s ease;
+  width: 100%;
+}
+
+.ricambi-dialog input:focus,
+.ricambi-dialog textarea:focus {
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
+}
+
+.ricambi-dialog textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.ricambi-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.ricambi-dialog .annulla,
+.ricambi-dialog .btn-submit {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.ricambi-dialog .annulla {
+  background-color: #e53935;
+  color: #fff;
+}
+
+.ricambi-dialog .annulla:hover {
+  background-color: #d32f2f;
+  transform: scale(1.03);
+}
+
+.ricambi-dialog .btn-submit {
+  background-color: #1976d2;
+  color: white;
+}
+
+.ricambi-dialog .btn-submit:hover {
+  background-color: #1565c0;
+  transform: scale(1.03);
+}

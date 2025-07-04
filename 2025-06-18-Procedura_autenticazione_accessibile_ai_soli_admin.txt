@@ -1,0 +1,466 @@
+
+User
+rendi accessibile la procedura di registrazione ai soli utenti 'admin'
+
+
+Gemini
+Okay, I can help you with that! To make the registration procedure accessible only to 'admin' users, we'll need to modify how your application handles routing and user authentication, specifically by checking the user's role.
+
+Here's a plan:
+
+Modify Login.jsx: Ensure that when a user logs in, their user information (including their role) is stored, for example, in localStorage. The backend API for login (/api/auth/login) should provide this user role.
+Modify App.jsx:
+Retrieve and manage the current user's information (including their role) in the App component's state.
+Update the ProtectedRoute component to check not only if the user is logged in but also if they have one of the allowedRoles.
+Change the route for /register to use this enhanced ProtectedRoute, specifying that only users with the 'admin' role can access it.
+Clean up any redundant redirection logic.
+Minor cleanup: Address an unused state variable and a double setError call in Login.jsx.
+Let's go through the changes file by file.
+
+1. Update Login Component
+We'll modify Login.jsx to store the user object (which should contain the role) in localStorage upon successful login. We'll also remove an unused state variable and fix a minor issue with error setting.
+
+Login.jsx
+-3
++5
+import "../css/Login.css"; // se usi un file separato
+
+function Login({ onSuccess }) {
+  const [user, setUser] = useState("");
+  const [username, setUsername] = useState(""); 
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState(""); // Modificato da 'pwd' a 'password'
+  const [error, setError] = useState(""); // Definisci lo stato per l'errore
+  const handleLogin = async (e) => {
+      if (res.data.success) {
+        console.log("Login riuscito:", res.data.user);
+        // Salva il token ricevuto per le richieste successive
+        localStorage.setItem('authToken', res.data.token);
+        // Salva i dati dell'utente, inclusa la role, se disponibili
+        if (res.data.user) {
+          localStorage.setItem('user', JSON.stringify(res.data.user));
+        }
+        onSuccess();
+      } else {
+        setError(res.data.message || "Credenziali errate");
+      }
+    } catch (err) {
+      setError("Errore di connessione al server");
+       setError(err.response?.data?.message || "Errore di connessione o credenziali non valide.");
+     }
+   };
+
+2. Update Main Application Component (App.jsx)
+This is where most of the logic for role-based access control will reside.
+
+We'll add state to hold the currentUser object.
+The ProtectedRoute component will be enhanced to check for allowedRoles.
+The /register route will be changed to use this ProtectedRoute.
+The useEffect that handled redirects for logged-in users trying to access /login or /register will be removed as the route definitions will now cover these cases more effectively.
+App.jsx
+-14
++52
+/*const RicambiTableGrid = lazy(() => import("./components/RicambiTableGrid"));*/
+
+//Componente per proteggere le rotte 
+const ProtectedRoute = ({ isLoggedIn,  children}) => {
+const ProtectedRoute = ({ isLoggedIn, children, allowedRoles, userRole }) => {
+  if (!isLoggedIn) {
+    return <Navigate to="/login" />;
+    return <Navigate to="/login" replace />;
+  }
+  // If allowedRoles are specified, check if the user's role is among them
+  if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
+    // User is logged in but does not have the required role
+    // Redirect to home or an "Access Denied" page. For now, home.
+    return <Navigate to="/" replace />;
+  }
+  return children;
+  };
+};
+
+function App() {
+   // Controlla se c'è un token in localStorage all'avvio per mantenere lo stato di login
+  const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem('authToken'));
+  const [currentUser, setCurrentUser] = useState(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        return JSON.parse(storedUser);
+      } catch (e) {
+        console.error("Error parsing user from localStorage", e);
+        localStorage.removeItem('user'); // Clear corrupted data if parsing fails
+        return null;
+      }
+    }
+    return null;
+  });
+  const [isSideBarOpen, setIsSideBarOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  // const location = useLocation(); // No longer needed for the removed useEffect
+
+  const toggleSidebar = () => setIsSideBarOpen(!isSideBarOpen);
+  const closeSidebar = () => setIsSideBarOpen(false);
+
+  const handleLoginSuccess = () => {
+    setLoggedIn(true);
+    const userJson = localStorage.getItem('user'); // User data should have been set by Login.jsx
+    if (userJson) {
+      try {
+        setCurrentUser(JSON.parse(userJson));
+      } catch (error) {
+        console.error("Failed to parse user from localStorage on login success", error);
+        setCurrentUser(null); // Fallback
+      }
+    }
+    navigate("/"); // Reindirizza alla home page o alla pagina precedente desiderata
+  };
+
+  const handleLogout = async () => {
+    await logoutUser(); // Chiama l'API di logout
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user'); // Rimuovi anche i dati utente se memorizzati
+    setLoggedIn(false);
+    setCurrentUser(null); // Clear current user state
+    navigate("/login");
+  };
+
+  // Effetto per reindirizzare se l'utente è già loggato e prova ad accedere a /login o /register
+  useEffect(() => {
+    if (loggedIn && (location.pathname === '/login' || location.pathname === '/register')) {
+      navigate('/');
+    }
+  }, [loggedIn, location, navigate]);
+  // The useEffect that redirected logged-in users from /login or /register
+  // has been removed as route definitions now handle these cases.
+
+  return (
+    <>
+      <button className="button1" onClick={toggleSidebar}>
+
+        {/* Rotte pubbliche */}
+        <Route path="/login" element={!loggedIn ? <Login onSuccess={handleLoginSuccess} /> : <Navigate to="/" />} />
+        <Route path="/register" element={!loggedIn ? <Register /> : <Navigate to="/" />} />
+        {/* The /register route is now protected below */}
+
+        {/* Rotte protette */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute isLoggedIn={loggedIn}>
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <MovimentiForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <ProtectedRoute
+              isLoggedIn={loggedIn}
+              allowedRoles={['admin']}
+              userRole={currentUser?.role}
+            >
+              <Register />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/articoli"
+          element={
+            <ProtectedRoute isLoggedIn={loggedIn}>
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <RicambiManagerDialog4 />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/causali"
+          element={
+            <ProtectedRoute isLoggedIn={loggedIn}>
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <CausaliManager4 />
+            </ProtectedRoute>
+          }
+
+Important Considerations:
+
+Backend API (/api/auth/login): This solution assumes that your login API endpoint (http://localhost:3001/api/auth/login) returns a user object within res.data.user that includes a role property (e.g., { username: "adminUser", role: "admin" }). If it doesn't, you'll need to adjust your backend to provide this information.
+User Roles: The code uses 'admin' as the role string. Ensure this matches what your backend provides.
+Navigation Links: If you have a navigation link to the /register page (e.g., in Nav.jsx or Sidebar1.jsx), you might want to conditionally render it so it's only visible to admin users. This would involve passing the currentUser object to those components and checking currentUser?.role === 'admin'. The current request only covers restricting access to the route itself.
+"Access Denied" Page: Currently, if a logged-in non-admin user tries to access an admin-only route, they are redirected to the home page (/). You might consider creating a dedicated "Access Denied" page for a better user experience.
+After implementing these changes, the /register route will only be accessible to users who are logged in and have the role of 'admin'. Other users will be redirected.
+
+Context Sources (6)
+
+User
+ok ma come si accede alla procedura di registrazione?
+
+
+Gemini
+Ottima domanda! Ora che la registrazione è protetta, ecco come un utente 'admin' può accedervi:
+
+Login come Admin: L'utente con ruolo 'admin' deve prima effettuare il login tramite la pagina /login.
+Accesso alla Pagina di Registrazione: Una volta loggato, l'admin può accedere alla pagina di registrazione navigando direttamente all'URL /register nel browser.
+Al momento, non c'è un link visibile nell'interfaccia utente che porti alla pagina di registrazione, perché l'abbiamo appena protetta. Per renderla più accessibile solo agli admin, possiamo modificare il componente di navigazione (Nav.jsx) per mostrare un link "Registra Nuovo Utente" (o simile) solo se l'utente loggato è un admin.
+
+Ecco come potremmo farlo:
+
+Modifiche suggerite per rendere il link di registrazione visibile agli admin:
+Passare currentUser a Sidebar1 in App.jsx: Dobbiamo passare l'informazione sull'utente corrente alla sidebar, che a sua volta la passerà al componente Nav.
+
+Passare currentUser a Nav in Sidebar1.jsx: La sidebar inoltrerà currentUser al componente Nav.
+
+Modificare Nav.jsx per mostrare il link condizionatamente: Il componente Nav userà currentUser.role per decidere se mostrare o meno il link di registrazione.
+
+Vediamo le modifiche nel dettaglio:
+
+App.jsx
+-1
++1
+      <button className="button1" onClick={toggleSidebar}>
+        ☰
+      </button>
+      <Sidebar1 isSidebarOpen={isSideBarOpen} closeSidebar={closeSidebar} onLogout={handleLogout} />
+      <Sidebar1 isSidebarOpen={isSideBarOpen} closeSidebar={closeSidebar} onLogout={handleLogout} currentUser={currentUser} />
+
+      {/*<Suspense fallback={<div>Caricamento...</div>}>*/}
+      {/* Potresti aggiungere un pulsante di Logout nella Sidebar o in un Header */}
+Sidebar1.jsx
+-2
++2
+import "../css/Sidebar.css";
+import Nav from "./Nav";
+
+function Sidebar1({ isSidebarOpen, closeSidebar, onLogout }) { // Aggiungi onLogout come prop
+function Sidebar1({ isSidebarOpen, closeSidebar, onLogout, currentUser }) { // Aggiungi currentUser come prop
+  return (
+    <>
+      {isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={closeSidebar}></div>
+      )}
+      <aside className={isSidebarOpen ? "open" : ""}>
+        <Nav className="nav-item" onLogout={onLogout}></Nav> {/* Passa onLogout a Nav */}
+        <Nav className="nav-item" onLogout={onLogout} currentUser={currentUser}></Nav> {/* Passa onLogout e currentUser a Nav */}
+      </aside>
+    </>
+  );
+Nav.jsx
+-1
++6
+import { Link } from "react-router-dom";
+import "../css/Nav.css";
+
+const Nav = ({ onLogout }) => { // Accetta onLogout come prop
+const Nav = ({ onLogout, currentUser }) => { // Accetta onLogout e currentUser come prop
+  return (
+    <nav>
+      <Link to="/" className="mylink">
+      <Link to="/movimenti" className="mylink"> {/* Aggiunto per coerenza con App.jsx */}
+        Movimenti
+      </Link>
+      {currentUser && currentUser.role === 'admin' && (
+        <Link to="/register" className="mylink">
+          Registra Utente
+        </Link>
+      )}
+      {onLogout && (
+        <button onClick={onLogout} className="mylink logout-button">
+          Logout
+Con queste modifiche:
+
+Un utente non loggato non vedrà il link "Registra Utente".
+Un utente loggato che non è admin non vedrà il link "Registra Utente".
+Un utente loggato che è admin vedrà il link "Registra Utente" nella sidebar e potrà cliccarlo per accedere alla pagina /register.
+Questo rende la funzionalità di registrazione accessibile in modo più intuitivo per gli amministratori, mantenendo la restrizione che hai richiesto.
+
+Context Sources (6)
+
+User
+ok nell perocedura di registrazione utente deve risulare possibile l'inserimento del ruolo
+
+
+Gemini
+Certo, per permettere l'inserimento del ruolo durante la procedura di registrazione (che, ricordiamo, è accessibile solo agli admin), dobbiamo modificare il componente Register.jsx.
+
+Ecco come possiamo procedere:
+
+Aggiungere uno stato per il ruolo: In Register.jsx, aggiungeremo una nuova variabile di stato per memorizzare il ruolo selezionato.
+Aggiungere un campo di input (select) per il ruolo: Nel form di registrazione, inseriremo un menu a tendina ( <select> ) che permetta all'admin di scegliere il ruolo per il nuovo utente (ad esempio, "user" o "admin").
+Includere il ruolo nella richiesta API: Quando l'admin invia il form, il ruolo selezionato verrà incluso nei dati inviati al backend per la registrazione.
+Importante: Questa modifica presuppone che il tuo backend (l'endpoint /api/auth/register) sia in grado di ricevere e processare il campo role durante la creazione di un nuovo utente. Se il backend non è predisposto, dovrai aggiornarlo di conseguenza.
+
+Ecco le modifiche proposte per Register.jsx:
+
+Register.jsx
+-0
++10
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState("user"); // Stato per il ruolo, default 'user'
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const navigate = useNavigate();
+      const res = await axios.post("http://localhost:3001/api/auth/register", {
+        username,
+        password,
+        role, // Includi il ruolo nella richiesta
+      });
+
+      if (res.data.success) {
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
+        <div className="form-group"> {/* Aggiunto un div per raggruppare label e select */}
+          <label htmlFor="role-select" style={{ marginRight: '10px', display: 'block', marginBottom: '5px' }}>Ruolo:</label>
+          <select id="role-select" value={role} onChange={(e) => setRole(e.target.value)} required className="role-select">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+            {/* Aggiungi altri ruoli se necessario */}
+          </select>
+        </div>
+        {error && <p className="login-error">{error}</p>}
+        {successMessage && <p style={{ color: 'green', textAlign: 'center' }}>{successMessage}</p>}
+        <button type="submit">Registrati</button>
+
+Ho anche aggiunto un piccolo stile inline per la label e una classe role-select per il <select> nel caso volessi stilizzarlo ulteriormente nel tuo CSS. Potresti aggiungere al tuo Login.css (o un CSS dedicato per la registrazione) qualcosa come:
+
+css
+/* In Login.css o un file CSS dedicato */
+.form-group {
+  margin-bottom: 1rem; /* Aggiunge spazio sotto il gruppo ruolo */
+  text-align: left; /* Allinea la label a sinistra se necessario */
+}
+
+.role-select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px; /* O rimuovi se .form-group gestisce lo spazio */
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+Use code with care. Learn more
+Riepilogo delle modifiche in Register.jsx:
+
+Nuovo stato role: const [role, setRole] = useState("user");
+Inizializzato a "user" come valore predefinito.
+Campo <select> per il ruolo:
+Permette di scegliere tra "User" e "Admin". Puoi aggiungere altre opzioni se il tuo sistema supporta più ruoli.
+Il valore selezionato aggiorna lo stato role.
+Invio del ruolo al backend:
+L'oggetto inviato ad axios.post ora include la proprietà role: { username, password, role }.
+Ricorda che il backend deve essere aggiornato per gestire questo nuovo campo role e salvarlo correttamente nel database associato al nuovo utente. Se il backend non si aspetta il campo role, potrebbe ignorarlo o generare un errore.
+
+External Sources (1)
+Context Sources (5)
+
+User
+se tento di inserire come admin un nuovo utente user compare questo messggio di errore react-dom_client.js?v=2e27aa53:17987 Download the React DevTools for a better development experience: https://react.dev/link/react-devtools Register.jsx:39
+
+Selected text
+: 1 lines selected
+dispatchXhrRequest @ axios.js?v=2e27aa53:1648 xhr @ axios.js?v=2e27aa53:1528 dispatchRequest @ axios.js?v=2e27aa53:2003 _request @ axios.js?v=2e27aa53:2224 request @ axios.js?v=2e27aa53:2115 httpMethod @ axios.js?v=2e27aa53:2253 wrap @ axios.js?v=2e27aa53:8 handleRegister @ Register.jsx:39 executeDispatch @ react-dom_client.js?v=2e27aa53:11736 runWithFiberInDEV @ react-dom_client.js?v=2e27aa53:1485 processDispatchQueue @ react-dom_client.js?v=2e27aa53:11772 (anonymous) @ react-dom_client.js?v=2e27aa53:12182 batchedUpdates$1 @ react-dom_client.js?v=2e27aa53:2628 dispatchEventForPluginEventSystem @ react-dom_client.js?v=2e27aa53:11877 dispatchEvent @ react-dom_client.js?v=2e27aa53:14792 dispatchDiscreteEvent @ react-dom_client.js?v=2e27aa53:14773 <form> exports.createElement @ chunk-UGC3UZ7L.js?v=2e27aa53:773 Register @ Register.jsx:62 react-stack-bottom-frame @ react-dom_client.js?v=2e27aa53:17424 renderWithHooksAgain @ react-dom_client.js?v=2e27aa53:4281 renderWithHooks @ react-dom_client.js?v=2e27aa53:4217 updateFunctionComponent @ react-dom_client.js?v=2e27aa53:6619 beginWork @ react-dom_client.js?v=2e27aa53:7654 runWithFiberInDEV @ react-dom_client.js?v=2e27aa53:1485 performUnitOfWork @ react-dom_client.js?v=2e27aa53:10874 workLoopSync @ react-dom_client.js?v=2e27aa53:10728 renderRootSync @ react-dom_client.js?v=2e27aa53:10711 performWorkOnRoot @ react-dom_client.js?v=2e27aa53:10330 performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=2e27aa53:11623 performWorkUntilDeadline @ react-dom_client.js?v=2e27aa53:36 <Register> exports.createElement @ chunk-UGC3UZ7L.js?v=2e27aa53:773 App @ App.jsx:124 react-stack-bottom-frame @ react-dom_client.js?v=2e27aa53:17424 renderWithHooksAgain @ react-dom_client.js?v=2e27aa53:4281 renderWithHooks @ react-dom_client.js?v=2e27aa53:4217 updateFunctionComponent @ react-dom_client.js?v=2e27aa53:6619 beginWork @ react-dom_client.js?v=2e27aa53:7654 runWithFiberInDEV @ react-dom_client.js?v=2e27aa53:1485 performUnitOfWork @ react-dom_client.js?v=2e27aa53:10874 workLoopSync @ react-dom_client.js?v=2e27aa53:10728 renderRootSync @ react-dom_client.js?v=2e27aa53:10711 performWorkOnRoot @ react-dom_client.js?v=2e27aa53:10330 performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=2e27aa53:11623 performWorkUntilDeadline @ react-dom_client.js?v=2e27aa53:36 <App> exports.createElement @ chunk-UGC3UZ7L.js?v=2e27aa53:773 (anonymous) @ main.jsx:10 Register.jsx:39
+
+Selected text
+: 1 lines selected
+dispatchXhrRequest @ axios.js?v=2e27aa53:1648 xhr @ axios.js?v=2e27aa53:1528 dispatchRequest @ axios.js?v=2e27aa53:2003 _request @ axios.js?v=2e27aa53:2224 request @ axios.js?v=2e27aa53:2115 httpMethod @ axios.js?v=2e27aa53:2253 wrap @ axios.js?v=2e27aa53:8 handleRegister @ Register.jsx:39 executeDispatch @ react-dom_client.js?v=2e27aa53:11736 runWithFiberInDEV @ react-dom_client.js?v=2e27aa53:1485 processDispatchQueue @ react-dom_client.js?v=2e27aa53:11772 (anonymous) @ react-dom_client.js?v=2e27aa53:12182 batchedUpdates$1 @ react-dom_client.js?v=2e27aa53:2628 dispatchEventForPluginEventSystem @ react-dom_client.js?v=2e27aa53:11877 dispatchEvent @ react-dom_client.js?v=2e27aa53:14792 dispatchDiscreteEvent @ react-dom_client.js?v=2e27aa53:14773 <form> exports.createElement @ chunk-UGC3UZ7L.js?v=2e27aa53:773 Register @ Register.jsx:62 react-stack-bottom-frame @ react-dom_client.js?v=2e27aa53:17424 renderWithHooksAgain @ react-dom_client.js?v=2e27aa53:4281 renderWithHooks @ react-dom_client.js?v=2e27aa53:4217 updateFunctionComponent @ react-dom_client.js?v=2e27aa53:6619 beginWork @ react-dom_client.js?v=2e27aa53:7654 runWithFiberInDEV @ react-dom_client.js?v=2e27aa53:1485 performUnitOfWork @ react-dom_client.js?v=2e27aa53:10874 workLoopSync @ react-dom_client.js?v=2e27aa53:10728 renderRootSync @ react-dom_client.js?v=2e27aa53:10711 performWorkOnRoot @ react-dom_client.js?v=2e27aa53:10330 performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=2e27aa53:11623 performWorkUntilDeadline @ react-dom_client.js?v=2e27aa53:36 <Register> exports.createElement @ chunk-UGC3UZ7L.js?v=2e27aa53:773 App @ App.jsx:124 react-stack-bottom-frame @ react-dom_client.js?v=2e27aa53:17424 renderWithHooksAgain @ react-dom_client.js?v=2e27aa53:4281 renderWithHooks @ react-dom_client.js?v=2e27aa53:4217 updateFunctionComponent @ react-dom_client.js?v=2e27aa53:6619 beginWork @ react-dom_client.js?v=2e27aa53:7654 runWithFiberInDEV @ react-dom_client.js?v=2e27aa53:1485 performUnitOfWork @ react-dom_client.js?v=2e27aa53:10874 workLoopSync @ react-dom_client.js?v=2e27aa53:10728 renderRootSync @ react-dom_client.js?v=2e27aa53:10711 performWorkOnRoot @ react-dom_client.js?v=2e27aa53:10330 performWorkOnRootViaSchedulerTask @ react-dom_client.js?v=2e27aa53:11623 performWorkUntilDeadline @ react-dom_client.js?v=2e27aa53:36 <App> exports.createElement @ chunk-UGC3UZ7L.js?v=2e27aa53:773 (anonymous) @ main.jsx:10 e anche se tento di inserire un nuovo utente admin
+
+
+Gemini
+L'errore 401 Unauthorized che ricevi quando provi a registrare un nuovo utente (sia 'user' che 'admin') indica che la tua API backend (http://localhost:3001/api/auth/register) sta rifiutando la richiesta perché non la considera autorizzata.
+
+Questo succede comunemente quando un endpoint API che richiede autenticazione (e in questo caso, anche un ruolo specifico come 'admin') non riceve un token valido che attesti l'identità e i permessi del richiedente.
+
+Anche se nel frontend hai protetto la rotta /register per renderla accessibile solo agli admin, la chiamata API che parte dal componente Register.jsx verso il backend deve anch'essa includere il token di autenticazione dell'admin loggato.
+
+Soluzione:
+
+Dobbiamo modificare il componente Register.jsx per inviare l' authToken (che dovrebbe essere salvato in localStorage dopo il login dell'admin) nell'header della richiesta POST a /api/auth/register.
+
+Ecco la modifica necessaria per Register.jsx:
+
+Register.jsx
+-2
++14
+    // Potresti aggiungere altre validazioni qui (es. formato email per username)
+
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setError("Token di autenticazione non trovato. Effettua nuovamente il login.");
+        return;
+      }
+
+      const res = await axios.post("http://localhost:3001/api/auth/register", {
+        username,
+        password,
+        role, // Includi il ruolo nella richiesta
+      });
+      }, {
+        headers: { 'Authorization': `Bearer ${token}` } // Invia il token nell'header
+      });
+
+      if (res.data.success) {
+        setSuccessMessage(res.data.message + " Sarai reindirizzato al login tra poco...");
+        setError(res.data.message || "Errore durante la registrazione.");
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Errore del server durante la registrazione.");
+      if (err.response && err.response.status === 401) {
+        setError("Non autorizzato. Assicurati di essere loggato come admin e che la sessione sia valida.");
+      } else {
+        setError(err.response?.data?.message || "Errore del server o di rete durante la registrazione.");
+      }
+    }
+  };
+
+Spiegazione delle modifiche:
+
+Recupero del Token:
+
+javascript
+const token = localStorage.getItem('authToken');
+if (!token) {
+  setError("Token di autenticazione non trovato. Effettua nuovamente il login.");
+  return;
+}
+Prima di effettuare la chiamata API, recuperiamo l' authToken da localStorage. Se non è presente, mostriamo un errore e interrompiamo la funzione.
+
+Invio del Token nell'Header:
+
+javascript
+axios.post("http://localhost:3001/api/auth/register", {
+  username,
+  password,
+  role,
+}, {
+  headers: { 'Authorization': `Bearer ${token}` } // Invia il token nell'header
+});
+Nell'oggetto di configurazione di axios.post, aggiungiamo un campo headers. All'interno di headers, impostiamo l'header Authorization con il valore Bearer ${token}. Questo è un modo standard per inviare token JWT.
+
+Gestione Errori Migliorata (Opzionale ma consigliato):
+
+javascript
+if (err.response && err.response.status === 401) {
+  setError("Non autorizzato. Assicurati di essere loggato come admin e che la sessione sia valida.");
+} else {
+  setError(err.response?.data?.message || "Errore del server o di rete durante la registrazione.");
+}
+Ho migliorato leggermente la gestione degli errori per dare un messaggio più specifico in caso di errore 401.
+
+Importante - Lato Backend:
+
+Assicurati che il tuo backend sull'endpoint /api/auth/register:
+
+Si aspetti un header Authorization con un token Bearer.
+Verifichi la validità del token.
+Estragga le informazioni dell'utente dal token (incluso il ruolo).
+Controlli che il ruolo dell'utente che effettua la richiesta sia 'admin'.
+Solo se tutte queste condizioni sono soddisfatte, proceda con la creazione del nuovo utente.
+Se il backend non è configurato per fare questi controlli, continuerai a ricevere errori o, peggio, la registrazione potrebbe avvenire senza la dovuta autorizzazione. La modifica al frontend che ti ho fornito è il primo passo; il backend deve fare la sua parte per la sicurezza.
+
+Context Sources (10)
+

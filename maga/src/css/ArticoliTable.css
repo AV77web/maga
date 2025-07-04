@@ -1,0 +1,269 @@
+h1 {
+  font-size: 40px;
+  text-align:center;
+}
+.container {
+  width: 100%;
+  /*margin: 40px auto;*/
+  padding: 32px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.container h2 {
+  text-align: center;
+  color: #343a40;
+}
+
+.container .btn-add {
+  background-color: #3c86f4;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.container button {
+  color: white;
+  cursor: pointer;
+  background-color: #3c86f4;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 10px 16px;
+  transition: background 0.25s ease;
+}
+
+.container button:hover {
+  background-color: #6f99d7;
+}
+
+.container form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.container form input[type="text"] {
+  padding: 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.container form input[type="text"]:focus {
+  border-color: #3c86f4;
+  outline: none;
+}
+
+
+.form-group-inline {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.form-group-inline .readonly-id {
+  flex: 1 1 120px; /* Base di 120px, può crescere/restringersi */
+  max-width: 120px;
+}
+
+.form-group-inline .readonly-name {
+  flex: 3 1 auto; /* Occupa lo spazio rimanente */
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+  color: #555;
+  padding: 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+
+.container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.container table th,
+.container table td {
+  border: 1px solid #dee2e6;
+  padding: 6px 10px;
+  
+}
+
+.text-center {
+  text-align: center;
+}
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
+}
+
+
+.container table th {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.container table td {
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.container table td.description-cell,
+.container table td.name-cell {
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  position: relative;
+  cursor: help;
+}
+
+.selected-row {
+  background-color: #f4850f;
+}
+
+/* --- Stili per Drag & Drop --- */
+
+/* Stile per la riga mentre viene trascinata */
+.dragging-row {
+  background-color: #d1e7fd; /* Un azzurro chiaro */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: table; /* Mantiene la larghezza delle celle durante il drag */
+  table-layout: fixed;
+  width: 100%;
+}
+
+/* --- Stili per il Popover della DiBa --- */
+
+.diba-popover {
+  position: absolute;
+  z-index: 1000;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  min-width: 450px;
+  max-width: 600px;
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.diba-popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid #eee;
+  background-color: #f8f9fa;
+}
+
+.diba-popover-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.diba-popover-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  font-weight: bold;
+  color: #888;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.diba-popover-close:hover {
+  color: #000;
+}
+
+.diba-popover-content {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.diba-popover-content table {
+  font-size: 12px;
+}
+
+.diba-popover-content td {
+  max-width: 200px; /* Limita la larghezza delle celle */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Stili per colorare le celle 'tipo' in base al valore */
+.tipo-carico {
+  background-color: #d4edda; /* Verde chiaro */
+  color: #155724; /* Verde scuro */
+  font-weight: bold;
+}
+
+.tipo-scarico {
+  background-color: #f8d7da; /* Rosso chiaro */
+  color: #721c24; /* Rosso scuro */
+  font-weight: bold;
+}
+/* Stile per l'area di rilascio quando un elemento è in drag-over */
+.drop-zone-active {
+  background-color: #e8f5e9; /* Un verde molto chiaro */
+  border: 2px dashed #4caf50; /* Bordo tratteggiato verde */
+  border-radius: 8px;
+  transition: background-color 0.2s ease-in-out, border 0.2s ease-in-out;
+}
+
+/* Layout a due pannelli per la distinta base (ora rimosso, ma teniamo per riferimento) */
+.manager-layout {
+  display: flex;
+  gap: 20px;
+  width: 100%;
+}
+
+
+/* Responsive table - optional uncommented section
+  @media (max-width: 768px) {
+    .container table,
+    .container thead,
+    .container tbody,
+    .container th,
+    .container td,
+    .container tr {
+      display: block;
+    }
+  
+    .container th {
+      display: none;
+    }
+  
+    .container td {
+      position: relative;
+      padding-left: 50%;
+      text-align: right;
+    }
+  
+    .container td::before {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      content: attr(data-label);
+      font-weight: bold;
+      color: #6c757d;
+      white-space: nowrap;
+    }
+  }
+  */

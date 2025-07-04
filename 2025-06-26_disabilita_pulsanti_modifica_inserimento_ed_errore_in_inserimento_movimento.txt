@@ -1,0 +1,486 @@
+er
+come disabilitare i pulsanit dell'Heder di modifica e cancellazione quando sono in Gestion Movimenti
+
+
+Gemini
+Ciao! Ho capito che vuoi disabilitare i pulsanti di modifica e cancellazione nell'header quando ti trovi nella pagina "Gestione Movimenti" (/movimenti).
+
+Prima di tutto, ho notato un piccolo problema nel tuo file App.js. L'importazione del componente MovimentiForm è commentata, il che probabilmente causa un errore dato che viene utilizzato nella definizione delle rotte. Ti suggerisco di decommentarla.
+
+Ecco la modifica per App.js:
+
+App.js
+-1
++1
+import "./App.css";
+import { useState } from "react";
+import Login from "./components/Login";
+/*import MovimentiForm from "./components/MovimentiForm";*/
+import MovimentiForm from "./components/MovimentiForm";
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import RicambiManager from "./components/RicambiManager";
+import Nav from "./components/Nav";
+
+Per quanto riguarda la tua richiesta, per disabilitare i pulsanti solo in quella pagina, il componente che li contiene (presumibilmente Nav.js, che gestisce la navigazione) deve essere a conoscenza della rotta corrente.
+
+Puoi ottenere questa informazione usando l'hook useLocation di react-router-dom. In questo modo, puoi controllare il percorso dell'URL e disabilitare i pulsanti se il percorso è /movimenti.
+
+Dato che non ho il codice del tuo componente Nav.js, ti mostro un esempio di come potresti modificarlo. Se i tuoi pulsanti si trovano in un altro file, puoi applicare la stessa logica lì.
+
+Esempio per c:\maga\maga\components\Nav.js:
+
+javascript
+ Show full code block 
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+
+const Nav = () => {
+  const location = useLocation();
+
+  // Controlla se il percorso attuale è '/movimenti'
+  const areButtonsDisabled = location.pathname === '/movimenti';
+
+  return (
+    <nav style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', background: '#f0f0f0' }}>
+      <div>
+        <Link to="/movimenti" style={{ marginRight: '1rem' }}>Gestione Movimenti</Link>
+        <Link to="/articoli">Gestione Articoli</Link>
+      </div>
+      <div>
+        {/* I pulsanti vengono disabilitati se areButtonsDisabled è true */}
+        <button disabled={areButtonsDisabled} style={{ marginRight: '0.5rem' }}>Modifica</button>
+        <button disabled={areButtonsDisabled}>Cancella</button>
+      </div>
+    </nav>
+  );
+};
+
+export default Nav;
+Spiegazione del codice:
+import { useLocation } from 'react-router-dom';: Importiamo l'hook useLocation.
+const location = useLocation();: Chiamiamo l'hook per ottenere l'oggetto location che contiene le informazioni sulla URL corrente, incluso il percorso (pathname).
+const areButtonsDisabled = location.pathname === '/movimenti';: Creiamo una variabile booleana areButtonsDisabled. Sarà true se l'utente si trova sulla pagina /movimenti, altrimenti false.
+disabled={areButtonsDisabled}: Applichiamo questa variabile all'attributo disabled dei pulsanti. Quando areButtonsDisabled è true, i pulsanti saranno disabilitati e non cliccabili.
+In questo modo, i pulsanti di "Modifica" e "Cancella" saranno funzionali su tutte le pagine tranne che in "Gestione Movimenti", dove appariranno disabilitati.
+
+Spero che questo ti sia d'aiuto!
+
+ Revert to checkpoint
+Context Sources (10)
+
+User
+//======================================= //File: Header.jsx //Componente che gestisce i l'header della pagina //@author: "villari.andrea@libero.it" //@version: "1.0.0 2025-06-09" //======================================== import React from "react"; import { CgAdd, CgTrash } from "react-icons/cg"; // Assicurati che queste icone siano ancora necessarie import { CiEdit, CiSearch, CiBoxList, CiCircleChevLeft, CiUser } from "react-icons/ci"; // Importa l'icona Indietro import "../css/Header.css";
+
+const Header = ({ onAdd, onDelete, onEdit, onSearch, onManageBOM, onBack, currentUser, // Aggiungi currentUser come prop }) => { return ( <div className="header-container"> {onBack && ( // Mostra il pulsante solo se la prop onBack è definita <button className="icon-button back-button" onClick={onBack} title="Indietro"> <CiCircleChevLeft /> </button> )} <button className="icon-button" onClick={onManageBOM} title="Distinta Base"> <CiBoxList /> </button> <button className="icon-button" onClick={onSearch} title="Cerca"> <CiSearch /> </button> <button className="icon-button" onClick={onAdd} title="Aggiungi"> <CgAdd /> </button> <button className="icon-button" onClick={onEdit} title="Aggiorna"> <CiEdit /> </button> <button className="icon-button" onClick={onDelete} title="Elimina"> <CgTrash /> </button> {currentUser && currentUser.username && ( <button className="icon-button user-button" title={User: ${currentUser.username}}> <CiUser /> <span className="user-initials"> {currentUser.username.substring(0, 2).toUpperCase()} </span> </button> )} </div> ); };
+
+export default Header;
+
+
+Gemini
+Certamente! Per disabilitare i pulsanti "Modifica" e "Cancella" nel componente Header.jsx quando ti trovi nella pagina "Gestione Movimenti" (/movimenti), dobbiamo passare l'informazione sulla rotta corrente al componente Header.
+
+Ecco i passaggi e le modifiche necessarie:
+
+Modifica App.js: Utilizza l'hook useLocation di react-router-dom per ottenere il percorso corrente e passalo come prop ai componenti MovimentiForm e RicambiManager. Ho anche decommentato l'import di MovimentiForm come discusso in precedenza.
+Modifica MovimentiForm.jsx: Accetta la prop currentLocation e passala al componente Header.
+Modifica RicambiManagerDialog4.jsx: Accetta la prop currentLocation e passala al componente Header.
+Modifica Header.jsx: Accetta la prop currentLocation e usala per impostare l'attributo disabled sui pulsanti "Modifica" e "Cancella".
+1. Modifica App.js
+App.js
+-7
++22
+import Login from "./components/Login";
+/*import MovimentiForm from "./components/MovimentiForm";*/
+import { HashRouter as Router, Routes, Route } from "react-router-dom";
+import { useLocation } from "react-router-dom"; // Import useLocation
+import RicambiManager from "./components/RicambiManager";
+import Nav from "./components/Nav";
+/*import CausaliManager from "./components/CausaliManager";*/
+/*import RicambiList from "./components/RicambiList"; */
+
+import MovimentiForm from "./components/MovimentiForm"; // Decomment MovimentiForm
+
+function App() {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  // Crea un componente wrapper per usare l'hook useLocation all'interno del Router
+  const AppRoutes = () => {
+    const location = useLocation(); // Ottieni la posizione corrente
+
+    return (
+      <>
+        <Nav />
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/movimenti" element={<MovimentiForm currentLocation={location.pathname} />} />
+          <Route path="/articoli" element={<RicambiManager currentLocation={location.pathname} />} />
+        </Routes>
+      </>
+    );
+  };
+
+  return (
+    <>
+      {loggedIn ? (
+        <Router>
+          <Nav />
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/movimenti" element={<MovimentiForm />} />
+            <Route path="/articoli" element={<RicambiManager />} />
+          </Routes>
+        <Router>
+          <AppRoutes />
+        </Router>
+      ) : (
+        <Login onSuccess={() => setLoggedIn(true)} />
+2. Modifica MovimentiForm.jsx
+MovimentiForm.jsx
+-2
++3
+ Show full code block 
+  note: "",
+};
+
+// Definizione colonne per la tabella
+// Definizione colonne per la tabella
+const tableColumns = [
+  { key: "id", label: "ID Mov.", cellClassName: "text-center" },
+  { key: "data", label: "Data", cellClassName: "text-center" }, // Verrà mostrato come YYYY-MM-DD
+  { key: "note", label: "Note", cellClassName: "text-left" },
+];
+
+export default function MovimentiForm({currentUser}) {
+export default function MovimentiForm({currentUser, currentLocation}) {
+  const [movimenti, setMovimenti] = useState([]);
+  const [articoliList, setArticoliList] = useState([]);
+  const [causaliList, setCausaliList] = useState([]);
+          }
+        }}
+        currentUser={currentUser}
+        currentLocation={currentLocation}
+      />
+      { showSearch && 
+        (
+3. Modifica RicambiManagerDialog4.jsx
+RicambiManagerDialog4.jsx
+-1
++2
+The code change produced by Gemini cannot be automatically applied. You can manually apply the change or ask Gemini to try again.
+ Show full code block 
+  };
+
+
+export default function RicambiManagerDialog4({ currentUser }) { // Accetta currentUser
+export default function RicambiManagerDialog4({ currentUser, currentLocation }) { // Accetta currentUser
+  const [ricambi, setRicambi] = useState([]);
+  const [formVisible, setFormVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+        }}
+        onManageBOM={handleManageBOM}
+        currentUser={currentUser} // Pass currentUser a Header
+        currentLocation={currentLocation}
+      />
+
+      <div className="container">
+4. Modifica Header.jsx
+Header.jsx
+-3
++7
+ Show full code block 
+  onSearch,
+  onManageBOM,
+  onBack,
+  currentUser, // Aggiungi currentUser come prop
+  currentUser,
+  currentLocation, // Accetta currentLocation come prop
+}) => {
+  // Determina se i pulsanti devono essere disabilitati in base alla posizione corrente
+  const disableEditAndDelete = currentLocation === '/movimenti';
+
+  return (
+    <div className="header-container">
+      {onBack && ( // Mostra il pulsante solo se la prop onBack è definita
+      <button className="icon-button" onClick={onAdd} title="Aggiungi">
+        <CgAdd />
+      </button>
+      <button className="icon-button" onClick={onEdit} title="Aggiorna">
+      <button className="icon-button" onClick={onEdit} title="Aggiorna" disabled={disableEditAndDelete}>
+        <CiEdit />
+      </button>
+      <button className="icon-button" onClick={onDelete} title="Elimina">
+      <button className="icon-button" onClick={onDelete} title="Elimina" disabled={disableEditAndDelete}>
+        <CgTrash />
+      </button>
+      {currentUser && currentUser.username && (
+ Revert to checkpoint
+Context Sources (9)
+
+User
+qui ti ho dato i riferimenti a Nav.jsx e ad Header.jsx
+
+javascriptreact: 41 lines selected
+javascriptreact: 55 lines selected
+
+Gemini
+Ciao! Ho esaminato i tuoi file e ho capito che vuoi disabilitare i pulsanti "Modifica" e "Cancella" nell'header quando l'utente si trova nella pagina "Gestione Movimenti" (/movimenti).
+
+Per fare ciò, dobbiamo passare l'informazione sulla rotta corrente (currentLocation) dal componente App.jsx (che gestisce le rotte e ha accesso a useLocation) ai componenti MovimentiForm.jsx e RicambiManagerDialog4.jsx, e da lì al componente Header.jsx.
+
+Ecco le modifiche necessarie:
+
+App.jsx: Recupera il percorso corrente usando useLocation() e passalo come prop currentLocation a MovimentiForm e RicambiManagerDialog4.
+MovimentiForm.jsx: Accetta la prop currentLocation e la passa al componente Header.
+RicambiManagerDialog4.jsx: Accetta la prop currentLocation e la passa al componente Header.
+Header.jsx: Utilizza la prop currentLocation per impostare l'attributo disabled sui pulsanti "Modifica" e "Cancella".
+Ecco i diff per i file coinvolti:
+
+App.jsx
+-4
++5
+    setCurrentUser(null); // Clear current user state
+    navigate("/login");
+  };
+  const location = useLocation(); // Get the current location object
+
+  // The useEffect that redirected logged-in users from /login or /register
+  // has been removed as route definitions now handle these cases.
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <MovimentiForm currentUser={currentUser} />
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <MovimentiForm currentUser={currentUser} currentLocation={location.pathname} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/articoli"
+          element={
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <RicambiManagerDialog4 currentUser={currentUser} />
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <RicambiManagerDialog4 currentUser={currentUser} currentLocation={location.pathname} />
+            </ProtectedRoute>
+          }
+        />
+MovimentiForm.jsx
+-1
++1
+  { key: "note", label: "Note", cellClassName: "text-left" },
+];
+
+export default function MovimentiForm({currentUser}) {
+export default function MovimentiForm({currentUser, currentLocation}) {
+  const [movimenti, setMovimenti] = useState([]);
+  const [articoliList, setArticoliList] = useState([]);
+  const [causaliList, setCausaliList] = useState([]);
+RicambiManagerDialog4.jsx
+-1
++1
+The code change produced by Gemini cannot be automatically applied. You can manually apply the change or ask Gemini to try again.
+  };
+
+
+export default function RicambiManagerDialog4({ currentUser }) { // Accetta currentUser
+export default function RicambiManagerDialog4({ currentUser, currentLocation }) { // Accetta currentUser
+  const [ricambi, setRicambi] = useState([]);
+  const [formVisible, setFormVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+Header.jsx
+-3
++7
+  onSearch,
+  onManageBOM,
+  onBack,
+  currentUser, // Aggiungi currentUser come prop
+  currentUser,
+  currentLocation, // Accetta currentLocation come prop
+}) => {
+  // Determina se i pulsanti devono essere disabilitati in base alla posizione corrente
+  const disableEditAndDelete = currentLocation === '/movimenti';
+
+  return (
+    <div className="header-container">
+      {onBack && ( // Mostra il pulsante solo se la prop onBack è definita
+      <button className="icon-button" onClick={onAdd} title="Aggiungi">
+        <CgAdd />
+      </button>
+      <button className="icon-button" onClick={onEdit} title="Aggiorna">
+      <button className="icon-button" onClick={onEdit} title="Aggiorna" disabled={disableEditAndDelete}>
+        <CiEdit />
+      </button>
+      <button className="icon-button" onClick={onDelete} title="Elimina">
+      <button className="icon-button" onClick={onDelete} title="Elimina" disabled={disableEditAndDelete}>
+        <CgTrash />
+      </button>
+      {currentUser && currentUser.username && (
+Con queste modifiche, i pulsanti "Modifica" e "Cancella" nel componente Header saranno disabilitati quando la rotta corrente è /movimenti.
+
+ Revert to checkpoint
+Context Sources (15)
+
+User
+ho effettuato alcune modifiche puoi ripropormi le modifiche da attuare?
+
+
+Gemini
+Certamente! Ho esaminato le modifiche che hai apportato e ho notato che la logica per disabilitare i pulsanti "Modifica" e "Cancella" nel componente Header.jsx è già correttamente implementata.
+
+Il componente Header.jsx riceve currentLocation e lo utilizza per impostare l'attributo disabled sui pulsanti, come richiesto.
+
+Ho controllato anche App.jsx e MovimentiForm.jsx e sembrano già configurati correttamente per passare la prop currentLocation al componente Header.
+
+L'unica piccola modifica necessaria è nel file RicambiManagerDialog4.jsx, dove c'è un piccolo errore di battitura (currenLocation invece di currentLocation).
+
+Ecco la modifica per RicambiManagerDialog4.jsx:
+
+RicambiManagerDialog4.jsx
+-2
++2
+The code change produced by Gemini cannot be automatically applied. You can manually apply the change or ask Gemini to try again.
+const rowsPerPageOptions = [5, 10, 20, 50];
+
+export default function RicambiManagerDialog4({ currentUser , onLogout, currenLocation }) { // Accetta currentUser
+  const [ricambi, setRicambi] = useState([]);
+export default function RicambiManagerDialog4({ currentUser , onLogout, currentLocation }) { // Accetta currentUser
+  const [ricambi, setRicambi] = useState([]);
+  const [formVisible, setFormVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+        }}
+        onManageBOM={handleManageBOM}
+        currentUser={currentUser} // Pass currentUser a Header
+        currentLocation={currenLocation}
+        currentLocation={currentLocation}
+        onLogout={onLogout} // Passa la funzione di logout a Header
+      />
+
+Context Sources (14)
+
+User
+Nono sembra funzionare purtroppo...
+
+
+Gemini
+Ciao! Ho esaminato nuovamente il codice che mi hai fornito, e ho individuato un paio di punti che potrebbero causare il problema che riscontri.
+
+La logica per disabilitare i pulsanti in Header.jsx (disableEditAndDelete = currentLocation === '/movimenti';) è corretta. Il problema risiede probabilmente nel fatto che la prop currentLocation non arriva correttamente al componente Header o che la visualizzazione dei pulsanti disabilitati non è chiara.
+
+Ecco le modifiche da attuare:
+
+Correzione di un errore di battitura in RicambiManagerDialog4.jsx: Nel codice che mi hai fornito, c'è un errore di battitura nella prop currenLocation invece di currentLocation. Se questo errore non è stato corretto, il componente Header non riceverebbe la posizione corrente quando RicambiManagerDialog4 è attivo.
+Aggiunta di stili CSS per i pulsanti disabilitati in Header.css: Per rendere più evidente che i pulsanti sono disabilitati, aggiungeremo degli stili specifici che li renderanno meno opachi e cambieranno il cursore.
+Ecco i diff per i file interessati:
+
+1. Modifica RicambiManagerDialog4.jsx
+RicambiManagerDialog4.jsx
+-2
++2
+The code change produced by Gemini cannot be automatically applied. You can manually apply the change or ask Gemini to try again.
+ Show full code block 
+  };
+
+
+export default function RicambiManagerDialog4({ currentUser , onLogout, currenLocation }) { // Accetta currentUser
+export default function RicambiManagerDialog4({ currentUser , onLogout, currentLocation }) { // Accetta currentUser
+  const [ricambi, setRicambi] = useState([]);
+  const [formVisible, setFormVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+        }}
+        onManageBOM={handleManageBOM}
+        currentUser={currentUser} // Passa currentUser a Header
+        currentLocation={currenLocation}
+        currentLocation={currentLocation}
+        onLogout={onLogout} // Passa la funzione di logout a Header
+      />
+
+2. Modifica Header.css
+Header.css
+-0
++7
+.back-button {
+  margin-right: auto;
+}
+
+/* Stili per i pulsanti disabilitati */
+.icon-button[disabled] {
+  opacity: 0.5; /* Rende il pulsante semi-trasparente */
+  cursor: not-allowed; /* Cambia il cursore per indicare che non è cliccabile */
+  background-color: #e0e0e0; /* Sfondo leggermente più scuro per maggiore contrasto */
+}
+Con queste modifiche, i pulsanti "Aggiorna" ed "Elimina" nel componente Header dovrebbero ora essere correttamente disabilitati e visivamente distinti quando ti trovi nella pagina "Gestione Movimenti" (/movimenti).
+
+Spero che questa volta funzioni!
+
+Context Sources (11)
+
+User
+❌ ERRORE NON GESTITO: Error: Incorrect integer value: 'CAR - carico magazzino (ID: )' for column 'p_idcau' at row 1 at PromisePool.query (C:\maga\server\node_modules\mysql2\lib\promise\pool.js:36:22) at exports.insertMovimento (C:\maga\server\controllers\movimenticontrollers.js:91:32) at Layer.handleRequest (C:\maga\server\node_modules\router\lib\layer.js:152:17) at next (C:\maga\server\node_modules\router\lib\route.js:157:13) at Route.dispatch (C:\maga\server\node_modules\router\lib\route.js:117:3) at handle (C:\maga\server\node_modules\router\index.js:435:11) at Layer.handleRequest (C:\maga\server\node_modules\router\lib\layer.js:152:17) at C:\maga\server\node_modules\router\index.js:295:15 at processParams (C:\maga\server\node_modules\router\index.js:582:12) at next (C:\maga\server\node_modules\router\index.js:291:5) Unhandled Database Error Code: ER_TRUNCATED_WRONG_VALUE_FOR_FIELD Incorrect integer value: 'CAR - carico magazzino (ID: )' for column 'p_idcau' at row 1
+
+
+Gemini
+Ciao! Ho analizzato l'errore che stai riscontrando: Incorrect integer value: 'CAR - carico magazzino (ID: )' for column 'p_idcau' at row 1.
+
+Questo errore si verifica perché il tuo database si aspetta un valore intero per la colonna p_idcau (che corrisponde a idcau nella tua stored procedure InsertMovimento), ma sta ricevendo una stringa descrittiva come 'CAR - carico magazzino (ID: )'.
+
+Il problema non risiede nel codice frontend che mi hai fornito (MovimentiForm.jsx, MovimentiDialogCustom.jsx, FilterSearch.jsx), poiché questi componenti impostano correttamente il value delle opzioni <select> all'ID numerico (value={cau.id}).
+
+La causa più probabile è nella stored procedure FetchMovimenti sul tuo database. Sembra che questa stored procedure stia restituendo la descrizione testuale della causale (es. c.description) nella colonna che dovrebbe contenere l'ID numerico della causale (m.idcau).
+
+Quando il frontend recupera i movimenti (tramite getMovimenti che chiama FetchMovimenti) e poi tenta di modificare un movimento esistente (handleEdit), il dialogFormData.idcau viene popolato con il valore ricevuto dalla stored procedure. Se la stored procedure ha erroneamente messo la descrizione della causale nel campo idcau del risultato, allora il frontend invierà quella stringa al server quando tenti di salvare il movimento.
+
+Per risolvere il problema, devi modificare la stored procedure FetchMovimenti nel tuo database.
+
+Assicurati che la stored procedure restituisca l'ID numerico della causale nella colonna idcau e la descrizione in una colonna separata (ad esempio, descriptioncau), come già previsto dal tuo frontend (tableColumns in MovimentiForm.jsx si aspetta descriptioncau).
+
+Ecco un esempio di come dovrebbe essere definita la SELECT all'interno della tua stored procedure FetchMovimenti:
+
+sql
+ Show full code block 
+-- Esempio di definizione corretta per la SELECT all'interno di FetchMovimenti
+-- Assicurati che 'm' sia l'alias per la tabella 'movimenti' e 'c' per la tabella 'causali'
+SELECT
+    m.id,
+    m.idart,
+    m.idcau, -- <-- DEVE ESSERE L'ID NUMERICO DALLA TABELLA MOVIMENTI
+    c.description AS descriptioncau, -- <-- LA DESCRIZIONE IN UNA COLONNA SEPARATA
+    a.name AS descriptionart, -- <-- Esempio per l'articolo, se fai il JOIN
+    m.data,
+    m.quantita,
+    m.tipo,
+    m.note
+FROM movimenti m
+JOIN causali c ON m.idcau = c.id
+JOIN articoli a ON m.idart = a.id; -- Esempio di JOIN con la tabella articoli
+-- ... (aggiungi qui le clausole WHERE per i filtri se presenti nella SP)
+Inoltre, ho notato una piccola correzione che potresti voler applicare nel file movimenticontrollers.js:
+
+La funzione getMovimenti restituisce rows direttamente, ma mysql2 per le stored procedure restituisce un array di array (il primo elemento contiene i dati). Il tuo frontend è già abbastanza robusto da gestirlo, ma per chiarezza e coerenza, è meglio accedere direttamente al primo set di risultati.
+
+movimenticontrollers.js
+-2
++2
+ Show full code block 
+// GET tutti i movimenti (potresti voler aggiungere filtri, es. per articolo o data)
+// Modificato per gestire i filtri da req.query
+exports.getMovimenti = async (req, res, next) => {
+    try { 
+    try {
+    const { idart, idcau, tipo, dataDa, dataA } = req.query;
+
+    // Chiama la stored procedure con i parametri, passando null se non presenti
+        idcau || null
+      ]
+    );
+    res.json({ success: true, data: rows });
+    res.json({ success: true, data: rows[0] }); // Assuming FetchMovimenti returns multiple result sets, the first one contains the data
+
+  } catch (error) {
+    next(error); // Passa l'errore al middleware centralizzato
+Dopo aver modificato la stored procedure e, opzionalmente, il controller, il problema dovrebbe risolversi.
+
+Spero che questo ti sia d'aiuto!
+
+ Revert to checkpoint
+Context Sources (77)

@@ -1,0 +1,163 @@
+.container {
+  width: 100%;
+  margin: 40px auto;
+  padding: 32px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  h2 {
+    text-align: center;
+    color: #343a40;
+  }
+
+  .btn-add {
+    background-color: #3c86f4;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  button {
+    color: white;
+    cursor: pointer;
+    background-color: #3c86f4;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 10px 16px;
+    transition: background 0.25s ease;
+
+    &:hover {
+      background-color: #6f99d7;
+    }
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+
+    input[type="text"] {
+      padding: 12px;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+
+      &:focus {
+        border-color: #3c86f4;
+        outline: none;
+      }
+    }
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+
+    th,
+    td {
+      border: 1px solid #dee2e6;
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f8f9fa;
+      color: #495057;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      font-size: 13px;
+      vertical-align: middle;
+    }
+
+    td.description-cell {
+      max-width: 100px; // o quanto vuoi larga la colonna
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+      cursor: help;
+    }
+
+    td.name-cell {
+      max-width: 100px; // o quanto vuoi larga la colonna
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+      cursor: help;
+    }
+
+    .bmodifica,
+    .bdelete {
+      border: none;
+      color: white;
+      min-width: 75px;
+      padding: 5px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .bmodifica {
+      background-color: #3c86f4;
+      margin-right: 4px;
+
+      &:hover {
+        background-color: #6f99d7;
+      }
+    }
+
+    .bdelete {
+      background-color: #dc3545;
+
+      &:hover {
+        background-color: #f07b8c;
+      }
+    }
+  }
+
+  /* @media (max-width: 768px) {
+    table,
+    thead,
+    tbody,
+    th,
+    td,
+    tr {
+      display: block;
+    }
+
+    th {
+      display: none;
+    }
+
+    td {
+      position: relative;
+      padding-left: 50%;
+      text-align: right;
+
+      &::before {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        content: attr(data-label);
+        font-weight: bold;
+        color: #6c757d;
+        white-space: nowrap;
+      }
+    }
+  } */
+}

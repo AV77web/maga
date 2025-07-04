@@ -1,0 +1,112 @@
+DELIMITER $$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertMovimento`(
+    IN `p_idart` INT,
+    IN `p_codice_cau` VARCHAR(3),
+    IN `p_data` DATE,
+    IN `p_quantita` DECIMAL(10, 2),
+    IN `p_tipo` CHAR(1),
+    IN `p_note` TEXT
+)
+BEGIN
+    DECLARE current_quantita DECIMAL(10, 2);
+    DECLARE new_id INT;
+    DECLARE done INT DEFAULT FALSE;
+
+    -- Per scorrere gli articoli figli della distinta base
+    DECLARE v_id_son INT;
+    DECLARE v_quant_son DECIMAL(10,2);
+
+    DECLARE diba_cursor CURSOR FOR
+        SELECT id_son, quantita FROM diba WHERE id_father = p_idart;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    -- Controllo giacenza se è uno scarico
+    IF p_tipo = 'S' THEN
+        SELECT quantita INTO current_quantita FROM articoli WHERE id = p_idart FOR UPDATE;
+
+        IF current_quantita IS NULL THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Articolo non trovato.';
+        END IF;
+
+        IF current_quantita < p_quantita THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Quantità insufficiente per lo scarico.';
+        END IF;
+    END IF;
+
+    -- Inserimento del movimento principale
+    INSERT INTO movimenti (idart, codice_cau, data, quantita, tipo, note)
+    VALUES (p_idart, p_codice_cau, p_data, p_quantita, p_tipo, p_note);
+
+    SET new_id = LAST_INSERT_ID();
+
+    -- Aggiornamento giacenza articolo padre
+    IF p_tipo = 'C' THEN
+        UPDATE articoli SET quantita = quantita + p_quantita WHERE id = p_idart;
+    ELSEIF p_tipo = 'S' THEN
+        UPDATE articoli SET quantita = quantita - p_quantita WHERE id = p_idart;
+    END IF;
+
+    -- Controllo se l'articolo movimentato è un padre nella distinta base
+    OPEN diba_cursor;
+
+    read_loop: LOOP
+        FETCH diba_cursor INTO v_id_son, v_quant_son;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Calcolo quantità da movimentare per ogni figlio
+        IF p_tipo = 'S' THEN
+            -- Controllo giacenza figlio
+            SELECT quantita INTO current_quantita FROM articoli WHERE id = v_id_son FOR UPDATE;
+
+            IF current_quantita < (v_quant_son * p_quantita) THEN
+                ROLLBACK;
+                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = CONCAT('Quantità insufficiente per articolo figlio id=', v_id_son);
+            END IF;
+
+            -- Scarico il figlio
+            UPDATE articoli
+            SET quantita = quantita - (v_quant_son * p_quantita)
+            WHERE id = v_id_son;
+
+            -- (Facoltativo: Loggare anche i movimenti dei figli nella tabella movimenti, se vuoi posso aggiungere anche questo)
+        END IF;
+
+        -- Se vuoi gestire anche carico sui figli, qui puoi aggiungere codice per il tipo 'C'
+
+    END LOOP;
+
+    CLOSE diba_cursor;
+
+    COMMIT;
+
+    SELECT new_id AS insertId;
+END$$
+
+DELIMITER ;
+
+✅ Cosa fa ora questa nuova versione
+Fase	Cosa succede
+✅ Scarico articoli padre	Controlla giacenza se è scarico
+✅ Inserisce movimento	Registra comunque il movimento (padre)
+✅ Aggiorna giacenza padre	Aggiunge o sottrae
+✅ Se articolo ha diba e tipo=S	Cicla i figli e scarica per ogni figlio la quantità moltiplicata
+
+✅ Se vuoi: Possibili migliorie future
+Inserire anche i movimenti di dettaglio sui figli nella tabella movimenti
+
+Aggiungere controllo giacenza anche sui figli
+
+Log o storicizzazione dei movimenti su articoli figli separatamente

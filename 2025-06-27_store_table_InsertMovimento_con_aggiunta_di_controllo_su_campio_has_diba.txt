@@ -1,0 +1,88 @@
+DELIMITER //
+
+CREATE PROCEDURE InsertMovimento(
+    IN p_idart INT,
+    IN p_codice_cau VARCHAR(3),
+    IN p_data DATE,
+    IN p_quantita DECIMAL(10, 2),
+    IN p_tipo CHAR(1),
+    IN p_note TEXT
+)
+BEGIN
+    DECLARE current_quantita DECIMAL(10, 2);
+    DECLARE new_id INT;
+    DECLARE v_has_diba ENUM('S','N');
+    DECLARE v_id_son INT;
+    DECLARE v_qta_per_son DECIMAL(10,2);
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE cur CURSOR FOR 
+        SELECT id_son, quantita FROM diba WHERE id_father = p_idart;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    -- Se tipo è Scarico, controlla giacenza articolo padre
+    IF p_tipo = 'S' THEN
+        SELECT quantita INTO current_quantita FROM articoli WHERE id = p_idart FOR UPDATE;
+
+        IF current_quantita IS NULL THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Articolo non trovato.';
+        END IF;
+
+        IF current_quantita < p_quantita THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Quantità insufficiente per lo scarico.';
+        END IF;
+    END IF;
+
+    -- Inserisce il movimento principale
+    INSERT INTO movimenti (idart, codice_cau, data, quantita, tipo, note)
+    VALUES (p_idart, p_codice_cau, p_data, p_quantita, p_tipo, p_note);
+
+    SET new_id = LAST_INSERT_ID();
+
+    -- Aggiorna la giacenza dell'articolo padre
+    IF p_tipo = 'C' THEN
+        UPDATE articoli SET quantita = quantita + p_quantita WHERE id = p_idart;
+    ELSEIF p_tipo = 'S' THEN
+        UPDATE articoli SET quantita = quantita - p_quantita WHERE id = p_idart;
+    END IF;
+
+    -- Controlla se ha distinta base
+    SELECT has_diba INTO v_has_diba FROM articoli WHERE id = p_idart;
+
+    IF p_tipo = 'S' AND v_has_diba = 'S' THEN
+        -- Per ogni figlio, scarica la quantità corretta
+        OPEN cur;
+
+        fetch_loop: LOOP
+            FETCH cur INTO v_id_son, v_qta_per_son;
+
+            IF done THEN
+                LEAVE fetch_loop;
+            END IF;
+
+            -- Calcola la quantità da scaricare per il figlio
+            UPDATE articoli
+            SET quantita = quantita - (v_qta_per_son * p_quantita)
+            WHERE id = v_id_son;
+
+            -- Verifica eventuale giacenza negativa (opzionale: puoi aggiungere controlli qui)
+
+        END LOOP;
+
+        CLOSE cur;
+    END IF;
+
+    COMMIT;
+
+    SELECT new_id AS insertId;
+END //
+
+DELIMITER ;

@@ -1,0 +1,434 @@
+//======================================
+// stored procedure DeleteArticolo()
+//======================================
+
+create PROCEDURE `DeleteArticoli`(
+IN p_id INT
+)
+BEGIN
+DELETE FROM `articoli`
+WHERE `id` = p_id;
+
+SELECT 'Ricambio eliminato con successo' AS message;
+END
+
+//========================================
+// stored procedure FetchArticoli
+//========================================    
+    Create Procedure `FetchArticoli`(
+    IN p_name VARCHAR(255),
+    IN p_description VARCHAR(255),
+    IN p_supplier VARCHAR(255)
+)
+BEGIN
+    SELECT
+        `id`,
+        `name`,
+        `description`,
+        `quantita`,
+        `min`,
+        `max`,
+        `supplier`
+    FROM
+        `articoli`
+    WHERE
+        (p_name IS NULL OR p_name = '' OR `name` LIKE CONCAT('%', p_name, '%'))
+        AND (p_description IS NULL OR p_description = '' OR `description` LIKE CONCAT('%', p_description, '%'))
+        AND (p_supplier IS NULL OR p_supplier = '' OR `supplier` LIKE CONCAT('%', p_supplier, '%'))
+    ORDER BY
+        `name` ASC;
+END$$
+character_set_client: cp850
+collation_connection: cp850_general_ci
+  Database Collation: utf8mb4_0900_ai_ci
+1 row in set (0.00 sec)
+
+//**************************************************
+//Procedure InsertArticolo()
+//**************************************************
+	Procedure: InsertArticolo
+mysql>CREATE PROCEDURE `InsertArticolo`(
+           IN p_name VARCHAR(255),
+	   IN p_description VARCHAR(255),
+	   IN p_quantita INT,
+	   IN p_min INT,
+	   IN p_max INT,
+	   IN p_supplier VARCHAR(255)
+	   )
+	  BEGIN
+		INSERT INTO `articoli` (`name`,`description`,`quantita`,`min`,`max`,`supplier`)
+		VALUES (p_name, p_description, p_quantita, p_min, p_max, p_supplier);
+		SELECT LAST_INSERT_ID() AS id;
+	 END$$
+mysql> DELIMITER ;
+
+//****************************************************
+//Procedure UpdateArticolo()
+//****************************************************
+
+CREATE PROCEDURE `UpdateArticolo`(
+	IN p_id INT,
+	IN p_name VARCHAR(255),
+	IN p_description TEXT,
+	IN p_quantita INT,
+	IN p_min INT,
+	IN p_max INT,
+	IN p_supplier VARCHAR(255)
+	)
+	BEGIN
+		UPDATE `articoli`
+		SET 
+			`name` = p_name,
+			`description` = p_description,
+			`quantita` = p_quantita,
+			`min` = p_min,
+			`max` = p_max,
+			`supplier`= p_supplier
+		WHERE 
+			`id` = p_id;
+	
+		SELECT 'Ricambio aggiornato con successo' AS message;
+	END$$
+DELIMITERS ;
+
+
+//=====================================
+//Procedure DeleteMovimento(
+//=====================================
+DELIMITER $$
+
+CREATE PROCEDURE `DeleteMovimento`(
+    IN p_id INT
+)
+BEGIN
+    DECLARE v_idart INT;
+    DECLARE v_quantita DECIMAL(10, 2);
+    DECLARE v_tipo CHAR(1);
+    DECLARE v_affected_rows INT;
+
+    -- Gestione degli errori con rollback automatico
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    -- 1. Ottieni i dettagli del movimento da eliminare, bloccando la riga
+    SELECT idart, quantita, tipo INTO v_idart, v_quantita, v_tipo
+    FROM movimenti
+    WHERE id = p_id
+    FOR UPDATE;
+
+    -- Se il movimento non esiste, FOUND_ROWS() sarà 0
+    IF FOUND_ROWS() = 0 THEN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Movimento non trovato.';
+    END IF;
+
+    -- 2. Storna l'effetto sulla quantità dell'articolo
+    IF v_tipo = 'C' THEN
+        -- Se era un carico, ora devo scaricare (sottrarre)
+        UPDATE articoli SET quantita = quantita - v_quantita WHERE id = v_idart;
+    ELSEIF v_tipo = 'S' THEN
+        -- Se era uno scarico, ora devo caricare (aggiungere)
+        UPDATE articoli SET quantita = quantita + v_quantita WHERE id = v_idart;
+    ELSE
+        -- Se il tipo non è valido, annulla la transazione
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Tipo movimento del record da eliminare non valido.';
+    END IF;
+
+    -- 3. Elimina il movimento
+    DELETE FROM movimenti WHERE id = p_id;
+    SET v_affected_rows = ROW_COUNT();
+
+    COMMIT;
+
+    -- 4. Restituisci il numero di righe eliminate
+    SELECT v_affected_rows as affectedRows;
+END$$
+
+DELIMITER ;
+
+
+//===================================
+// STORED PROCEDURE InsertMovimento()
+//===================================
+DELIMITER $$
+
+CREATE PROCEDURE `InsertMovimento`(
+    IN p_idart INT,
+    IN p_idcau INT,
+    IN p_data DATE,
+    IN p_quantita DECIMAL(10, 2), -- O INT, a seconda della precisione richiesta
+    IN p_tipo CHAR(1),
+    IN p_description VARCHAR(255),
+    IN p_note TEXT
+)
+BEGIN
+    DECLARE current_quantita DECIMAL(10, 2);
+    DECLARE new_id INT;
+
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL; -- Rilancia l'eccezione al chiamante
+    END;
+
+    START TRANSACTION;
+
+    
+    IF p_tipo = 'S' THEN
+        
+        SELECT quantita INTO current_quantita FROM articoli WHERE id = p_idart FOR UPDATE;
+
+        IF current_quantita IS NULL THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Articolo non trovato.';
+        END IF;
+
+        IF current_quantita < p_quantita THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Quantità insufficiente per lo scarico.';
+        END IF;
+    END IF;
+
+    
+    INSERT INTO movimenti (idart, idcau, data, quantita, tipo, description, note)
+    VALUES (p_idart, p_idcau, p_data, p_quantita, p_tipo, p_description, p_note);
+
+    SET new_id = LAST_INSERT_ID();
+
+    
+    IF p_tipo = 'C' THEN
+        UPDATE articoli SET quantita = quantita + p_quantita WHERE id = p_idart;
+    ELSEIF p_tipo = 'S' THEN
+        UPDATE articoli SET quantita = quantita - p_quantita WHERE id = p_idart;
+    END IF;
+
+    COMMIT;
+
+    
+    SELECT new_id as insertId;
+
+END$$
+
+DELIMITER ;
+
+
+//=======================================
+//STORED PROCEDURE UpdateMovimento()
+//=======================================
+DELIMITER $$
+
+CREATE PROCEDURE `UpdateMovimento`(
+    IN p_id INT,
+    IN p_description VARCHAR(255),
+    IN p_note TEXT
+)
+BEGIN
+    
+    UPDATE movimenti
+    SET
+        description = p_description,
+        note = p_note
+    WHERE id = p_id;
+
+    SELECT ROW_COUNT() as affectedRows;
+END$$
+
+DELIMITER ;
+
+
+//==========================================
+//Stored Procedure FetchMovimenti()
+//==========================================
+DELIMITER $$
+create procedure `FetchMovimenti`(
+	IN p_idart INT,
+	IN p_data_da DATE,
+	IN p_data_a DATE,
+	IN p_tipo ENUM('C','S'),
+	IN p_idcau INT
+	)
+BEGIN
+	SELECT
+		m.id,
+		m.data,
+		m.quantita,
+		m.tipo,
+		m.description,
+		m.note,
+		m.idart,
+		m.idcau,
+		a.name AS descriptionart,
+		c.description AS descriptioncau
+	FROM
+		movimenti m
+	JOIN
+	articoli a ON m.idart = a.id
+	JOIN
+	causali c ON m.idcau = c.id
+	WHERE 
+		(p_idart IS NULL OR p_idart = '' OR m.id = p_idart) AND
+		(p_data_da IS NULL OR m.data >= p_data_da) AND
+		(p_data_a IS NULL OR m.data <= p_data_a) AND
+		(p_tipo IS NULL OR m.tipo = p_tipo) AND
+		(p_idcau IS NULL OR m.idcau = p_idcau)
+	ORDER BY
+		m.data DESC, m.id DESC;
+END$$
+DELIMITER ;	
+	
+
+//==========================================
+//Stored Procedure FetchCausali()
+//==========================================
+ create procedure `FetchCausali`(
+     in p_codice varchar(3),
+     in p_description varchar(255),
+     in p_tipo enum('C','S')
+     )
+     begin
+     select
+     `codice`,
+     `description`,
+     `tipo`
+     from
+     `causali`
+     where
+     (p_codice is null or p_codice = '' or `codice` like concat('%', p_codice ,'%'))
+     and (p_description is null or p_description ='' or `description` like concat('%', p_description,'%'))
+     and (p_tipo is null or p_tipo='' or `tipo` like concat('%', p_tipo, '%'))
+     order by
+     `codice` asc;
+     end$$
+//==========================================
+
+//============================================
+// stored procedure DeleteCausali
+//============================================
+
+
+create PROCEDURE `DeleteCausali`(
+IN p_id INT
+)
+BEGIN
+DELETE FROM `causali`
+WHERE `id` = p_id;
+
+SELECT 'Ricambio eliminato con successo' AS message;
+END
+
+
+//**************************************************
+//Procedure InsertCausali()
+//**************************************************
+	
+CREATE PROCEDURE `InsertCausali`(
+        IN p_codice VARCHAR(10),
+	IN p_description VARCHAR(100),
+	IN p_tipo ENUM('C','S'),
+	IN p_attiva TINYINT(1)
+	   )
+	  BEGIN
+		INSERT INTO `causali` (`codice`,`description`,`tipo`,`attiva`)
+		VALUES (p_codice, p_description, p_tipo, p_attiva);
+		SELECT LAST_INSERT_ID() AS id;
+	 END$$
+mysql> DELIMITER ;
+
+
+//===================================================
+//stored procedure InsertDiBa()
+//===================================================
+
+DELIMITER $$
+
+create Procedure `InsertDiBa`(
+	IN p_id_father INT,
+	IN p_id_son INT,
+	IN p_quantita decimal(12,2)
+)
+	BEGIN 
+		INSERT INTO `diba` (`id_father`, `id_son`, `quantita`)
+		VALUES (p_id_father, p_id_son, p_quantita);
+		SELECT LAST_INSERT_ID()AS id;
+	END$$
+DELIMITER ;
+
+//===================================
+//stored procedure FetchDiBa()
+//===================================
+
+DELIMITER $$
+
+CREATE PROCEDURE `FetchDiba`(
+    IN p_id INT,
+    IN p_id_father INT,
+    IN p_id_son INT
+)
+BEGIN
+    SELECT
+        d.id,
+        d.id_father,
+        father.name AS father_name,
+        father.description AS father_description,
+        d.id_son,
+        son.name AS son_name,
+        son.description AS son_description,
+        d.quantita
+    FROM
+        diba d
+    JOIN
+        articoli father ON d.id_father = father.id
+    JOIN
+        articoli son ON d.id_son = son.id
+    WHERE
+        (p_id IS NULL OR d.id = p_id) AND
+        (p_id_father IS NULL OR d.id_father = p_id_father) AND
+        (p_id_son IS NULL OR d.id_son = p_id_son)
+    ORDER BY
+        father.name, son.name;
+END$$
+
+DELIMITER ;
+
+//=============================
+//Stored Procedure DeleteDiBa()
+//=============================
+DELIMITER $$
+
+CREATE PROCEDURE `DeleteDiba`(
+    IN p_id INT
+)
+BEGIN
+    DELETE FROM diba WHERE id = p_id;
+    SELECT ROW_COUNT() as affectedRows;
+END$$
+
+DELIMITER ;
+
+//===============================
+//Stored Procedure UpdateDiBa() // Viene aggiornata solo la quantità
+//===============================
+
+DELIMITER $$
+
+CREATE PROCEDURE `UpdateDiba`(
+    IN p_id INT,
+    IN p_quantita DECIMAL(10, 2) -- O INT
+)
+BEGIN
+    UPDATE diba
+    SET
+        quantita = p_quantita
+    WHERE id = p_id;
+
+    SELECT ROW_COUNT() as affectedRows;
+END$$
+
+DELIMITER ;

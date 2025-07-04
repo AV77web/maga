@@ -1,0 +1,17 @@
+📦 Tabella movimenti
+Campo	 	Tipo						Note
+id		INT AUTO_INCREMENT		Chiave primaria univoca del movimento.
+data		DATETIME			Data e ora del movimento (inserimento o esecuzione).
+cod_articolo	VARCHAR(50)			Codice dell’articolo movimentato (FK verso tabella articoli).
+descrizione	VARCHAR(255)			Descrizione dell’articolo (opzionale, derivabile da articoli).
+quantita	DECIMAL(10,2)			Quantità movimentata (+ per carico, - per scarico).
+um		VARCHAR(10)			Unità di misura (es: PZ, KG, M).
+causale		VARCHAR(50)			Codice causale (FK verso tabella causali).
+tipo_movimento	ENUM('CARICO','SCARICO')	Tipo del movimento: entrata (CARICO) o uscita (SCARICO).
+id_magazzino	INT				FK verso tabella magazzini, utile se hai più magazzini.
+lotto		VARCHAR(50)			Lotto/seriale se gestisci tracciabilità.
+scadenza	DATE				Data di scadenza (solo per prodotti deperibili).
+operatore	VARCHAR(100)			Nome o ID dell’operatore che ha eseguito il movimento.
+note		TEXT				Eventuali note aggiuntive sul movimento.
+created_at	TIMESTAMP			Data e ora di creazione record (default CURRENT_TIMESTAMP).
+updated_at	TIMESTAMP			Data e ora ultima modifica (ON UPDATE CURRENT_TIMESTAMP).
