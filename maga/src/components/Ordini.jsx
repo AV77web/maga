@@ -8,9 +8,10 @@
 import React, { useState, useCallback, useMemo } from "react";
 import HeadDocument from "./HeadDocument2"; // Utilizzo la versione con react-hook-form
 import TableGrid from "./TableGrid";
+import Header from "./Header";
 import "../css/Ordini.css";
 
-const Ordini = () => {
+const Ordini = ({ currentUser, Logout, currentLocation }) => {
   // 1. Configurazione per HeadDocument basata sulla tabella `ordini`
   const headConfig = {
     titolo: "Dati Ordine Fornitore",
@@ -119,6 +120,15 @@ const Ordini = () => {
     alert("Ordine salvato! (Controlla la console)");
   }, [headData, rows]);
 
+  // Handler per i pulsanti dell'Header
+  const handleEditOrder = () => {
+    alert("Funzione di modifica dell'ordine non ancora implementata.");
+  };
+
+  const handleSeardhOrder = () => {
+    alert("Funzione di ricerca dell'ordine non ancora implementata.");
+  };
+
   // 4. Colonne per TableGrid con input modificabili
   const rowsColumns = useMemo(
     () => [
@@ -214,6 +224,14 @@ const Ordini = () => {
 
   return (
     <div className="ordini-container">
+      <Header
+        onEditOrder={handleEditOrder}
+        onSearchOrder={handleSeardhOrder}
+        currentUser={currentUser}
+        onLogout={Logout}
+        currentLocation={currentLocation}
+      />
+
       <div className="ordini-actions-header">
         <h1>Gestione Ordini</h1>
         <button onClick={handleSaveOrder} className="btn-save">
@@ -221,7 +239,11 @@ const Ordini = () => {
         </button>
       </div>
 
-      <HeadDocument config={headConfig} onChange={handleHeadChange} />
+      <HeadDocument
+        config={headConfig}
+        onChange={handleHeadChange}
+        className="doc-header"
+      />
 
       <div className="ordini-righe-container">
         <h2>Righe Ordine</h2>
