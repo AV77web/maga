@@ -1,0 +1,1 @@
+Get-Content "d:\database_magazzino\dump.sql" | & "c:\mysql\mysql-8.4.5-winx64\bin\mysql.exe" -u root -p magazzino

@@ -1,0 +1,73 @@
+/* Login layout container */
+.login-container {
+  display: flex; /* Aggiunto per centrare verticalmente */
+  flex-direction: column; /* Aggiunto per centrare verticalmente */
+  justify-content: center; /* Aggiunto per centrare verticalmente */
+  align-items: center; /* Aggiunto per centrare verticalmente */
+  min-height: 100vh; /* Occupa l'intera altezza della viewport */
+  background-color: #f4f7f6; /* Sfondo leggermente grigio per la pagina */
+  padding: 1rem; /* Padding per schermi piccoli */
+}
+
+.login-card { /* Nuovo contenitore per il form effettivo */
+  max-width: 400px;
+  width: 100%;
+  padding: 2rem;
+  border-radius: 12px; /* Bordi più arrotondati */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1); /* Ombra più morbida e moderna */
+  text-align: center;
+  background-color: #fff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Transizione per hover */
+}
+
+.login-card:hover {
+  transform: translateY(-5px); /* Leggero sollevamento all'hover */
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+}
+
+/* Login form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Aumentato lo spazio tra gli elementi */
+}
+
+/* Input fields */
+.login-form input,select {
+  padding: 0.85rem 1rem; /* Padding leggermente aumentato */
+  font-size: 1rem;
+  border-radius: 8px; /* Bordi più arrotondati */
+  border: 1px solid #dde2e7; /* Colore del bordo più tenue */
+  transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Transizione per focus */
+}
+
+.login-form input,select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2); /* Ombra al focus */
+  outline: none; /* Rimuove l'outline di default */
+}
+
+/* Submit button */
+.login-form button {
+  padding: 0.85rem 1rem; /* Padding leggermente aumentato */
+  font-size: 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px; /* Bordi più arrotondati */
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Transizioni */
+  font-weight: 500; /* Testo leggermente più bold */
+}
+.login-form button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px); /* Leggero sollevamento all'hover */
+}
+
+/* Error message */
+.login-error {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 0.5rem; /* Spazio sopra il messaggio di errore */
+  font-weight: 500;
+}

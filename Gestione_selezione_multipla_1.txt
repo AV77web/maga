@@ -1,0 +1,115 @@
+Perfetto! Ti guiderò nella trasformazione della selezione singola in selezione multipla tramite checkbox. Vedremo come:
+
+✅ Selezionare/deselezionare singole righe.
+
+✅ Selezionare/deselezionare tutte le righe visibili (checkbox in <th>).
+
+✅ Usare selectedIds (array) al posto di selectedId (singolo valore).
+
+✅ Integrazione con handleDelete per eliminare più righe insieme.
+
+🛠️ 1. Cambia lo stato selectedId → selectedIds
+Nel componente RicambiManagerDialog3.jsx, sostituisci:
+
+js
+Copia codice
+const [selectedId, setSelectedId] = useState(null);
+con:
+
+js
+Copia codice
+const [selectedIds, setSelectedIds] = useState([]);
+🧠 2. Aggiungi checkbox nella tabella (una per riga)
+Aggiorna <tbody> per includere il checkbox:
+
+jsx
+Copia codice
+<tbody>
+  {currentTableData.map((row) => (
+    <tr key={row.id}>
+      <td>
+        <input
+          type="checkbox"
+          checked={selectedIds.includes(row.id)}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setSelectedIds((prev) => [...prev, row.id]);
+            } else {
+              setSelectedIds((prev) => prev.filter((id) => id !== row.id));
+            }
+          }}
+        />
+      </td>
+      <td>{row.id}</td>
+      <td>{row.name}</td>
+      <td>{row.description}</td>
+      <td className="text-right">{row.quantita}</td>
+      <td className="text-right">{row.min}</td>
+      <td className="text-right">{row.max}</td>
+      <td className="text-center">...</td>
+    </tr>
+  ))}
+</tbody>
+🧾 3. Aggiungi il checkbox nell’intestazione (<th>)
+In cima alla tabella, nella riga <thead>, aggiungi un <th>:
+
+jsx
+Copia codice
+<thead>
+  <tr>
+    <th>
+      <input
+        type="checkbox"
+        checked={
+          currentTableData.length > 0 &&
+          currentTableData.every((row) => selectedIds.includes(row.id))
+        }
+        onChange={(e) => {
+          if (e.target.checked) {
+            const newIds = currentTableData.map((row) => row.id);
+            setSelectedIds((prev) => [...new Set([...prev, ...newIds])]);
+          } else {
+            const newIds = currentTableData.map((row) => row.id);
+            setSelectedIds((prev) => prev.filter((id) => !newIds.includes(id)));
+          }
+        }}
+        title="Seleziona/Deseleziona tutto"
+      />
+    </th>
+    <th>ID</th>
+    <th>Nome</th>
+    <th>Descrizione</th>
+    <th>Quantità</th>
+    <th>Minimo</th>
+    <th>Massimo</th>
+    <th>Azioni</th>
+  </tr>
+</thead>
+🧨 4. Modifica onDelete passato a <Header />
+Nel componente:
+
+jsx
+Copia codice
+<Header
+  onAdd={handleNew}
+  onDelete={() => {
+    if (selectedIds.length === 0) {
+      alert("Seleziona almeno una riga da eliminare.");
+      return;
+    }
+
+    if (!window.confirm("Confermi l'eliminazione delle righe selezionate?")) return;
+
+    selectedIds.forEach((id) => handleDelete(id));
+    setSelectedIds([]);
+  }}
+/>
+🎯 Risultato
+✅ L'utente può:
+
+Spuntare una o più righe.
+
+Selezionare/deselezionare tutte le righe visibili.
+
+Eliminare più righe contemporaneamente tramite l’icona nel Header.
+

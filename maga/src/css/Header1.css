@@ -1,0 +1,31 @@
+.header-container {
+  align-content: end;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 40px;
+  list-style: none;
+  position: fixed;
+  right: 10px;
+  width: 500px;
+  z-index: 1000;
+}
+
+.icon-button {
+  background-color: #f0f0f0;
+  border: none;
+  cursor: pointer;
+  width: 50px;
+  height: 50px;
+  padding: 0.5rem;
+  transition: transform 0.3s ease;
+}
+
+.icon-button:hover {
+  background-color: #575151;
+  transform: scale(1.4);
+}
+
+icon-button:active {
+  background-color: #ddd;
+}

@@ -1,0 +1,201 @@
+DELIMITER //
+
+CREATE PROCEDURE Insert__Movimento(
+    IN p_idart INT,
+    IN p_codice_cau VARCHAR(3),
+    IN p_data DATE,
+    IN p_quantita DECIMAL(10, 2),
+    IN p_tipo CHAR(1),
+    IN p_note TEXT
+)
+BEGIN
+    DECLARE current_quantita DECIMAL(10, 2);
+    DECLARE new_id INT;
+    DECLARE v_has_diba ENUM('S','N');
+    DECLARE v_id_son INT;
+    DECLARE v_qta_per_son DECIMAL(10,2);
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE total_movimento DECIMAL(10,2);
+    
+    DECLARE cur CURSOR FOR 
+        SELECT id_son, quantita FROM diba WHERE id_father = p_idart;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    -- Controllo giacenza solo per gli scarichi del padre
+    IF p_tipo = 'S' THEN
+        SELECT quantita INTO current_quantita FROM articoli WHERE id = p_idart FOR UPDATE;
+
+        IF current_quantita IS NULL THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Articolo padre non trovato.';
+        END IF;
+
+        IF current_quantita < p_quantita THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Quantità insufficiente per lo scarico dell\'articolo padre.';
+        END IF;
+    END IF;
+
+    -- Inserisci il movimento principale (padre)
+    INSERT INTO movimenti (idart, codice_cau, data, quantita, tipo, note)
+    VALUES (p_idart, p_codice_cau, p_data, p_quantita, p_tipo, p_note);
+
+    SET new_id = LAST_INSERT_ID();
+
+    -- Aggiorna giacenza padre
+    IF p_tipo = 'C' THEN
+        UPDATE articoli SET quantita = quantita + p_quantita WHERE id = p_idart;
+    ELSEIF p_tipo = 'S' THEN
+        UPDATE articoli SET quantita = quantita - p_quantita WHERE id = p_idart;
+    END IF;
+
+    -- Verifica se ha distinta base
+    SELECT has_diba INTO v_has_diba FROM articoli WHERE id = p_idart;
+
+    IF v_has_diba = 'S' THEN
+        OPEN cur;
+
+        fetch_loop: LOOP
+            FETCH cur INTO v_id_son, v_qta_per_son;
+
+            IF done THEN
+                LEAVE fetch_loop;
+            END IF;
+
+            SET total_movimento = v_qta_per_son * p_quantita;
+
+            -- Controlla giacenza figlio SOLO in caso di scarico
+            IF p_tipo = 'S' THEN
+                SELECT quantita INTO current_quantita FROM articoli WHERE id = v_id_son FOR UPDATE;
+
+                IF current_quantita IS NULL THEN
+                    ROLLBACK;
+                    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = CONCAT('Articolo figlio ID ', v_id_son, ' non trovato.');
+                END IF;
+
+                IF current_quantita < total_movimento THEN
+                    ROLLBACK;
+                    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = CONCAT('Quantità insufficiente per lo scarico del figlio ID ', v_id_son);
+                END IF;
+            END IF;
+
+            -- Aggiorna giacenza figlio
+            IF p_tipo = 'C' THEN
+                UPDATE articoli
+                SET quantita = quantita + total_movimento
+                WHERE id = v_id_son;
+            ELSEIF p_tipo = 'S' THEN
+                UPDATE articoli
+                SET quantita = quantita - total_movimento
+                WHERE id = v_id_son;
+            END IF;
+
+            -- Inserisci movimento anche per il figlio
+            INSERT INTO movimenti (idart, codice_cau, data, quantita, tipo, note)
+            VALUES (
+                v_id_son,
+                p_codice_cau,
+                p_data,
+                total_movimento,
+                p_tipo,
+                CONCAT(
+                    IF(p_tipo = 'C', 'Carico ', 'Scarico '),
+                    'da distinta base per articolo padre ID: ', p_idart
+                )
+            );
+
+        END LOOP;
+
+        CLOSE cur;
+    END IF;
+
+    COMMIT;
+
+    SELECT new_id AS insertId;
+END //
+
+DELIMITER ;
+ 
+
+
+C✅ Cosa fa adesso (Logica Carico/Scarico)
+Caso	                                     Azione
+Carico articolo padre senza DIBA	Solo carico padre
+Scarico articolo padre senza DIBA	Solo scarico padre
+Carico articolo padre con DIBA		Carico padre + carico su tutti i figli (in proporzione)
+Scarico articolo padre con DIBA		Scarico padre + scarico su tutti i figli (in proporzione)
+
+
+✅ Cosa già fa questa versione (riga per riga)
+Per ogni figlio trovato nella distinta base (diba):
+
+Calcola la quantità totale da caricare o scaricare sul figlio (moltiplicando la quantità distinta base × la quantità del movimento padre).
+
+sql
+Copia
+Modifica
+SET total_movimento = v_qta_per_son * p_quantita;
+Controlla la giacenza del figlio prima di procedere (solo in caso di scarico).
+
+sql
+Copia
+Modifica
+IF p_tipo = 'S' THEN
+    SELECT quantita INTO current_quantita FROM articoli WHERE id = v_id_son FOR UPDATE;
+    ...
+    IF current_quantita < total_movimento THEN
+        ROLLBACK;
+        SIGNAL ...;
+    END IF;
+END IF;
+Aggiorna la giacenza del figlio in base al tipo di movimento (carico o scarico):
+
+sql
+Copia
+Modifica
+IF p_tipo = 'C' THEN
+    UPDATE articoli SET quantita = quantita + total_movimento WHERE id = v_id_son;
+ELSEIF p_tipo = 'S' THEN
+    UPDATE articoli SET quantita = quantita - total_movimento WHERE id = v_id_son;
+END IF;
+Crea un movimento specifico sul figlio nella tabella movimenti:
+
+sql
+Copia
+Modifica
+INSERT INTO movimenti (idart, codice_cau, data, quantita, tipo, note)
+VALUES (
+    v_id_son,
+    p_codice_cau,
+    p_data,
+    total_movimento,
+    p_tipo,
+    CONCAT(
+        IF(p_tipo = 'C', 'Carico ', 'Scarico '),
+        'da distinta base per articolo padre ID: ', p_idart
+    )
+);
+✅ In sintesi:
+👉 Se l'articolo padre ha distinta base (has_diba = 'S'), viene creato un movimento anche per ogni figlio, con quantità già calcolata moltiplicata per il movimento del padre.
+
+👉 Se il padre non ha figli in diba, la procedura agisce solo sull'articolo padre (comportamento classico).
+
+✅ Se vuoi ti posso comunque rigenerare il codice finale già pronto da fare copia-incolla.
+👉 Confermi che vuoi che te lo rigeneri completo?
+
+
+
+
+
+
+
+
+

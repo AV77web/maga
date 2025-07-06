@@ -1,0 +1,96 @@
+/* c:\maga\maga\src\components\FilterSearch.css */
+.filter-search-container {
+  padding: 1.5rem; /* Aumentato un po' il padding */
+  background: #f8f9fa; /* Leggermente più chiaro */
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Aggiunta una leggera ombra */
+  max-width: 960px; /* Larghezza massima per il contenitore del filtro */
+  margin: 2rem auto; /* Centra il blocco del filtro e aggiunge margine verticale */
+  text-align: left; /* Resetta text-align per il contenuto interno se necessario */
+}
+
+.filter-search-container h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem; /* Più spazio sotto il titolo */
+  text-align: center; /* Centra il titolo del filtro */
+  color: #333;
+}
+
+.filter-search-fields-wrapper {
+  display: flex;
+  gap: 1rem; /* Aumentato il gap per migliore spaziatura */
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center; /* Centra i campi se non occupano tutta la larghezza */
+}
+
+.filter-search-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px; /* Aumentato min-width per migliore leggibilità */
+  flex-grow: 1; /* Permette ai campi di crescere se c'è spazio */
+}
+
+.filter-search-field label {
+  font-size: 0.85rem; /* Leggermente più grande */
+  margin-bottom: 0.3rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.filter-search-container input[type="text"],
+.filter-search-container input[type="date"],
+.filter-search-container select {
+  padding: 0.6rem 0.8rem; /* Padding più bilanciato */
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 0.9rem;
+  width: 100%; /* Fa sì che gli input occupino lo spazio del .filter-search-field */
+}
+
+.filter-search-container input[type="text"]:focus,
+.filter-search-container input[type="date"]:focus,
+.filter-search-container select:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+
+.filter-search-button-wrapper {
+  display: flex; /* Contenitore per il bottone per allinearlo con i campi */
+  align-items: flex-end; /* Allinea il bottone con la base degli input */
+  min-width: auto; /* Rimuove il min-width se non necessario per il bottone */
+  flex-grow: 0; /* Non fa crescere il contenitore del bottone */
+}
+
+.filter-search-container button {
+  padding: 0.6rem 1.5rem; /* Padding più generoso */
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  font-size: 0.9rem;
+  font-weight: 500;
+  height: calc(0.6rem * 2 + 0.9rem + 2px + 0.8rem); /* Altezza per allinearsi con gli input */
+  line-height: 0.9rem; /* Per centrare il testo verticalmente nel bottone */
+}
+
+.filter-search-container button:disabled {
+  background-color: #adb5bd;
+  cursor: not-allowed;
+}
+
+.filter-search-container button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.filter-search-error {
+  color: #dc3545; /* Rosso più standard per errori */
+  margin-top: 1.5rem;
+  text-align: center;
+  font-weight: 500;
+}

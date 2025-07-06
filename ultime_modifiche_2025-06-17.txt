@@ -1,0 +1,1253 @@
+A form field element should have an id or name attribute An element doesn't have an autocomplete attribute Duplicate form field id in the same form Multiple form field elements in the same form have the same id attribute value. This might prevent the browser from correctly autofilling the form.
+
+To fix this issue, use unique id attribute values for each form field.
+
+4 resources Violating node Violating node Violating node Violating node Learn more: How does autofill work?
+
+
+Gemini
+It sounds like you're running into some common HTML form validation and accessibility issues. These are important to address for a better user experience and to ensure browsers can correctly understand and autofill your forms. Let's break down the problems and apply fixes.
+
+The main issues are:
+
+Missing id or name attributes: Form fields need these for labels to associate with them and for form submission/state management.
+Missing autocomplete attribute: This attribute helps browsers with autofill capabilities.
+Duplicate id attributes: The id attribute must be unique across the entire HTML document. Duplicate ids can lead to incorrect behavior with JavaScript, CSS, and assistive technologies.
+I'll provide suggestions to fix these in your React components. We'll focus on ensuring unique ids, adding name attributes where they make sense (they are generally good practice, especially if you were to submit forms traditionally), and adding autocomplete attributes. For many custom application fields, autocomplete="off" is a safe choice if a more specific token isn't applicable, as it still satisfies the requirement of the attribute being present.
+
+Here are the suggested changes:
+
+1. FilterSearch.jsx
+
+To handle potential id conflicts when FilterSearch is used multiple times on a page, we'll add an idPrefix prop.
+
+FilterSearch.jsx
+-4
++6
+import React, { useState, useEffect } from "react";
+import "../css/FilterSearch.css"; // Importa il file CSS
+
+function FilterSearch({ fields, onSearch, onResults }) {
+function FilterSearch({ fields, onSearch, onResults, idPrefix = "filter" }) { // Added idPrefix prop
+  const [filters, setFilters] = useState({
+    idart: "",
+    idcau: "",
+      <div className="filter-search-fields-wrapper">
+        {fields.map(field => (
+          <div key={field.name} className="filter-search-field">
+            {field.label && <label htmlFor={field.name}>{field.label}</label>}
+            {field.label && <label htmlFor={`${idPrefix}-${field.name}`}>{field.label}</label>}
+            {field.type === 'select' ? (
+              <select
+                id={field.name}
+                id={`${idPrefix}-${field.name}`}
+                name={field.name}
+                value={filters[field.name] || ''}
+                onChange={(e) => setFilters({ ...filters, [field.name]: e.target.value })}
+                disabled={loading || field.disabled}
+                autoComplete={field.autoComplete || "off"} // Added autocomplete
+              >
+                <option value="">{field.placeholder || `Seleziona ${field.label || field.name}`}</option>
+                {(field.options || []).map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                id={field.name}
+                id={`${idPrefix}-${field.name}`}
+                type={field.type || 'text'}
+                name={field.name}
+                placeholder={field.placeholder || field.label || field.name}
+                value={filters[field.name] || ''}
+                onChange={(e) => setFilters({ ...filters, [field.name]: e.target.value })}
+                disabled={loading || field.disabled}
+                autoComplete={field.autoComplete || "off"} // Added autocomplete
+              />
+            )}
+          </div>
+
+2. RicambiManagerDialog4.jsx
+
+We'll prefix ids for fields within DialogCustom and when using FilterSearch.
+
+RicambiManagerDialog4.jsx
+-12
++19
+The code change produced by Gemini cannot be automatically applied. You can manually apply the change or ask Gemini to try again.
+        isSubmitting={isSubmitting}
+      >
+        {/* These are the children: the specific fields of the Ricambio form */}
+        <label htmlFor="name">Nome:</label>
+        <label htmlFor="ricambiForm-name">Nome:</label>
+        <input
+          id="name"
+          id="ricambiForm-name"
+          type="text"
+          name="name"
+          placeholder="Nome"
+          value={formData.name}
+          onChange={handleChange}
+          autoComplete="off"
+        />
+        <label htmlFor="description">Descrizione:</label>
+        <label htmlFor="ricambiForm-description">Descrizione:</label>
+        <textarea
+          id="description"
+          id="ricambiForm-description"
+          name="description"
+          placeholder="Descrizione"
+          rows={3}
+          value={formData.description}
+          onChange={handleChange}
+          autoComplete="off"
+        />
+        <label htmlFor="quantita">Quantità:</label>
+        <label htmlFor="ricambiForm-quantita">Quantità:</label>
+        <input
+          id="quantita"
+          id="ricambiForm-quantita"
+          type="number"
+          name="quantita"
+          placeholder="Quantità"
+          value={formData.quantita}
+          onChange={handleChange}
+          autoComplete="off"
+        />
+        <label htmlFor="min">Quantità min:</label>
+        <label htmlFor="ricambiForm-min">Quantità min:</label>
+        <input
+          id="min"
+          id="ricambiForm-min"
+          type="number"
+          name="min"
+          placeholder="Minimo"
+          value={formData.min}
+          onChange={handleChange}
+          autoComplete="off"
+        />
+        <label htmlFor="max">Quantità max:</label>
+        <label htmlFor="ricambiForm-max">Quantità max:</label>
+        <input
+          id="max"
+          id="ricambiForm-max"
+          type="number"
+          name="max"
+          placeholder="Massimo"
+          value={formData.max}
+          onChange={handleChange}
+          autoComplete="off"
+        />
+        <label htmlFor="fornitore">Fornitore:</label>
+        <label htmlFor="ricambiForm-supplier">Fornitore:</label>
+        <input
+          id="fornitore"
+          id="ricambiForm-supplier" // Changed id to match name for consistency
+          type="text"
+          name="supplier"
+          placeholder="Fornitore"
+          value={formData.supplier}
+          onChange={handleChange}
+          autoComplete="organization"
+        />
+      </DialogCustom>
+
+        {showSearch && (
+          <FilterSearch
+            fields={ricambiFilterFields}
+            idPrefix="ricambiFilter" // Added idPrefix
+            onSearch={handleSearchRicambi}
+            onResults={handleFilterResultsRicambi}
+          />
+
+3. MovimentiForm.jsx
+
+Similar to RicambiManagerDialog4.jsx, we'll prefix ids.
+
+MovimentiForm.jsx
+-13
++19
+      isSubmitting={isSubmitting} // Passa lo stato di sottomissione
+    >
+      {/* Questi sono i children: i campi specifici del form Movimento */}
+      {/* Notare che le select, le label e la logica disabled rimangono qui */}
+      <label htmlFor="idart">Articolo:</label>
+      <label htmlFor="movimentiForm-idart">Articolo:</label>
+      <select
+        id="idart"
+        id="movimentiForm-idart"
+        name="idart"
+        value={dialogFormData.idart || ""}
+        onChange={handleDialogChange} // L'handler onChange rimane nel componente padre
+        required
+        disabled={loadingArticoli || isSubmitting || (isEditing && !dialogFormData.idart)}
+        autoComplete="off"
+      >
+        <option value="">-- Seleziona Articolo --</option>
+        {loadingArticoli ? (
+          <option disabled>Caricamento articoli...</option>
+        ) : (
+          articoliList.map((art) => (
+            <option key={art.id} value={art.id}>
+              {art.name} (ID: {art.id})
+            </option>
+          ))
+        )}
+      </select>
+
+      <label htmlFor="idcau">Causale:</label>
+      <label htmlFor="movimentiForm-idcau">Causale:</label>
+      <select
+        id="idcau"
+        id="movimentiForm-idcau"
+        name="idcau"
+        value={dialogFormData.idcau || ""}
+        onChange={handleDialogChange}
+        required
+        disabled={loadingCausali || isSubmitting || (isEditing && !dialogFormData.idcau)}
+        autoComplete="off"
+      >
+        <option value="">-- Seleziona Causale --</option>
+        {loadingCausali ? (
+          <option disabled>Caricamento causali...</option>
+        ) : (
+          causaliList.map((cau) => (
+            <option key={cau.id} value={cau.id}>
+              {cau.codice} - {cau.description} (ID: {cau.id})
+            </option>
+          ))
+        )}
+      </select>
+
+      <label htmlFor="data">Data Movimento:</label>
+      <label htmlFor="movimentiForm-data">Data Movimento:</label>
+      <input
+        id="data"
+        id="movimentiForm-data"
+        type="date"
+        name="data"
+        value={dialogFormData.data || ""}
+        onChange={handleDialogChange}
+        required
+        disabled={isSubmitting}
+        autoComplete="off"
+      />
+
+      <label htmlFor="quantita">Quantità:</label>
+      <label htmlFor="movimentiForm-quantita">Quantità:</label>
+      <input
+        id="quantita"
+        id="movimentiForm-quantita"
+        type="number"
+        name="quantita"
+        placeholder="Quantità"
+        value={dialogFormData.quantita || ""}
+        onChange={handleDialogChange}
+        required
+        min="1"
+        disabled={isSubmitting || (isEditing && typeof dialogFormData.quantita !== "undefined")}
+        autoComplete="off"
+      />
+
+      <label htmlFor="tipo">Tipo Movimento:</label>
+      <label htmlFor="movimentiForm-tipo">Tipo Movimento:</label>
+      <select
+        id="tipo"
+        id="movimentiForm-tipo"
+        name="tipo"
+        value={dialogFormData.tipo || ""}
+        onChange={handleDialogChange}
+        required
+        disabled={isSubmitting || (isEditing && dialogFormData.tipo)}
+        autoComplete="off"
+      >
+        <option value="">-- Seleziona Tipo --</option>
+        <option value="C">C</option>
+        <option value="S">S</option>
+      </select>
+
+      <label htmlFor="note">Note:</label>
+      <label htmlFor="movimentiForm-note">Note:</label>
+      <textarea
+        id="note"
+        id="movimentiForm-note"
+        name="note"
+        placeholder="Note aggiuntive"
+        rows={3}
+        value={dialogFormData.note || ""}
+        onChange={handleDialogChange}
+        disabled={isSubmitting}
+        autoComplete="off"
+      />
+    </DialogCustom>     
+        {/*<MovimentiDialogCustom
+        (
+        <FilterSearch
+          fields={movimentiFilterFields} // Pass the defined fields
+          idPrefix="movimentiFilter" // Added idPrefix
+          onSearch={handleSearchMovimenti} // Pass the search handler function
+          onResults={handleFilterResults} // Pass the results handler
+        ></FilterSearch>
+
+4. RicambiDialogCustom.jsx
+
+This component was missing id attributes and labels.
+
+RicambiDialogCustom.jsx
+-6
++24
+      >
+        <h2>{isEditing ? "Modifica Ricambio" : "Nuovo Ricambio"}</h2>
+
+        <label htmlFor="ricambiDialog-name">Nome:</label>
+        <input
+          id="ricambiDialog-name"
+          type="text"
+          name="name"
+          placeholder="Nome"
+          value={formData.name}
+          onChange={onChange}
+          autoComplete="off"
+        />
+        <label htmlFor="ricambiDialog-description">Descrizione:</label>
+        <textarea
+          id="ricambiDialog-description"
+          name="description"
+          placeholder="Descrizione"
+          rows={3}
+          value={formData.description}
+          onChange={onChange}
+          autoComplete="off"
+        />
+        <label htmlFor="ricambiDialog-quantita">Quantità:</label>
+        <input
+          id="ricambiDialog-quantita"
+          type="number"
+          name="quantita"
+          placeholder="Quantità"
+          value={formData.quantita}
+          onChange={onChange}
+          autoComplete="off"
+        />
+        <label htmlFor="ricambiDialog-min">Minimo:</label>
+        <input
+          id="ricambiDialog-min"
+          type="number"
+          name="min"
+          placeholder="Minimo"
+          value={formData.min}
+          onChange={onChange}
+          autoComplete="off"
+        />
+        <label htmlFor="ricambiDialog-max">Massimo:</label>
+        <input
+          id="ricambiDialog-max"
+          type="number"
+          name="max"
+          placeholder="Massimo"
+          value={formData.max}
+          onChange={onChange}
+          autoComplete="off"
+        />
+        <input 
+        type="text"
+        name="supplier"
+        placeholder="Fornitore"
+        value={formData.supplier}
+        onChange={onChange}
+        <label htmlFor="ricambiDialog-supplier">Fornitore:</label>
+        <input
+          id="ricambiDialog-supplier"
+          type="text"
+          name="supplier"
+          placeholder="Fornitore"
+          value={formData.supplier}
+          onChange={onChange}
+          autoComplete="organization"
+        />
+
+        <div className="ricambi-dialog-actions">
+
+5. MovimentiDialogCustom.jsx
+
+Prefix ids and add autocomplete.
+
+MovimentiDialogCustom.jsx
+-12
++18
+          {isEditing ? "Modifica Movimento" : "Nuovo Movimento"}
+        </h2>
+
+        <label htmlFor="idart">Articolo:</label>
+        <label htmlFor="movimentiDialog-idart">Articolo:</label>
+        <select
+          id="idart"
+          id="movimentiDialog-idart"
+          name="idart"
+          value={formData.idart || ""}
+          onChange={onChange}
+            isSubmitting ||
+            (isEditing && !formData.idart)
+          } // Non modificabile in edit se complesso
+          autoComplete="off"
+        >
+          <option value="">-- Seleziona Articolo --</option>
+          {loadingArticoli ? (
+          )}
+        </select>
+
+        <label htmlFor="idcau">Causale:</label>
+        <label htmlFor="movimentiDialog-idcau">Causale:</label>
+        <select
+          id="idcau"
+          id="movimentiDialog-idcau"
+          name="idcau"
+          value={formData.idcau || ""}
+          onChange={onChange}
+            isSubmitting ||
+            (isEditing && !formData.idcau)
+          } // Non modificabile in edit se complesso
+          autoComplete="off"
+        >
+          <option value="">-- Seleziona Causale --</option>
+          {loadingCausali ? (
+          )}
+        </select>
+
+        <label htmlFor="data">Data Movimento:</label>
+        <label htmlFor="movimentiDialog-data">Data Movimento:</label>
+        <input
+          id="data"
+          id="movimentiDialog-data"
+          type="date"
+          name="data"
+          value={formData.data || ""}
+          onChange={onChange}
+          required
+          disabled={isSubmitting}
+          autoComplete="off"
+        />
+
+        <label htmlFor="quantita">Quantità:</label>
+        <label htmlFor="movimentiDialog-quantita">Quantità:</label>
+        <input
+          id="quantita"
+          id="movimentiDialog-quantita"
+          type="number"
+          name="quantita"
+          placeholder="Quantità"
+          value={formData.quantita || ""}
+          onChange={onChange}
+          required
+          min="1"
+          disabled={
+            isSubmitting ||
+            (isEditing && typeof formData.quantita !== "undefined")
+          } // Non modificabile in edit se complesso
+          autoComplete="off"
+        />
+
+        <label htmlFor="tipo">Tipo Movimento:</label>
+        <label htmlFor="movimentiDialog-tipo">Tipo Movimento:</label>
+        <select
+          id="tipo"
+          id="movimentiDialog-tipo"
+          name="tipo"
+          value={formData.tipo || ""}
+          onChange={onChange}
+          required
+          disabled={isSubmitting || (isEditing && formData.tipo)} // Non modificabile in edit se complesso
+          autoComplete="off"
+        >
+          <option value="">-- Seleziona Tipo --</option>
+          <option value="C">C</option>
+          <option value="S">S</option>
+        </select>
+
+        <label htmlFor="note">Note:</label>
+        <label htmlFor="movimentiDialog-note">Note:</label>
+        <textarea
+          id="note"
+          id="movimentiDialog-note"
+          name="note"
+          placeholder="Note aggiuntive"
+          rows={3}
+          value={formData.note || ""}
+          onChange={onChange}
+          disabled={isSubmitting}
+          autoComplete="off"
+        />
+
+        <div className="ricambi-dialog-actions">
+
+6. CausaliDialog.jsx
+
+Add ids, labels, autocomplete, and fix type attribute.
+
+CausaliDialog.jsx
+-2
++11
+      >
+        <h2>{isEditing ? "Modifica Causale" : "Nuovo Causale"}</h2>
+
+        <label htmlFor="causaliDialog-codice">Codice:</label>
+        <input
+          id="causaliDialog-codice"
+          type="text"
+          name="codice"
+          placeholder="Codice"
+          value={formData.codice}
+          onChange={onChange}
+          autoComplete="off"
+        />
+        <label htmlFor="causaliDialog-description">Descrizione:</label>
+        <textarea
+          id="causaliDialog-description"
+          name="description"
+          placeholder="Descrizione"
+          rows={3}
+          value={formData.description}
+          onChange={onChange}
+          autoComplete="off"
+        />
+        <label htmlFor="causaliDialog-tipo">Tipo:</label>
+        <input
+          type="tipo"
+          name="Tipo"
+          id="causaliDialog-tipo"
+          type="text" // Corrected: type="text" instead of "tipo"
+          name="tipo" // Corrected: name="tipo" instead of "Tipo"
+          placeholder="Tipo"
+          value={formData.tipo}
+          onChange={onChange}
+          autoComplete="off"
+        />
+
+        <div className="causali-dialog-actions">
+
+General Recommendations:
+
+Unique IDs: Always ensure id attributes are unique across your entire rendered page. Using a prefix related to the form's context (e.g., ricambiForm-, movimentiFilter-) is a good strategy.
+Labels: Every form input should have an associated <label> with a htmlFor attribute that matches the input's id.
+name Attribute: While React often manages state internally, name attributes are crucial for native form behavior, accessibility, and sometimes for server-side processing if you weren't using client-side API calls. It's good practice to include them and have them match the piece of state they control.
+autocomplete Attribute: Add this to all your input fields. Use specific values like name, email, street-address, postal-code, cc-number, etc., where appropriate. For fields that don't map to standard autocomplete tokens or where autofill is not desired, use autocomplete="off". This still satisfies the requirement of the attribute being present.
+By applying these changes, you should resolve the reported issues, leading to more robust and accessible forms. Remember to test thoroughly after making these modifications.
+
+Context Sources (51)
+
+User
+ora implementiamo il componente DistintaBaseManager in RicambiManagerDialog4.jsx
+
+Selected text
+: 1 lines selected
+
+Gemini
+Okay, let's integrate the DistintaBaseManager component into RicambiManagerDialog4.jsx. The approach will be to add a new view mode to RicambiManagerDialog4.jsx. When a user selects a single "ricambio" (part) and clicks a "Manage BOM" (Gestisci Distinta Base) button, the view will switch to display the DistintaBaseManager for that selected part.
+
+Here's how we'll proceed:
+
+Modify RicambiManagerDialog4.jsx:
+
+Add state to manage the current view (ricambi or diba) and to store the selected "ricambio" for which the Bill of Materials (BOM) will be managed.
+Add a function to handle switching to the BOM management view.
+Update the Header component to include a "Manage BOM" button.
+Conditionally render either the ricambi list or the DistintaBaseManager component.
+Modify DistintaBaseManager.jsx:
+
+Accept ricambioPadre (the parent part) and an onBack function as props.
+Use ricambioPadre.id to fetch and display the BOM specific to that part.
+Pre-fill the id_father field when adding new BOM items.
+Add a "Back" button to return to the ricambi list view.
+Correct some existing typos and inconsistencies within DistintaBaseManager.jsx.
+Assumptions for dibaApi.js (not provided, but necessary for full functionality):
+
+You will need a dibaApi.js file.
+This API module should have a method like fetchByParentId(parentId) that makes a GET request to an endpoint like /api/diba?id_father=${parentId}.
+The backend API for /api/diba must support filtering by id_father.
+Let's start with the code changes.
+
+RicambiManagerDialog4.jsx
+-128
++165
+The code change produced by Gemini cannot be automatically applied. You can manually apply the change or ask Gemini to try again.
+import Header from "./Header";
+import ricambiApi from "../api/ricambiApi";
+import TableGrid from "./TableGrid"; // Importa il nuovo componente TableGrid
+import DistintaBaseManager from "./DistinaBaseManager"; // Importa DistintaBaseManager
+
+const API_BASE = "http://localhost:3001/api/ricambi";
+
+  const [sortKey, setSortKey] = useState("name");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [showSearch, setShowSearch] = useState(false); // Stato per il panello di ricerca
+  const [viewMode, setViewMode] = useState("ricambi"); // 'ricambi' o 'diba'
+  const [currentRicambioForBOM, setCurrentRicambioForBOM] = useState(null);
+
+  const toggleSort = (key) => {
+    if (key === sortKey) {
+    }
+  };
+
+  const handleManageBOM = () => {
+    if (selectedIds.length !== 1) {
+      alert("Seleziona un singolo ricambio per gestirne la distinta base.");
+      return;
+    }
+    const ricambioSelected = ricambi.find(r => r.id === selectedIds[0]);
+    if (ricambioSelected) {
+      setCurrentRicambioForBOM(ricambioSelected);
+      setViewMode("diba");
+    } else {
+      alert("Ricambio selezionato non trovato.");
+    }
+  };
+
+
+  return (
+    <>
+            console.log("[Header onDelete] Deletion cancelled by user.");
+          }
+        }}
+        onManageBOM={viewMode === "ricambi" ? handleManageBOM : undefined} // Passa la nuova funzione
+        isBOMButtonEnabled={selectedIds.length === 1 && viewMode === "ricambi"} // Condizione per abilitare il pulsante BOM
+      />
+
+      <div className="container">
+        <h1>Ricambi Manager</h1>
+        {showSearch && (
+          <FilterSearch
+            fields={ricambiFilterFields}
+            onSearch={handleSearchRicambi}
+            onResults={handleFilterResultsRicambi}
+          />
+        )}
+        {message && <div className="message-info">{message}</div>}
+
+        <div className="table-wrapper">
+          <TableGrid
+            columns={tableColumns}
+            rows={currentTableData}
+            selectedIds={selectedIds}
+            onRowSelectionChange={(id, checked) => {
+              if (checked) {
+                setSelectedIds((prev) => [...prev, id]);
+              } else {
+                setSelectedIds((prev) => prev.filter((selId) => selId !== id));
+              }
+            }}
+            areAllCurrentPageRowsSelected={areAllCurrentPageRowsSelected}
+            onSelectAllCurrentPageRowsChange={handleSelectAllCurrentPageRowsChange}
+            sortKey={sortKey}
+            sortOrder={sortOrder}
+            onSort={toggleSort}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            loading={loading}
+            onClearAllSelections={() => setSelectedIds([])}
+            areAnyRowsSelected={selectedIds.length > 0}
+          />
+        </div>
+
+      <div className="pagination-bar">
+        <Pagination
+            currentPage={page + 1}
+            totalCount={ricambi.length}
+            pageSize={rowsPerPage}
+            onPageChange={(newPage) => setPage(newPage - 1)}
+        />
+
+        <label>
+            Elementi per pagina:&nbsp;
+          <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              disabled={loading}
+          >
+              {rowsPerPageOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+          </select>
+        </label>
+      </div>
+      <DialogCustom
+        open={formVisible}
+        onClose={() => setFormVisible(false)}
+        onSubmit={handleSubmit} // La logica di submit rimane nel componente padre
+        title={isEditing ? "Modifica Articolo" : "Nuovo Articolo"}
+        submitButtonText={isSubmitting ? "Salvataggio..." : isEditing ? "Aggiorna Articolo" : "Salva Articolo"}
+        isSubmitting={isSubmitting} // Passa lo stato di sottomissione
+      >
+        {/* Questi sono i children: i campi specifici del form Ricambio */}
+        <label htmlFor="name">Nome:</label>
+        <input
+          id="name"
+          type="text"
+          name="name"
+          placeholder="Nome"
+          value={formData.name}
+          onChange={handleChange} // L'handler onChange rimane nel componente padre
+        />
+        <label htmlFor="description">Descrizione:</label>
+        <textarea
+          id="description"
+          name="description"
+          placeholder="Descrizione"
+          rows={3}
+          value={formData.description}
+          onChange={handleChange}
+        />
+        <label htmlFor="quantita">Quantità:</label>
+        <input
+          id="quantita"
+          type="number"
+          name="quantita"
+          placeholder="Quantità"
+          value={formData.quantita}
+          onChange={handleChange}
+        />
+        <label htmlFor="min">Quantità min:</label>
+        <input
+          id="min"
+          type="number"
+          name="min"
+          placeholder="Minimo"
+          value={formData.min}
+          onChange={handleChange}
+        />
+        <label htmlFor="max">Quantità max:</label>
+        <input
+          id="max"
+          type="number"
+          name="max"
+          placeholder="Massimo"
+          value={formData.max}
+          onChange={handleChange}
+        />
+        <label htmlFor="fornitore">Fornitore:</label>
+        <input
+          id="fornitore"
+          type="text"
+          name="supplier"
+          placeholder="Fornitore"
+          value={formData.supplier}
+          onChange={handleChange}
+        />
+      </DialogCustom>
+
+      </div>
+      {viewMode === "ricambi" && (
+        <div className="container">
+          <h1>Ricambi Manager</h1>
+          {showSearch && (
+            <FilterSearch
+              fields={ricambiFilterFields}
+              idPrefix="ricambiFilter"
+              onSearch={handleSearchRicambi}
+              onResults={handleFilterResultsRicambi}
+            />
+          )}
+          {message && <div className="message-info">{message}</div>}
+
+          <div className="table-wrapper">
+            <TableGrid
+              columns={tableColumns}
+              rows={currentTableData}
+              selectedIds={selectedIds}
+              onRowSelectionChange={(id, checked) => {
+                if (checked) {
+                  setSelectedIds((prev) => [...prev, id]);
+                } else {
+                  setSelectedIds((prev) => prev.filter((selId) => selId !== id));
+                }
+              }}
+              areAllCurrentPageRowsSelected={areAllCurrentPageRowsSelected}
+              onSelectAllCurrentPageRowsChange={handleSelectAllCurrentPageRowsChange}
+              sortKey={sortKey}
+              sortOrder={sortOrder}
+              onSort={toggleSort}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              loading={loading}
+              onClearAllSelections={() => setSelectedIds([])}
+              areAnyRowsSelected={selectedIds.length > 0}
+            />
+          </div>
+
+          <div className="pagination-bar">
+            <Pagination
+                currentPage={page + 1}
+                totalCount={ricambi.length}
+                pageSize={rowsPerPage}
+                onPageChange={(newPage) => setPage(newPage - 1)}
+            />
+
+            <label>
+                Elementi per pagina:&nbsp;
+              <select
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                  }}
+                  disabled={loading}
+              >
+                  {rowsPerPageOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          </div>
+          <DialogCustom
+            open={formVisible}
+            onClose={() => setFormVisible(false)}
+            onSubmit={handleSubmit}
+            title={isEditing ? "Modifica Articolo" : "Nuovo Articolo"}
+            submitButtonText={isSubmitting ? "Salvataggio..." : isEditing ? "Aggiorna Articolo" : "Salva Articolo"}
+            isSubmitting={isSubmitting}
+          >
+            <label htmlFor="ricambiForm-name">Nome:</label>
+            <input
+              id="ricambiForm-name"
+              type="text"
+              name="name"
+              placeholder="Nome"
+              value={formData.name}
+              onChange={handleChange}
+              autoComplete="off"
+            />
+            <label htmlFor="ricambiForm-description">Descrizione:</label>
+            <textarea
+              id="ricambiForm-description"
+              name="description"
+              placeholder="Descrizione"
+              rows={3}
+              value={formData.description}
+              onChange={handleChange}
+              autoComplete="off"
+            />
+            <label htmlFor="ricambiForm-quantita">Quantità:</label>
+            <input
+              id="ricambiForm-quantita"
+              type="number"
+              name="quantita"
+              placeholder="Quantità"
+              value={formData.quantita}
+              onChange={handleChange}
+              autoComplete="off"
+            />
+            <label htmlFor="ricambiForm-min">Quantità min:</label>
+            <input
+              id="ricambiForm-min"
+              type="number"
+              name="min"
+              placeholder="Minimo"
+              value={formData.min}
+              onChange={handleChange}
+              autoComplete="off"
+            />
+            <label htmlFor="ricambiForm-max">Quantità max:</label>
+            <input
+              id="ricambiForm-max"
+              type="number"
+              name="max"
+              placeholder="Massimo"
+              value={formData.max}
+              onChange={handleChange}
+              autoComplete="off"
+            />
+            <label htmlFor="ricambiForm-supplier">Fornitore:</label>
+            <input
+              id="ricambiForm-supplier"
+              type="text"
+              name="supplier"
+              placeholder="Fornitore"
+              value={formData.supplier}
+              onChange={handleChange}
+              autoComplete="organization"
+            />
+          </DialogCustom>
+        </div>
+      )}
+
+      {viewMode === "diba" && currentRicambioForBOM && (
+        <DistintaBaseManager
+          ricambioPadre={currentRicambioForBOM}
+          onBack={() => {
+            setViewMode("ricambi");
+            setCurrentRicambioForBOM(null);
+            setSelectedIds([]); // Deseleziona per evitare confusione
+          }}
+        />
+      )}
+    </>
+  );
+}
+DistinaBaseManager.jsx
+-53
++100
+The code change produced by Gemini cannot be automatically applied. You can manually apply the change or ask Gemini to try again.
+//==============================================
+
+import React, { useDebugValue, useState } from 'react';
+import { useEffect, useMemo, useCallback } from 'react'; // Aggiunto useCallback, useEffect, useMemo
+import TableGrid from './TableGrid';
+import DialogCustom from './DialogCustom';
+import Pagination from './Pagination1';
+import Header from './Header';
+import "../css/RicambiManager.css"
+// import dibaApi from '../api/dibaApi'; // Assicurati che esista e sia configurato
+
+const rowsPagePageOptions = [ 5, 10, 20 ,50];
+
+  const [diba, setDiBa] = useState([]);
+  const [formVisible, setFormVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    id: "",
+    id_father:"",
+    id_son:"",
+    quantita:"",
+    id_father: ricambioPadre ? ricambioPadre.id : "", // Pre-fill if ricambioPadre is provided
+    id_son: "",
+    quantita: "",
+  });
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [Loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(false);
+  const [loading, setLoading] = useState(false); // Corretto nome variabile
+  const [message, setMessage] = useState(""); // Inizializzato a stringa
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [sortKey, setSortKey] = useState("name");
+
+const fetchDiBa = useCallback(async () => {
+    try {
+      setLoading(true); // Imposta loading a true all'inizio
+      setLoading(true);
+      setMessage(""); // Resetta il messaggio
+      const responseData = await dibaApi.fetchAll(); // fetchAll non necessita di argomenti
+
+      let responseData;
+      // Assumendo che dibaApi esista e abbia fetchByParentId o fetchAll
+      // if (ricambioPadre && ricambioPadre.id && dibaApi.fetchByParentId) {
+      //   responseData = await dibaApi.fetchByParentId(ricambioPadre.id);
+      // } else if (dibaApi.fetchAll) {
+      //   responseData = await dibaApi.fetchAll();
+      // } else {
+      //   throw new Error("Funzione API per caricare la distinta base non trovata.");
+      // }
+      // --- SIMULAZIONE DATI API IN ATTESA DI dibaApi.js ---
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simula ritardo API
+      if (ricambioPadre && ricambioPadre.id) {
+        // Simula dati filtrati per il padre
+        responseData = { success: true, data: [
+          { id: 1, id_father: ricambioPadre.id, id_son: 101, quantita: 2, name_son: "Componente A" },
+          { id: 2, id_father: ricambioPadre.id, id_son: 102, quantita: 5, name_son: "Componente B" },
+        ]};
+      } else {
+        responseData = { success: true, data: [] }; // Nessun dato se non c'è padre (o mostra tutti se preferito)
+      }
+      // --- FINE SIMULAZIONE ---
+      // La tua dibaApi.js ritorna direttamente response.data
+      // Se il backend invia { success: true, data: [...] }
+      // allora responseData sarà quell'oggetto.
+      // quindi 'responseData' è ciò che il server invia nel corpo della risposta.
+      // Se il server invia { success: true, data: [...] }, allora la logica qui è corretta.
+      // Se il server invia solo l'array [...], allora dovresti controllare Array.isArray(responseData)
+      if (!responseData || !Array.isArray(responseData.data)) { // Adattato per la struttura comune
+      if (!responseData || responseData.success !== true || !Array.isArray(responseData.data)) { // Adattato per la struttura comune
+        console.warn("Risposta non valida del server o dati mancanti:", responseData);
+        setMessage("⚠️ Dati delle diba non validi o mancanti.");
+        setDiBa([]);
+        return;
+      }
+      const cleanDiBa = responseData.data.map((item) => ({ // Usa responseData.data
+        id: Number(item.id), // Assicurati di includere l'ID
+        id: Number(item.id),
+        id_father: Number(item.id_father),
+        id_son: Number(item.id_son),
+        quantiita: Number(item.quantita),
+        quantita: Number(item.quantita), // Corretto typo: quantiita -> quantita
+        name_son: String(item.name_son || `Articolo ID: ${item.id_son}`) // Aggiunto per visualizzazione
+      }));
+      setDiBa(cleanDiBa,);
+    } catch (err) {
+      console.error("Errore nel caricamento delle diba:", err);
+      setMessage(`❌ Errore caricamento diba: ${err.message || "Errore sconosciuto"}`);
+      setDiBa([]); // Resetta in caso di errore
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Rimosso punto e virgola extra
+  }, [ricambioPadre]); // Aggiunta dipendenza ricambioPadre
+
+  useEffect(() => {
+    fetchDiBa();
+  }, [page, rowsPerPage, sortedDiBa]);
+
+  const handleNew = useCallback(() => {
+    setFormData({ id: null, id_father: null, id_son: null, quantita: null }); // ID a null per nuovi record
+    setFormData({
+      id: null,
+      id_father: ricambioPadre ? ricambioPadre.id : "", // Pre-fill con ID del padre
+      id_son: "",
+      quantita: "" });
+    setIsEditing(false);
+    setFormVisible(true);
+    setMessage("");
+
+  const handleSubmit = useCallback(async () => { // e.preventDefault() non serve se il bottone non è type="submit" in un form
+
+    if (!formData.id_father || !formData.id_son || !formData.quantita) {
+      setMessage("⚠️ Compila tutti i campi obbligatori (Articolo Figlio, Quantità). L'articolo Padre è preimpostato.");
+      return;
+    }
+    setIsSubmitting(true);
+    setLoading(true); // Potrebbe essere utile anche qui
+    setMessage("Salvataggio in corso...");
+      let response;
+      if (isEditing) {
+        response = await 
+        
+        dibaApi.update(formData.id, formData);
+        // dibaApi.update(formData.id, formData); // Sostituire con chiamata API reale
+        new Promise(res => setTimeout(() => res({success: true}), 500)); // Simulazione
+      } else {
+        response = await dibaApi.insert(formData);
+        // dibaApi.insert(formData); // Sostituire con chiamata API reale
+        response = await new Promise(res => setTimeout(() => res({success: true, id: Math.random()}), 500)); // Simulazione
+      }
+
+      // Assumendo che l'API restituisca un oggetto con { success: true/false, message: "..." }
+      // o che lanci un errore gestito da dibaApi.js
+      setMessage(isEditing ? "✅ diba aggiornata con successo!" : "✅ diba creata con successo!");
+      fetchDiBa();
+      setFormData({ id: null, id_father: null, id_son: null, quantita: null, });
+      setFormData({ id: null,
+        id_father: ricambioPadre ? ricambioPadre.id : "",
+        id_son: "",
+        quantita: "" });
+      setIsEditing(false);
+      setFormVisible(false);
+    } catch (err) {
+      setIsSubmitting(false);
+      setLoading(false);
+    }
+  }, [fetchDiBa, formData, isEditing]);
+  }, [fetchDiBa, formData, isEditing, ricambioPadre]);
+
+  const handleEdit = useCallback((diba) => {
+    setFormData({
+      return;
+    setLoading(true); // Imposta loading per feedback visivo
+    setMessage("Eliminazione in corso...");
+    try {
+      await dibaApi.delete(id); // Passa solo l'ID
+      // await dibaApi.delete(id); // Sostituire con chiamata API reale
+      await new Promise(res => setTimeout(() => res({success: true}), 500)); // Simulazione
+      setMessage("✅ Distinta base eliminata con successo!");
+      fetchBooom();
+      fetchDiBa(); // Corretto typo
+      setSelectedIds(prev => prev.filter(selId => selId !== id)); // Rimuovi l'ID selezionato
+    } catch (err)      console.error("Errore nell'eliminazione della distinta:", err);
+
+  const tableColumns = useMemo(() => [
+  { key: "id", label: "ID Riga", cellClassName: "text-center" },
+  { key: "id_father" , label: "Articolo padre" , cellClassName: "tex-left" },
+  { key: "id_son", label: "Articolo figlio", cellClassName: "text-left" },
+  { key: "quamtita", label: "Quantita", cellClassName: "text-left" }
+  // { key: "id_father" , label: "ID Art. Padre" , cellClassName: "text-left" }, // Nascosto se sempre lo stesso
+  { key: "id_son", label: "ID Art. Figlio", cellClassName: "text-left" },
+  { key: "name_son", label: "Nome Art. Figlio", cellClassName: "text-left" }, // Aggiunto per leggibilità
+  { key: "quantita", label: "Quantità", cellClassName: "text-right" } // Corretto typo e allineamento
+] , []);
+
+return (
+  <>
+  <Header
+    title={`Distinta Base per: ${ricambioPadre ? ricambioPadre.name : 'N/A'} (ID: ${ricambioPadre ? ricambioPadre.id : 'N/A'})`}
+    onAdd = {handleNew}
+    onEdit={() => {
+      console.log("[Header onEdit] Triggered. Current selectedIds:", selectedIds);
+        console.log("[Header onEdit] Multiple items selected for single edit:", selectedIds.length);
+        return;
+      }
+        const itemToEdit = causali.find((r) => r.id === selectedIds[0]);
+        const itemToEdit = diba.find((r) => r.id === selectedIds[0]); // Usa 'diba' state
+      if (itemToEdit) {
+        console.log("[Header onEdit] Item to edit found:", itemToEdit);
+        handleEdit(itemToEdit);
+        console.log("[Header onDelete] Deletion cancelled by user.");
+      }
+    }}
+    showBackButton={true} // Aggiunta prop per mostrare il pulsante Indietro
+    onBack={onBack} // Funzione per tornare indietro
+    />
+
+
+    <div className="container">
+        <h1>Distinta Base Manager</h1>
+        {/* 
+          Il titolo ora è gestito dall'Header, 
+          ma puoi tenerlo se preferisci un titolo statico qui sotto l'header.
+          <h1>Gestione Distinta Base per: {ricambioPadre ? ricambioPadre.name : 'N/A'}</h1>
+        */}
+        {message && (
+          <div
+            className={`message-info ${
+      
+      <div className="pagination-bar">
+        <Pagination
+            currentPage={page + 1}
+            totalCount={causali.length}
+            currentPage={page + 1} // Corretto: usa diba.length
+            totalCount={diba.length}
+            pageSize={rowsPerPage}
+            onPageChange={(newPage) => setPage(newPage - 1)}
+        />
+            <DialogCustom 
+                open={formVisible}
+                onClose={() => setFormVisible(false)}
+                onSubmit={handleSubmit}
+                title={isEditing ? "Modifica Causale" : "Nuova Causale"}
+                submitButtonText={isSubmitting ? "Salvataggio..." : isEditing ? "Aggiorna Causale" : "Salva Causale"}
+                title={isEditing ? "Modifica Componente Distinta" : "Nuovo Componente Distinta"} // Titolo corretto
+                submitButtonText={isSubmitting ? "Salvataggio..." : isEditing ? "Aggiorna Componente" : "Salva Componente"} // Testo bottone corretto
+                isSubmitting={isSubmitting}
+              >
+                <label htmlFor="id">id:</label>
+                {/* ID è auto-generato, non serve nel form di inserimento/modifica manuale se non per display */}
+                {isEditing && formData.id && (
+                  <>
+                    <label htmlFor="dibaForm-id">ID Riga Distinta:</label>
+                    <input id="dibaForm-id" type="text" name="id" value={formData.id} readOnly disabled />
+                  </>
+                )}
+                <label htmlFor="dibaForm-id_father">Articolo Padre (ID):</label>
+                <input
+                  id="id"
+                  type="number"
+                  id="dibaForm-id_father"
+                  type="text" // o number se preferisci, ma sarà disabilitato
+                  name="id_father"
+                  placeholder="id"
+                  value={formData.id}
+                 onChange={handleChange}
+                  value={formData.id_father}
+                  readOnly // L'ID del padre è determinato dal contesto
+                  disabled
+                  autoComplete="off"
+                />
+                <label htmlFor="id_father">codice articolo padre:</label>
+                <label htmlFor="dibaForm-id_son">Articolo Figlio (ID):</label>
+                <input
+                  id="id_father"
+                  id="dibaForm-id_son"
+                  type="number"
+                  name="id_father"
+                  placeholder="codice articolo padre"
+                  value={formData.id_father}
+                 onChange={handleChange}
+                />
+                <label htmlFor="id_son">codice articolo figlio:</label>
+                <input
+                  id="id_son"
+                  type="number"
+                  name="id_son"
+                  placeholder="codice articolo figlio"
+                  placeholder="ID Articolo Componente"
+                  value={formData.id_son}
+                 onChange={handleChange}
+                  onChange={handleChange}
+                  required
+                  autoComplete="off"
+                /> 
+                <label htmlFor="quantita">Quantita</label>
+                <label htmlFor="dibaForm-quantita">Quantità Componente:</label>
+                <input
+                  id="quantita"
+                  type="numberr"
+                  id="dibaForm-quantita"
+                  type="number" // Corretto typo
+                  name="quantita"
+                  placeholder="Quantita"
+                  value={formData.tipo}
+                  placeholder="Quantità necessaria"
+                  value={formData.quantita} // Corretto: usa formData.quantita
+                  onChange={handleChange}
+                  required
+                  min="1"
+                  autoComplete="off"
+                 />  
+               </DialogCustom>
+             </div> 
+Use code with care. Learn more
+Spiegazione delle Modifiche:
+
+In RicambiManagerDialog4.jsx:
+
+Import DistintaBaseManager: Aggiunto l'import.
+Nuovi Stati:
+viewMode: Stringa che può essere 'ricambi' (default) o 'diba'.
+currentRicambioForBOM: Oggetto che memorizza i dati del "ricambio" selezionato per cui si vuole gestire la distinta base.
+handleManageBOM Function:
+Questa funzione viene chiamata quando si vuole passare alla gestione della distinta base.
+Controlla che sia selezionato un solo "ricambio".
+Trova l'oggetto "ricambio" completo.
+Imposta currentRicambioForBOM e cambia viewMode in 'diba'.
+Aggiornamento Header Props:
+onManageBOM: Passa la funzione handleManageBOM.
+isBOMButtonEnabled: Passa una condizione per abilitare il pulsante "Gestisci Distinta Base" solo se è selezionato un singolo ricambio e si è nella vista ricambi. (Dovrai modificare il tuo componente Header per includere questo nuovo pulsante e usare queste props).
+Conditional Rendering:
+Se viewMode === 'ricambi', viene renderizzata la normale interfaccia di gestione dei ricambi.
+Se viewMode === 'diba' e currentRicambioForBOM è impostato, viene renderizzato il componente <DistintaBaseManager />.
+ricambioPadre: Gli viene passato l'oggetto del ricambio selezionato.
+onBack: Una funzione per permettere a DistintaBaseManager di segnalare che si vuole tornare alla vista dei ricambi. Questa funzione resetta viewMode e currentRicambioForBOM.
+In DistinaBaseManager.jsx:
+
+Props:
+Accetta ricambioPadre (l'oggetto del ricambio di cui gestire la distinta base).
+Accetta onBack (la funzione da chiamare per tornare indietro).
+Correzioni Generali e Miglioramenti:
+Importati useEffect, useMemo, useCallback.
+Corretto il nome dello stato Loading in loading.
+Inizializzato message a "".
+Corretto fetchBooom() in fetchDiBa() in handleDelete.
+Corretto totalCount={causali.length} in totalCount={diba.length} nella Pagination.
+Corretti i titoli e i testi dei bottoni nel DialogCustom per riferirsi alla "Distinta Base" o "Componente" invece che "Causale".
+Corretto type="numberr" e value={formData.tipo} per l'input quantità nel DialogCustom.
+Utilizzo di ricambioPadre:
+fetchDiBa: Ora dipende da ricambioPadre. Se ricambioPadre è fornito, dovresti modificare questa funzione per chiamare un'API specifica (es. dibaApi.fetchByParentId(ricambioPadre.id)). Per ora, ho inserito una simulazione di dati API che filtra in base a ricambioPadre.id per permetterti di testare l'UI. Dovrai sostituire questa simulazione con la tua logica API reale.
+handleNew: Quando si crea un nuovo componente della distinta base, formData.id_father viene pre-impostato con ricambioPadre.id.
+handleSubmit: La logica di validazione e salvataggio dovrebbe considerare id_father.
+Titolo: L' Header ora mostra il nome e l'ID del ricambioPadre.
+Pulsante "Indietro":
+L'Header in DistintaBaseManager ora ha le props showBackButton={true} e onBack={onBack}. Dovrai modificare il tuo componente Header per renderizzare un pulsante "Indietro" quando showBackButton è true e chiamare onBack al click.
+Colonne Tabella: Aggiunta una colonna name_son per mostrare il nome del componente figlio (assumendo che l'API possa fornirlo, altrimenti mostrerà l'ID).
+Dialog Form:
+Il campo id_father nel DialogCustom è ora readOnly e disabled perché determinato dal ricambioPadre.
+Aggiunti id e autoComplete agli input del form.
+Prossimi Passi Cruciali:
+
+Modifica il tuo componente Header.jsx:
+Deve accettare e utilizzare le nuove props: onManageBOM, isBOMButtonEnabled, showBackButton, onBack, e title.
+Dovrà renderizzare un pulsante "Gestisci Distinta Base" (che chiama onManageBOM) e un pulsante "Indietro" (che chiama onBack) quando le rispettive props sono fornite.
+Implementa dibaApi.js:
+Crea questo file API.
+Implementa fetchAll() e, soprattutto, fetchByParentId(parentId) che interroghi il tuo backend per /api/diba?id_father=PARENT_ID.
+Implementa insert, update, delete per la distinta base.
+Backend per Distinta Base: Assicurati che il tuo server Express abbia le rotte e i controller per gestire le operazioni CRUD sulla distinta base, inclusa la possibilità di filtrare per id_father.
+Queste modifiche dovrebbero fornirti una buona base per l'integrazione richiesta. Ricorda di sostituire la logica API simulata in DistintaBaseManager.jsx con le tue chiamate API reali una volta che dibaApi.js e il backend sono pronti.
+
+External Sources (2)
+Context Sources (51)

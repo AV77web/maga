@@ -1,0 +1,236 @@
+User
+applica la possibilità di selezionare gli articoli con 1 click del mouse dalla tabella di RicambiDialogManager4.jsx
+
+
+Gemini
+Per abilitare la selezione delle righe con un singolo click del mouse nella tabella, è necessario modificare sia il componente che gestisce la logica di selezione (in questo caso, DistintaBaseManager.jsx come esempio, dato che RicambiDialogManager4.jsx non è fornito) sia il componente TableGrid stesso.
+
+Poiché il file TableGrid.jsx non è disponibile, ti mostrerò come preparare DistintaBaseManager.jsx per interagire con un TableGrid potenziato e descriverò le modifiche concettuali per TableGrid.jsx.
+
+Modifiche concettuali per TableGrid.jsx (ipotetico):
+
+Il componente TableGrid dovrebbe essere aggiornato per:
+
+Accettare una nuova prop, ad esempio onRowClick, che sarà una funzione chiamata con l'ID della riga cliccata.
+Aggiungere un gestore onClick all'elemento <tr> di ogni riga.
+All'interno del gestore onClick della riga, invocare props.onRowClick(row.id).
+È importante gestire la propagazione degli eventi: se la riga contiene altri elementi cliccabili (come checkbox o pulsanti di azione), il click su questi elementi non dovrebbe propagare e attivare anche il click della riga, a meno che non sia il comportamento desiderato. Questo si può ottenere con event.stopPropagation() sui gestori degli elementi interni o controllando event.target nel gestore onClick della riga.
+Ecco un esempio di come potrebbe apparire la modifica in un ipotetico TableGrid.jsx:
+
+javascriptreact
+// Ipotetico TableGrid.jsx
+// ...altre importazioni e codice...
+
+const TableGrid = ({
+  // ...altre props
+  rows,
+  selectedIds,
+  onRowSelectionChange,
+  onRowClick, // Nuova prop
+  // ...altre props
+}) => {
+  // ...
+  return (
+    <table>
+      {/* ... a_thead ... */}
+      <tbody>
+        {rows.map(row => (
+          <tr
+            key={row.id}
+            onClick={(e) => {
+              // Esempio per evitare di triggerare il click della riga se si clicca su un input o bottone
+              if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && onRowClick) {
+                onRowClick(row.id);
+              }
+            }}
+            style={{ cursor: onRowClick ? 'pointer' : 'default' }}
+          >
+            <td>
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(row.id)}
+                onChange={(e) => {
+                  // e.stopPropagation(); // Opzionale: previene il trigger del click della riga
+                  onRowSelectionChange(row.id, e.target.checked);
+                }}
+              />
+            </td>
+            {/* ...altre celle td... */}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+// ...altro codice...
+Modifiche per DistintaBaseManager.jsx:
+
+Verrà aggiunta una nuova funzione handleRowClick per gestire il click sulla riga e passata come prop a TableGrid. Ho anche rimosso un'importazione useDebugValue non utilizzata e corretto un piccolo typo in tableColumns.
+
+DistintaBaseManager.jsx
+-2
++16
+//@version: "1.0.0 2025-06-13"
+//==============================================
+
+import React, { useDebugValue, useState, useMemo,useEffect,useCallback } from 'react';
+import React, { useState, useMemo,useEffect,useCallback } from 'react';
+import TableGrid from './TableGrid';
+import DialogCustom from './DialogCustom';
+import Pagination from './Pagination1';
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  }, [ricambioPadre]);
+
+  // Nuovo: Gestore per il click sulla riga per selezionare/deselezionare
+  const handleRowClick = useCallback((rowId) => {
+    setSelectedIds((prevSelectedIds) => {
+      const newSelectedIds = new Set(prevSelectedIds);
+      if (newSelectedIds.has(rowId)) {
+        newSelectedIds.delete(rowId);
+      } else {
+        newSelectedIds.add(rowId);
+      }
+      return Array.from(newSelectedIds);
+    });
+  }, []);
+
+  const handleDelete = useCallback(async (idToDelete) => {
+    // Se idToDelete è un array (da Header), gestisci multipli. Altrimenti singolo.
+    const idsArray = Array.isArray(idToDelete) ? idToDelete : [idToDelete];
+    // { key: "id_father", label: "Articolo Padre ID", cellClassName: "text-left" }, // Nascosto se sempre uguale
+    { key: "id_son", label: "Articolo Figlio ID", cellClassName: "text-left" }, // TODO: Mostrare nome/descrizione
+    { key: "son_name", label: "Nome Art. Foglio", cellClassName: "text-left" },
+    { key: "son_description", label: "Descr. Art Figlio", cellClassName: "text-lefr" },
+    { key: "son_description", label: "Descr. Art Figlio", cellClassName: "text-left" },
+  ], []);
+
+return (
+            onSort={toggleSort}
+            onEdit={handleEdit}
+            onDelete={(id) => handleDelete([id])} // Azione per riga, passa come array
+            onRowClick={handleRowClick} // Passa il nuovo gestore a TableGrid
+            loading={loading}
+            onClearAllSelections={() => setSelectedIds([])}
+            areAnyRowsSelected={selectedIds.length > 0}
+
+Con queste modifiche, DistintaBaseManager.jsx è pronto per utilizzare un TableGrid che supporta la selezione tramite click sulla riga. La logica effettiva di cattura del click sulla <tr> e l'invocazione di onRowClick risiederebbe all'interno del componente TableGrid.jsx. Se RicambiDialogManager4.jsx utilizza una struttura simile con TableGrid, puoi applicare lo stesso pattern.
+
+ Revert to checkpoint
+Context Sources (12)
+
+User
+sia in movimenitForm.jsx che in DistintaBaseManager.jsx che in RicambiDialogManager4.jsx uso i componenti TableGrid.jsx TableHead.jsx e TableBody.jsx
+
+
+Gemini
+Certo! Per implementare la selezione degli articoli con un singolo click del mouse, dobbiamo modificare principalmente due componenti:
+
+RicambiTableBody.jsx: per aggiungere il gestore dell'evento onClick alla riga della tabella (<tr>).
+TableGrid.jsx: per passare la nuova prop onRowClick a RicambiTableBody.
+Il componente DistintaBaseManager.jsx (o RicambiDialogManager4.jsx e MovimentiForm.jsx se usano TableGrid in modo simile) dovrà fornire la logica per cosa succede quando una riga viene cliccata, come già illustrato nella risposta precedente per DistintaBaseManager.jsx.
+
+Ecco le modifiche specifiche:
+
+1. Modifiche a c:\maga\maga\src\components\RicambiTableBody.jsx
+
+Aggiungeremo la prop onRowClick e la useremo per gestire il click sulla riga. Cambieremo anche il cursore per indicare che la riga è cliccabile.
+
+TableBody.jsx
+-0
++9
+  rows,
+  selectedIds,
+  onRowSelectionChange,
+  onRowClick, // Nuova prop per gestire il click sulla riga
+  loading,
+  colSpan, // colSpan calcolato da TableGrid
+}) => {
+        <tr
+          key={row.id}
+          className={selectedIds.includes(row.id) ? "selected-row" : ""}
+          onClick={(e) => {
+            // Esegui onRowClick solo se il click non proviene da un input o un bottone
+            // per evitare doppia gestione con il checkbox o futuri bottoni di azione sulla riga.
+            if (onRowClick && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+              onRowClick(row.id);
+            }
+          }}
+          style={{ cursor: onRowClick ? 'pointer' : 'default' }} // Cambia il cursore per indicare cliccabilità
+        >
+          <td>
+            <input
+
+Ho usato e.target.closest('button') per una maggiore robustezza nel caso ci fossero bottoni annidati.
+2. Modifiche a TableGrid.jsx
+
+Dobbiamo assicurarci che la prop onRowClick venga passata da TableGrid a RicambiTableBody.
+
+TableGrid.jsx
+-0
++1
+        rows={rows}
+        selectedIds={selectedIds}
+        onRowSelectionChange={onRowSelectionChange}
+        onRowClick={onRowClick} // Passa la prop onRowClick a RicambiTableBody
+        loading={loading}
+        colSpan={colSpanForBody}
+      />
+
+Come utilizzare queste modifiche (esempio in DistintaBaseManager.jsx):
+
+Come mostrato nella risposta precedente, in un componente come DistintaBaseManager.jsx (o RicambiDialogManager4.jsx, MovimentiForm.jsx), dovrai:
+
+Definire una funzione callback per gestire il click sulla riga (ad esempio, handleRowClick).
+Passare questa callback al componente TableGrid come prop onRowClick.
+Ecco un riepilogo della parte rilevante in DistintaBaseManager.jsx (già fornita precedentemente):
+
+javascriptreact
+// In DistintaBaseManager.jsx o simile
+
+// ... altre importazioni e state ...
+
+  const handleRowClick = useCallback((rowId) => {
+    setSelectedIds((prevSelectedIds) => {
+      const currentSelectedIds = new Set(prevSelectedIds);
+      if (currentSelectedIds.has(rowId)) {
+        currentSelectedIds.delete(rowId); // Deseleziona se già selezionata
+      } else {
+        currentSelectedIds.add(rowId);    // Seleziona se non selezionata
+      }
+      return Array.from(currentSelectedIds);
+    });
+  }, []);
+
+// ... nel JSX return ...
+        <TableGrid
+          columns={tableColumns}
+          rows={currentTableData}
+          selectedIds={selectedIds}
+          onRowSelectionChange={(id, checked) => { // Questa gestisce il checkbox
+            if (checked) {
+              setSelectedIds((prev) => [...prev, id]);
+            } else {
+              setSelectedIds((prev) => prev.filter((selId) => selId !== id));
+            }
+          }}
+          onRowClick={handleRowClick} // <-- QUI PASSI LA CALLBACK PER IL CLICK SULLA RIGA
+          areAllCurrentPageRowsSelected={areAllCurrentPageRowsSelected}
+          onSelectAllCurrentPageRowsChange={handleSelectAllCurrentPageRowsChange}
+          sortKey={sortKey}
+          sortOrder={sortOrder}
+          onSort={toggleSort}
+          onEdit={handleEdit}
+          onDelete={(id) => handleDelete([id])}
+          loading={loading}
+          onClearAllSelections={() => setSelectedIds([])}
+          areAnyRowsSelected={selectedIds.length > 0}
+        />
+// ...
+Con queste modifiche, cliccando su una riga (al di fuori del checkbox o di altri input/bottoni) si attiverà la funzione handleRowClick, che nel caso dell'esempio fornito per DistintaBaseManager.jsx farà il toggle della selezione per quella riga. I checkbox continueranno a funzionare come prima per la selezione multipla.
+
+Queste modifiche ai file RicambiTableBody.jsx e TableGrid.jsx renderanno la funzionalità di selezione con un click disponibile ovunque TableGrid sia utilizzato, a patto di fornire una funzione onRowClick appropriata.
+
+ Revert to checkpoint
+Context Sources (13)
+Prompts to try

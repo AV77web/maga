@@ -1,0 +1,35 @@
+.pagination-item {
+  .arrow {
+    position: relative;
+    width: 24px;
+    height: 24px;
+
+    &::before {
+      border-width: 5px 8px 5px 0;
+      border-color: transparent currentColor transparent transparent;
+    }
+
+    &.left::before {
+      border-width: 5px 8px 5px 0;
+      border-color: transparent currentColor transparent transparent;
+    }
+
+    &.right::before {
+      border-width: 5px 0 5px 8px;
+      border-color: transparent transparent transparent currentColor;
+    }
+
+    &.left,
+    &.right {
+      transform: none !important;
+    }
+  }
+}
+
+.pagination-container {
+  align-items: baseline;
+}
+
+.pagination-item {
+  vertical-align: middle;
+}

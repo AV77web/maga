@@ -1,0 +1,938 @@
+al click del pulsante
+
+javascriptreact: 1 lines selected
+
+Gemini
+Basandosi sul codice fornito, analizziamo cosa succede quando viene cliccato il pulsante "Distinta Base" (quello con l'icona CiBoxList) nell'Header.
+
+Nel componente Header.jsx, il pulsante "Distinta Base" è definito così:
+
+jsx
+<button className="icon-button" onClick={onManageBOM} title="Distinta Base">
+  <CiBoxList />
+</button>
+Questo significa che al click, viene chiamata la funzione passata tramite la prop onManageBOM.
+
+Nel componente RicambiManagerDialog4.jsx, il componente Header viene utilizzato in questo modo:
+
+jsx
+<Header
+  // ... altre props ...
+  onManageBOM={onManageBOM} // Qui viene passata la prop
+/>
+La prop onManageBOM viene passata, ma osservando il codice del componente RicambiManagerDialog4, non è definita alcuna funzione o variabile con il nome onManageBOM.
+
+Conclusione:
+
+Al click del pulsante "Distinta Base", il componente Header tenterà di chiamare la funzione onManageBOM che gli è stata passata. Tuttavia, poiché nel componente RicambiManagerDialog4 questa funzione non è definita, l'applicazione genererà un errore JavaScript a runtime, probabilmente un TypeError che indica che onManageBOM non è una funzione.
+
+Per far sì che il pulsante "Distinta Base" faccia qualcosa, dovresti definire una funzione onManageBOM all'interno di RicambiManagerDialog4.jsx e passarla correttamente alla prop onManageBOM del componente Header.
+
+Context Sources (14)
+
+User
+Come posso definire la funzione onManageBOM in RicambiManagerDialog4.jsx per mostrare il componente DistintaBaseManager?
+
+
+Gemini
+Certo, ecco come puoi definire la funzione onManageBOM in RicambiManagerDialog4.jsx per mostrare il componente DistintaBaseManager quando un ricambio è selezionato:
+
+Definisci la funzione handleManageBOM: Questa funzione controllerà se è stato selezionato un singolo ricambio, imposterà il ricambio corrente per la gestione della distinta base e cambierà la viewMode per mostrare DistintaBaseManager.
+Passa handleManageBOM al componente Header.
+Aggiorna il rendering condizionale nel return statement per mostrare DistintaBaseManager quando viewMode è "bom" e currentRicambioForBOM è impostato.
+DistintaBaseManager riceverà il ricambioPadre selezionato e una funzione onClose per tornare alla vista della tabella dei ricambi.
+Ecco le modifiche al codice:
+
+RicambiManagerDialog4.jsx
+-123
++107
+  const [sortKey, setSortKey] = useState("name");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [showSearch, setShowSearch] = useState(false); // Stato per il panello di ricerca
+  const [viewMode, setViewMode] = useState("ricambi");   
+  const [viewMode, setViewMode] = useState("ricambi"); // 'ricambi' o 'bom'
+  const [currentRicambioForBOM, setCurrentRicambioForBOM] = useState(null);
+  const toggleSort = (key) => {
+    if (key === sortKey) {
+    setFormVisible(true);
+  }, []);
+
+  const handleManageBOM = useCallback(() => {
+    if (selectedIds.length === 0) {
+      alert("Seleziona un ricambio per gestirne la distinta base.");
+      return;
+    }
+    if (selectedIds.length > 1) {
+      alert("Puoi gestire la distinta base di un solo ricambio alla volta.");
+      return;
+    }
+    const ricambioId = selectedIds[0];
+    const ricambioSelezionato = ricambi.find(r => r.id === ricambioId);
+
+    if (ricambioSelezionato) {
+      setCurrentRicambioForBOM(ricambioSelezionato);
+      setViewMode("bom");
+    } else {
+      alert("Ricambio selezionato non trovato. Prova a ricaricare i dati.");
+    }
+  }, [selectedIds, ricambi, setViewMode, setCurrentRicambioForBOM]);
+
+  // Logica per il checkbox "seleziona/deseleziona tutto in questa pagina"
+  const areAllCurrentPageRowsSelected = useMemo(() => {
+    return currentTableData.length > 0 && currentTableData.every((row) => selectedIds.includes(row.id));
+            console.log("[Header onDelete] Deletion cancelled by user.");
+          }
+        }}
+        onManageBOM={handleManageBOM}
+      />
+
+      <div className="container">
+            onResults={handleFilterResultsRicambi}
+          />
+        )}
+        {message && <div className="message-info">{message}</div>}
+
+        <div className="table-wrapper">
+          <TableGrid
+            columns={tableColumns}
+            rows={currentTableData}
+            selectedIds={selectedIds}
+            onRowSelectionChange={(id, checked) => {
+              if (checked) {
+                setSelectedIds((prev) => [...prev, id]);
+              } else {
+                setSelectedIds((prev) => prev.filter((selId) => selId !== id));
+              }
+
+        {viewMode === "ricambi" ? (
+          <>
+            {message && <div className="message-info">{message}</div>}
+            <div className="table-wrapper">
+              <TableGrid
+                columns={tableColumns}
+                rows={currentTableData}
+                selectedIds={selectedIds}
+                onRowSelectionChange={(id, checked) => {
+                  if (checked) {
+                    setSelectedIds((prev) => [...prev, id]);
+                  } else {
+                    setSelectedIds((prev) => prev.filter((selId) => selId !== id));
+                  }
+                }}
+                areAllCurrentPageRowsSelected={areAllCurrentPageRowsSelected}
+                onSelectAllCurrentPageRowsChange={handleSelectAllCurrentPageRowsChange}
+                sortKey={sortKey}
+                sortOrder={sortOrder}
+                onSort={toggleSort}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                loading={loading}
+                onClearAllSelections={() => setSelectedIds([])}
+                areAnyRowsSelected={selectedIds.length > 0}
+              />
+            </div>
+
+            <div className="pagination-bar">
+              <Pagination
+                  currentPage={page + 1}
+                  totalCount={ricambi.length}
+                  pageSize={rowsPerPage}
+                  onPageChange={(newPage) => setPage(newPage - 1)}
+              />
+
+              <label>
+                  Elementi per pagina:&nbsp;
+                <select
+                    value={rowsPerPage}
+                    onChange={(e) => {
+                      setRowsPerPage(parseInt(e.target.value, 10));
+                      setPage(0);
+                    }}
+                    disabled={loading}
+                >
+                    {rowsPerPageOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                </select>
+              </label>
+            </div>
+            <DialogCustom
+              open={formVisible}
+              onClose={() => setFormVisible(false)}
+              onSubmit={handleSubmit}
+              title={isEditing ? "Modifica Articolo" : "Nuovo Articolo"}
+              submitButtonText={isSubmitting ? "Salvataggio..." : isEditing ? "Aggiorna Articolo" : "Salva Articolo"}
+              isSubmitting={isSubmitting}
+            >
+              <label htmlFor="ricambiForm-name">Nome:</label>
+              <input id="ricambiForm-name" type="text" name="name" placeholder="Nome" value={formData.name} onChange={handleChange} autoComplete="off" />
+              <label htmlFor="description">Descrizione:</label>
+              <textarea id="ricambiForm-description" name="description" placeholder="Descrizione" rows={3} value={formData.description} onChange={handleChange} autoComplete="off" />
+              <label htmlFor="ricambiForm-quantita">Quantità:</label>
+              <input id="ricambiForm-quantita" type="number" name="quantita" placeholder="Quantità" value={formData.quantita} onChange={handleChange} autoComplete="off" />
+              <label htmlFor="ricambiForm-min">Quantità min:</label>
+              <input id="ricambiForm-min" type="number" name="min" placeholder="Minimo" value={formData.min} onChange={handleChange} autoComplete="off" />
+              <label htmlFor="ricambiForm-max">Quantità max:</label>
+              <input id="ricambiForm-max" type="number" name="max" placeholder="Massimo" value={formData.max} onChange={handleChange} autoComplete="off" />
+              <label htmlFor="ricambiForm-supplier">Fornitore:</label>
+              <input id="ricambiForm-supplier" type="text" name="supplier" placeholder="Fornitore" value={formData.supplier} onChange={handleChange} autoComplete="organization" />
+            </DialogCustom>
+          </>
+        ) : viewMode === "bom" && currentRicambioForBOM ? (
+          <DistintaBaseManager
+            ricambioPadre={currentRicambioForBOM}
+            onClose={() => {
+              setViewMode("ricambi");
+              setCurrentRicambioForBOM(null);
+              setSelectedIds([]); // Deseleziona anche l'ID
+            }}
+            areAllCurrentPageRowsSelected={areAllCurrentPageRowsSelected}
+            onSelectAllCurrentPageRowsChange={handleSelectAllCurrentPageRowsChange}
+            sortKey={sortKey}
+            sortOrder={sortOrder}
+            onSort={toggleSort}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            loading={loading}
+            onClearAllSelections={() => setSelectedIds([])}
+            areAnyRowsSelected={selectedIds.length > 0}
+          />
+        </div>
+
+      <div className="pagination-bar">
+        <Pagination
+            currentPage={page + 1}
+            totalCount={ricambi.length}
+            pageSize={rowsPerPage}
+            onPageChange={(newPage) => setPage(newPage - 1)}
+        />
+
+        <label>
+            Elementi per pagina:&nbsp;
+          <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              disabled={loading}
+          >
+              {rowsPerPageOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+          </select>
+        </label>
+      </div>
+      <DialogCustom
+        open={formVisible}
+        onClose={() => setFormVisible(false)}
+        onSubmit={handleSubmit} // La logica di submit rimane nel componente padre
+        title={isEditing ? "Modifica Articolo" : "Nuovo Articolo"}
+        submitButtonText={isSubmitting ? "Salvataggio..." : isEditing ? "Aggiorna Articolo" : "Salva Articolo"}
+        isSubmitting={isSubmitting} // Passa lo stato di sottomissione
+      >
+        {/* Questi sono i children: i campi specifici del form Ricambio */}
+        <label htmlFor="ricambiForm-name">Nome:</label>
+        <input
+          id="ricambiForm-name"
+          type="text"
+          name="name"
+          placeholder="Nome"
+          value={formData.name}
+          onChange={handleChange} // L'handler onChange rimane nel componente padre
+          autoComplete="off"
+        />
+        <label htmlFor="description">Descrizione:</label>
+        <textarea
+          id="ricambiForm-description"
+          name="description"
+          placeholder="Descrizione"
+          rows={3}
+          value={formData.description}
+          onChange={handleChange}
+          autoComplete="off"
+        />
+        <label htmlFor="ricambiForm-quantita">Quantità:</label>
+        <input
+          id="ricambiForm-quantita"
+          type="number"
+          name="quantita"
+          placeholder="Quantità"
+          value={formData.quantita}
+          onChange={handleChange}
+          autoComplete="off"
+        />
+        <label htmlFor="ricambiForm-min">Quantità min:</label>
+        <input
+          id="ricambiForm-min"
+          type="number"
+          name="min"
+          placeholder="Minimo"
+          value={formData.min}
+          onChange={handleChange}
+          autoComplete="off"
+        />
+        <label htmlFor="ricambiForm-max">Quantità max:</label>
+        <input
+          id="ricambiForm-max"
+          type="number"
+          name="max"
+          placeholder="Massimo"
+          value={formData.max}
+          onChange={handleChange}
+          autoComplete="off"
+        />
+        <label htmlFor="ricambiForm-supplier">Fornitore:</label>
+        <input
+          id="ricambiForm-supplier" // Changed id to match name for consistency
+          type="text"
+          name="supplier"
+          placeholder="Fornitore"
+          value={formData.supplier}
+          onChange={handleChange}
+          autoComplete="organization"
+        />
+      </DialogCustom>
+
+        ) : null}
+      </div>
+    </>
+  );
+Spiegazione delle modifiche:
+
+handleManageBOM (Nuova funzione):
+
+Utilizza useCallback per la memoizzazione, simile agli altri gestori di eventi.
+Controlla se selectedIds contiene esattamente un ID. Se no, mostra un alert e interrompe l'esecuzione.
+Trova il ricambio completo dall'array ricambi usando l'ID selezionato.
+Se il ricambio viene trovato, imposta currentRicambioForBOM con i dati del ricambio e viewMode su "bom".
+Se il ricambio non viene trovato (potrebbe accadere se i dati non sono aggiornati), mostra un alert.
+Passaggio a Header:
+
+La prop onManageBOM del componente Header è ora impostata su handleManageBOM.
+javascriptreact
+<Header
+  // ... altre props
+  onManageBOM={handleManageBOM}
+/>
+Rendering Condizionale:
+
+Il return statement principale è stato modificato per mostrare o la vista della tabella dei ricambi o DistintaBaseManager in base al valore di viewMode.
+Quando viewMode è "ricambi", viene renderizzata l'interfaccia utente esistente per la gestione dei ricambi (tabella, paginazione, dialog per il form).
+Quando viewMode è "bom" e currentRicambioForBOM non è null, viene renderizzato il componente DistintaBaseManager.
+A DistintaBaseManager vengono passate due prop:
+ricambioPadre: contiene l'oggetto del ricambio selezionato per cui si vuole gestire la distinta base.
+onClose: una funzione che, quando chiamata (presumibilmente da un pulsante "Indietro" o "Chiudi" all'interno di DistintaBaseManager), reimposta viewMode a "ricambi", currentRicambioForBOM a null, e svuota selectedIds.
+Con queste modifiche, cliccando il pulsante "Distinta Base" nell'header (quando un singolo ricambio è selezionato nella tabella) si dovrebbe nascondere la tabella dei ricambi e mostrare il componente DistintaBaseManager con i dati del ricambio selezionato.
+
+ Revert to checkpoint
+Context Sources (15)
+
+User
+puoi correggere DistintaBaseManager.jsx: per esempio la funzione onManagBOM non ha viewMode dichiarata...
+
+
+Gemini
+Certamente! Ho analizzato il tuo file DistintaBaseManager.jsx e ho apportato diverse correzioni e miglioramenti. La logica di onManageBOM e viewMode appartiene al componente genitore (RicambiManagerDialog4.jsx), mentre DistintaBaseManager si occupa di visualizzare e gestire i componenti della distinta base per un dato ricambioPadre.
+
+Ecco le modifiche proposte:
+
+DistintaBaseManager.jsx
+-157
++149
+import DialogCustom from './DialogCustom';
+import Pagination from './Pagination1';
+import Header from './Header'; // Assumiamo che Header sia generico
+import "../css/RicambiManager.css"
+import dibaApi from '../api/dibaApi'; // IPOTETICO: API per la distinta base
+import "../css/RicambiManager.css"; // Potrebbe servire un CSS specifico
+
+const rowsPagePageOptions = [ 5, 10, 20 ,50];
+const rowsPerPageOptions = [5, 10, 20, 50]; // Corretto nome variabile
+
+export default function DistintaBaseManager() {
+// Props: ricambioPadre, onClose
+export default function DistintaBaseManager({ ricambioPadre, onClose }) {
+  const [diba, setDiBa] = useState([]);
+  const [formVisible, setFormVisible] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+    id: "",
+    id_father:"",
+    id_son:"",
+    quantita:"",
+    quantita: "", // Corretto nome campo
+  });
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [Loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(false);
+  const [loading, setLoading] = useState(false); // Corretto nome variabile (era Loading)
+  const [message, setMessage] = useState(""); // Corretto inizializzazione (era false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [sortKey, setSortKey] = useState("name");
+  const [sortKey, setSortKey] = useState("id_son"); // Default sort key
+  const [sortOrder, setSortOrder] = useState("asc");
+
+  const toggleSort = (key) => {
+    setPage(0);
+  };
+
+const fetchDiBa = useCallback(async () => {
+  const fetchDiBaForFather = useCallback(async () => {
+    if (!ricambioPadre || !ricambioPadre.id) {
+      setDiBa([]);
+      return;
+    }
+    try {
+      setLoading(true); // Imposta loading a true all'inizio
+      setMessage(""); // Resetta il messaggio
+      const responseData = await dibaApi.fetchAll(); // fetchAll non necessita di argomenti
+      setLoading(true);
+      setMessage("");
+      // IPOTETICO: dibaApi.fetchByFatherId(fatherId)
+      const responseData = await dibaApi.fetchByFatherId(ricambioPadre.id);
+
+      // La tua dibaApi.js ritorna direttamente response.data
+      // Se il backend invia { success: true, data: [...] }
+      // allora responseData sarà quell'oggetto.
+      // Se il backend invia direttamente l'array [...], allora responseData sarà l'array.
+      // Assumiamo che il backend invii un oggetto con una proprietà 'data' che è l'array.
+      // Se dibaApi.fetchAll() già gestisce la struttura {success, data},
+      // e ritorna direttamente l'array, allora la condizione sotto va adattata.
+      // Dalla definizione di dibaApi.js, request ritorna response.data,
+      // quindi 'responseData' è ciò che il server invia nel corpo della risposta.
+      // Se il server invia { success: true, data: [...] }, allora la logica qui è corretta.
+      // Se il server invia solo l'array [...], allora dovresti controllare Array.isArray(responseData)
+      if (!responseData || !Array.isArray(responseData.data)) { // Adattato per la struttura comune
+        console.warn("Risposta non valida del server o dati mancanti:", responseData);
+        setMessage("⚠️ Dati delle diba non validi o mancanti.");
+      if (!responseData || !Array.isArray(responseData.data)) {
+        console.warn("Risposta non valida del server o dati mancanti per la distinta base:", responseData);
+        setMessage("⚠️ Dati della distinta base non validi o mancanti.");
+        setDiBa([]);
+        return;
+      }
+      const cleanDiBa = responseData.data.map((item) => ({ // Usa responseData.data
+        id: Number(item.id), // Assicurati di includere l'ID
+      const cleanDiBa = responseData.data.map((item) => ({
+        id: Number(item.id),
+        id_father: Number(item.id_father),
+        id_son: Number(item.id_son),
+        quantiita: Number(item.quantita),
+        id_son: Number(item.id_son), // TODO: Idealmente qui dovremmo avere il nome/descrizione del figlio
+        quantita: Number(item.quantita), // Corretto nome campo (era quantiita)
+      }));
+      setDiBa(cleanDiBa,);
+      setDiBa(cleanDiBa);
+    } catch (err) {
+      console.error("Errore nel caricamento delle diba:", err);
+      setMessage(`❌ Errore caricamento diba: ${err.message || "Errore sconosciuto"}`);
+      setDiBa([]); // Resetta in caso di errore
+      console.error("Errore nel caricamento della distinta base:", err);
+      setMessage(`❌ Errore caricamento distinta base: ${err.message || "Errore sconosciuto"}`);
+      setDiBa([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Rimosso punto e virgola extra
+  }, [ricambioPadre]); // Dipende da ricambioPadre
+
+  useEffect(() => {
+    fetchDiBa();
+  }, [fetchDiBa]);
+    fetchDiBaForFather();
+  }, [fetchDiBaForFather]);
+
+const sortedDiBa = useMemo(() => {
+    const sorted = [...diba].sort((a, b) => {
+  }, [page, rowsPerPage, sortedDiBa]);
+
+  const handleNew = useCallback(() => {
+    setFormData({ id: null, id_father: null, id_son: null, quantita: null }); // ID a null per nuovi record
+    setFormData({
+      id: "", // ID vuoto per nuovi record
+      id_father: ricambioPadre ? ricambioPadre.id : "", // Precompilato
+      id_son: "",
+      quantita: "",
+    });
+    setIsEditing(false);
+    setFormVisible(true);
+    setMessage("");
+  }, []);
+  }, [ricambioPadre]);
+
+  const handleSubmit = useCallback(async () => { // e.preventDefault() non serve se il bottone non è type="submit" in un form
+
+  const handleSubmit = useCallback(async () => {
+    setIsSubmitting(true);
+    setLoading(true); // Potrebbe essere utile anche qui
+    setLoading(true);
+    setMessage("Salvataggio in corso...");
+
+    const dataToSubmit = { ...formData, id_father: ricambioPadre.id }; // Assicura id_father
+
+    try {
+      let response;
+      if (isEditing) {
+        response = await 
+        
+        dibaApi.update(formData.id, formData);
+        await dibaApi.update(formData.id, dataToSubmit);
+      } else {
+        response = await dibaApi.insert(formData);
+        await dibaApi.insert(dataToSubmit);
+      }
+
+      // Assumendo che l'API restituisca un oggetto con { success: true/false, message: "..." }
+      // o che lanci un errore gestito da dibaApi.js
+      setMessage(isEditing ? "✅ diba aggiornata con successo!" : "✅ diba creata con successo!");
+      fetchDiBa();
+      setFormData({ id: null, id_father: null, id_son: null, quantita: null, });
+      setMessage(isEditing ? "✅ Componente aggiornato con successo!" : "✅ Componente aggiunto con successo!");
+      fetchDiBaForFather(); // Ricarica i dati per il padre corrente
+      setFormVisible(false);
+      setIsEditing(false); // Resetta lo stato di editing
+      setFormVisible(false);
+    } catch (err) {
+      console.error("Errore nel salvataggio della diba:", err);
+      console.error("Errore nel salvataggio del componente della distinta base:", err);
+      setMessage(`❌ Errore nel salvataggio: ${err.message || "Errore sconosciuto"}`);
+    } finally {
+      setIsSubmitting(false);
+      setLoading(false);
+    }
+  }, [fetchDiBa, formData, isEditing]);
+  }, [fetchDiBaForFather, formData, isEditing, ricambioPadre]);
+
+  const handleEdit = useCallback((diba) => {
+    setFormData({
+      id: diba.id,
+      id_father: diba.id_father,
+      id_son: diba.id_son,
+      quantita: diba.quantita,  
+  const handleEdit = useCallback((item) => {
+    setFormData({
+      id: item.id,
+      id_father: item.id_father, // Dovrebbe essere ricambioPadre.id
+      id_son: item.id_son,
+      quantita: item.quantita,
+    });
+    setIsEditing(true);
+    setFormVisible(true);
+  }, []);
+
+  // Logica per il checkbox "seleziona/deseleziona tutto in questa pagina"
+    const areAllCurrentPageRowsSelected = useMemo(() => {
+      return currentTableData.length > 0 && currentTableData.every((row) => selectedIds.includes(row.id));
+    }, [currentTableData, selectedIds]);
+  
+    const handleSelectAllCurrentPageRowsChange = useCallback((checked) => {
+      const currentPageIds = currentTableData.map(row => row.id);
+      if (checked) {
+        setSelectedIds(prev => [...new Set([...prev, ...currentPageIds])]);
+      } else {
+        setSelectedIds(prev => prev.filter(id => !currentPageIds.includes(id)));
+      }
+    }, [currentTableData, setSelectedIds]);
+  
+    const handleChange = useCallback((e) => {
+      const { name, value } = e.target; // Usa 'name' dall'input
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }, []);
+  const areAllCurrentPageRowsSelected = useMemo(() => {
+    return currentTableData.length > 0 && currentTableData.every((row) => selectedIds.includes(row.id));
+  }, [currentTableData, selectedIds]);
+
+  const handleSelectAllCurrentPageRowsChange = useCallback((checked) => {
+    const currentPageIds = currentTableData.map(row => row.id);
+    if (checked) {
+      setSelectedIds(prev => [...new Set([...prev, ...currentPageIds])]);
+    } else {
+      setSelectedIds(prev => prev.filter(id => !currentPageIds.includes(id)));
+    }
+  }, [currentTableData]);
+
+  const handleDelete = useCallback (
+   async (id) => {
+    if (!window.confirm("Sei sicuro di voler eliminare questa distinta base?"))
+      return;
+    setLoading(true); // Imposta loading per feedback visivo
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    // Impedisci la modifica di id_father se è precompilato
+    if (name === "id_father" && ricambioPadre && ricambioPadre.id) {
+        return;
+    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  }, [ricambioPadre]);
+
+  const handleDelete = useCallback(async (idToDelete) => {
+    // Se idToDelete è un array (da Header), gestisci multipli. Altrimenti singolo.
+    const idsArray = Array.isArray(idToDelete) ? idToDelete : [idToDelete];
+    if (idsArray.length === 0) return;
+
+    const confirmMessage = idsArray.length === 1
+      ? "Sei sicuro di voler eliminare questo componente della distinta base?"
+      : `Sei sicuro di voler eliminare ${idsArray.length} componenti della distinta base?`;
+
+    if (!window.confirm(confirmMessage)) return;
+
+    setLoading(true);
+    setMessage("Eliminazione in corso...");
+    let successCount = 0;
+    try {
+      await dibaApi.delete(id); // Passa solo l'ID
+      setMessage("✅ Distinta base eliminata con successo!");
+      fetchBooom();
+      setSelectedIds(prev => prev.filter(selId => selId !== id)); // Rimuovi l'ID selezionato
+      for (const id of idsArray) {
+        await dibaApi.delete(id);
+        successCount++;
+      }
+      setMessage(`✅ ${successCount} componente/i eliminato/i con successo!`);
+      fetchDiBaForFather(); // Corretto nome funzione
+      setSelectedIds(prev => prev.filter(selId => !idsArray.includes(selId)));
+    } catch (err) {
+      console.error("Errore nell'eliminazione della distinta:", err);
+      setMessage(`❌ Errore eliminazione: ${err.message || "Errore sconosciuto"}`);
+      console.error("Errore nell'eliminazione:", err);
+      setMessage(`❌ Errore eliminazione: ${err.message || "Errore sconosciuto"}. ${successCount} su ${idsArray.length} eliminati.`);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchDiBa] );
+  }, [fetchDiBaForFather]);
+
+  const tableColumns = useMemo(() => [
+  { key: "id", label: "ID", cellClassName: "text-center" },
+  { key: "id_father" , label: "Articolo padre" , cellClassName: "tex-left" },
+  { key: "id_son", label: "Articolo figlio", cellClassName: "text-left" },
+  { key: "quamtita", label: "Quantita", cellClassName: "text-left" }
+] , []);
+
+  const handleManageBOM = () => {
+    if (selectedIds.length !== 1) {
+      alert("Seleziona un singolo ricambio per gestirne la distinta base.");
+      return;
+    }
+    const ricambioSelected = ricambi.find(r => r.id === selectedIds[0]);
+    if (ricambioSelected) {
+      setCurrentRicambioForBOM(ricambioSelected);
+      setViewMode("diba");
+    } else {
+      alert("Ricambio selezionato non trovato.");
+    }
+  };
+    { key: "id", label: "ID Riga", cellClassName: "text-center" },
+    // { key: "id_father", label: "Articolo Padre ID", cellClassName: "text-left" }, // Nascosto se sempre uguale
+    { key: "id_son", label: "Articolo Figlio ID", cellClassName: "text-left" }, // TODO: Mostrare nome/descrizione
+    { key: "quantita", label: "Quantità", cellClassName: "text-right" } // Corretto nome campo (era quamtita)
+  ], []);
+
+return (
+  <>
+  <Header
+    onAdd = {handleNew}
+    onBack={onClose} // Aggiunta prop onBack per tornare indietro
+    // Le seguenti prop potrebbero non essere necessarie o avere logica diversa qui:
+    onEdit={() => {
+      console.log("[Header onEdit] Triggered. Current selectedIds:", selectedIds);
+      if (selectedIds.length === 0) {
+        alert("Seleziona una distinta base da modificare");
+        alert("Seleziona un componente da modificare.");
+        console.log("[Header onEdit] No item selected.");
+        return;
+      }
+      if (selectedIds.length > 1) {
+        alert("Puoi modificare solo una distinta base alla volta dall'intestazione. Seleziona una singola riga.");
+        alert("Puoi modificare solo un componente alla volta dall'intestazione. Seleziona una singola riga.");
+        console.log("[Header onEdit] Multiple items selected for single edit:", selectedIds.length);
+        return;
+      }
+        const itemToEdit = causali.find((r) => r.id === selectedIds[0]);
+      const itemToEdit = diba.find((item) => item.id === selectedIds[0]); // Corretto: usa 'diba'
+      if (itemToEdit) {
+        console.log("[Header onEdit] Item to edit found:", itemToEdit);
+        handleEdit(itemToEdit);
+        setSelectedIds([]);
+        console.log("[Header onEdit] selectedIds cleared after finding item.");
+      } else {
+        alert("La distinta base selezionata non è statatrovata. Potrebbe essere stata eliminata o la selezione non è valida.");
+        alert("Il componente selezionato non è stato trovato. Potrebbe essere stato eliminato o la selezione non è valida.");
+        console.warn("[Header onEdit] Item to edit not found for ID:", selectedIds[0]);
+        setSelectedIds([]); 
+        setSelectedIds([]);
+        console.log("[Header onEdit] selectedIds cleared after item not found.");
+      }
+    }}
+      }
+      if (window.confirm(`Confermi l'eliminazione di ${selectedIds.length} element${selectedIds.length > 1 ? 'i' : 'o'} selezionat${selectedIds.length > 1 ? 'i' : 'o'}?`)) {
+        console.log("[Header onDelete] Deletion confirmed for IDs:", selectedIds);
+        selectedIds.forEach((id) => handleDelete(id));
+        setSelectedIds([]); 
+        handleDelete(selectedIds); // Passa l'array di ID
+        setSelectedIds([]);
+        console.log("[Header onDelete] selectedIds cleared after initiating deletions.");
+      } else {
+        console.log("[Header onDelete] Deletion cancelled by user.");
+      }
+    }}
+    onManageBOM={viewMode === "ricambi" ? handleManageBOM : undefined} // Passa la nuova funizione 
+    isBOMButtonEnabled={selectedIds.length === 1 && viewMode === "ricambi"} // Condizione per abilitare il pulsante BOM
+
+    // Rimuovi onManageBOM e isBOMButtonEnabled o adattali se servono per altre azioni
+    />
+    <div className="container">
+        <h1>Distinta Base Manager</h1>
+        <h1>Distinta Base per: {ricambioPadre ? ricambioPadre.name : 'N/D'} (ID: {ricambioPadre ? ricambioPadre.id : 'N/D'})</h1>
+        {message && (
+          <div
+            className={`message-info ${
+            sortOrder={sortOrder}
+            onSort={toggleSort}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onDelete={(id) => handleDelete([id])} // Azione per riga, passa come array
+            loading={loading}
+            onClearAllSelections={() => setSelectedIds([])}
+            areAnyRowsSelected={selectedIds.length > 0}
+          />
+        </div>
+      
+
+      <div className="pagination-bar">
+        <Pagination
+            currentPage={page + 1}
+            totalCount={causali.length}
+            totalCount={diba.length} // Corretto: usa 'diba.length'
+            pageSize={rowsPerPage}
+            onPageChange={(newPage) => setPage(newPage - 1)}
+        />
+            <DialogCustom 
+                open={formVisible}
+                onClose={() => setFormVisible(false)}
+                onSubmit={handleSubmit}
+                title={isEditing ? "Modifica Causale" : "Nuova Causale"}
+                submitButtonText={isSubmitting ? "Salvataggio..." : isEditing ? "Aggiorna Causale" : "Salva Causale"}
+                title={isEditing ? "Modifica Componente" : "Nuovo Componente"}
+                submitButtonText={isSubmitting ? "Salvataggio..." : isEditing ? "Aggiorna Componente" : "Salva Componente"}
+                isSubmitting={isSubmitting}
+              >
+                <label htmlFor="id">id:</label>
+                {/* ID è gestito automaticamente o nascosto se non necessario per l'utente */}
+                {/* <label htmlFor="id">ID Riga:</label>
+                <input id="id" type="text" name="id" readOnly value={formData.id} /> */}
+
+                <label htmlFor="id_father">Articolo Padre ID:</label>
+                <input
+                  id="id"
+                  id="id_father"
+                  type="number"
+                  name="id"
+                  placeholder="id"
+                  value={formData.id}
+                 onChange={handleChange}
+                  name="id_father"
+                  readOnly // Non modificabile
+                  value={formData.id_father}
+                  // onChange={handleChange} // Non serve se readOnly
+                />
+                <label htmlFor="id_father">codice articolo padre:</label>
+                <input
+                  id="id_father"
+
+                <label htmlFor="id_son">Articolo Figlio ID:</label>
+                <input // TODO: Idealmente questo sarebbe un selettore di ricambi esistenti
+                  id="id_son"
+                  type="number"
+                  name="id_father"
+                  placeholder="codice articolo padre"
+                  value={formData.id_father}
+                 onChange={handleChange}
+                  name="id_son"
+                  placeholder="ID Articolo Figlio"
+                  value={formData.id_son}
+                  onChange={handleChange}
+                  required
+                />
+                <label htmlFor="id_son">codice articolo figlio:</label>
+                <input
+                  id="id_son"
+                  type="number"
+                  name="id_son"
+                  placeholder="codice articolo figlio"
+                  value={formData.id_son}
+                 onChange={handleChange}
+                /> 
+                <label htmlFor="quantita">Quantita</label>
+
+                <label htmlFor="quantita">Quantità:</label>
+                <input
+                  id="quantita"
+                  type="numberr"
+                  type="number" // Corretto tipo (era numberr)
+                  name="quantita"
+                  placeholder="Quantita"
+                  value={formData.tipo}
+                  placeholder="Quantità"
+                  value={formData.quantita} // Corretto nome campo (era formData.tipo)
+                  onChange={handleChange}
+                />  
+                  required
+                  min="0" // Aggiungi validazione base
+                />
+              </DialogCustom>
+            </div> 
+
+
+            </div>
+    </>
+)
+
+  );
+}
+Ho anche creato un file dibaApi.js ipotetico per completezza, dato che era mancante e necessario per far funzionare il componente. Dovrai adattarlo al tuo backend effettivo.
+
+javascript
+// src/api/dibaApi.js (File IPOTETICO)
+
+const API_BASE_URL = 'http://localhost:3001/api/diba'; // Adatta all'URL del tuo backend
+
+const request = async (url, method = 'GET', body = null) => {
+  const options = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      // Aggiungi altri header se necessari, come Authorization per token JWT
+      // 'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+    },
+  };
+
+  if (body) {
+    options.body = JSON.stringify(body);
+  }
+
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      // Prova a leggere il corpo dell'errore se presente
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        // Nessun corpo JSON o errore nel parsing
+        errorData = { message: response.statusText };
+      }
+      throw new Error(errorData.message || `Errore HTTP: ${response.status}`);
+    }
+    // Se la risposta è vuota (es. DELETE con 204 No Content), restituisci un oggetto di successo standard
+    if (response.status === 204) {
+        return { success: true, message: 'Operazione completata con successo.' };
+    }
+    return await response.json(); // Aspettati che il backend ritorni JSON
+  } catch (error) {
+    console.error(`Errore nella richiesta API ${method} ${url}:`, error);
+    throw error; // Rilancia l'errore per essere gestito dal chiamante
+  }
+};
+
+const dibaApi = {
+  fetchAll: () => request(`${API_BASE_URL}`),
+  fetchById: (id) => request(`${API_BASE_URL}/${id}`),
+  fetchByFatherId: (fatherId) => request(`${API_BASE_URL}/father/${fatherId}`), // IPOTETICO endpoint
+  insert: (data) => request(`${API_BASE_URL}`, 'POST', data),
+  update: (id, data) => request(`${API_BASE_URL}/${id}`, 'PUT', data),
+  delete: (id) => request(`${API_BASE_URL}/${id}`, 'DELETE'),
+  // Aggiungi qui altre funzioni API se necessario
+};
+
+export default dibaApi;
+Riepilogo delle correzioni e miglioramenti chiave:
+
+Props: Il componente ora accetta ricambioPadre (l'articolo per cui si sta visualizzando/modificando la distinta base) e onClose (una funzione per tornare alla vista precedente).
+Logica di Fetch: fetchDiBaForFather ora recupera i componenti della distinta base specifici per il ricambioPadre.id. Ho ipotizzato un endpoint API come dibaApi.fetchByFatherId(fatherId).
+Form (DialogCustom):
+L'id_father è precompilato con ricambioPadre.id e reso non modificabile (readOnly).
+L'id_son è un input numerico (in un'applicazione reale, sarebbe meglio un selettore di ricambi).
+Corretto l'uso di formData.quantita (era formData.tipo).
+handleSubmit e handleDelete: Utilizzano dibaApi e aggiornano la tabella dopo le operazioni. handleDelete ora può gestire un array di ID.
+Titolo: Il titolo della pagina ora indica dinamicamente per quale articolo si sta gestendo la distinta base.
+Header:
+Ho aggiunto una prop onBack a Header. Dovrai modificare il tuo componente Header per supportare questa prop (ad esempio, mostrando un'icona "indietro" e chiamando onBack al click).
+Le azioni di onEdit e onDelete nell'Header ora si riferiscono ai componenti selezionati nella tabella della distinta base.
+Le prop onManageBOM e isBOMButtonEnabled sono state rimosse perché non sono appropriate per questa vista specifica.
+Correzioni Generali:
+Risolti vari errori di battitura (es. rowsPagePageOptions, Loading, quantiita, fetchBooom, causali.length).
+Inizializzato message a stringa vuota.
+Migliorata la gestione della selezione multipla per l'eliminazione.
+Cosa devi fare:
+
+Implementare/Adattare dibaApi.js: Assicurati che il tuo file API per la distinta base (dibaApi.js) abbia le funzioni necessarie (in particolare fetchByFatherId, insert, update, delete) e che comunichi correttamente con il tuo backend.
+Modificare Header.jsx: Aggiungi il supporto per la prop onBack per permettere all'utente di tornare indietro.
+Input id_son: Considera di sostituire l'input numerico per id_son con un componente più user-friendly (come un dropdown con ricerca) per selezionare i ricambi figli.
+Spero che queste modifiche ti siano d'aiuto!
+
+ Revert to checkpoint
+Context Sources (15)
+
+User
+Come posso modificare Header.jsx per includere un pulsante "Indietro" che usi la prop onBack?
+
+
+Gemini
+Certamente! Per aggiungere un pulsante "Indietro" al componente Header.jsx che utilizzi la prop onBack, puoi modificare il file come segue. Aggiungeremo un'icona di freccia sinistra e faremo in modo che il pulsante sia visibile solo se la prop onBack è definita.
+
+Ecco il diff per il file Header.jsx:
+
+Header.jsx
+-3
++8
+//@author: "villari.andrea@libero.it"
+//@version: "1.0.0 2025-06-09"
+//========================================
+import React from "react";
+import { CgAdd, CgTrash } from "react-icons/cg";
+import { CiEdit, CiSearch, CiBoxList } from "react-icons/ci";
+import { CgAdd, CgTrash } from "react-icons/cg"; // Assicurati che queste icone siano ancora necessarie
+import { CiEdit, CiSearch, CiBoxList, CiCircleChevLeft } from "react-icons/ci"; // Importa l'icona Indietro
+import "../css/Header.css";
+
+const Header = ({ onAdd, onDelete, onEdit, onSearch, onManageBOM}) => {
+const Header = ({ onAdd, onDelete, onEdit, onSearch, onManageBOM, onBack }) => {
+  return (
+    <div className="header-container">
+      {onBack && ( // Mostra il pulsante solo se la prop onBack è definita
+        <button className="icon-button back-button" onClick={onBack} title="Indietro">
+          <CiCircleChevLeft />
+        </button>
+      )}
+      <button className="icon-button" onClick={onManageBOM} title="Distinta Base">
+        <CiBoxList />
+      </button>
+
+Spiegazione delle modifiche:
+
+Importazione Icona: Abbiamo importato CiCircleChevLeft dalla libreria react-icons/ci.
+Prop onBack: Abbiamo aggiunto onBack all'elenco delle prop che il componente Header accetta.
+Rendering Condizionale: Abbiamo avvolto il nuovo pulsante "Indietro" in un blocco {onBack && (...) }. Questo fa sì che il pulsante venga renderizzato solo se la prop onBack viene passata al componente Header (e non è undefined o null).
+Nuovo Pulsante: Abbiamo aggiunto un nuovo elemento <button> con la classe icon-button (che probabilmente ha già stili di base nel tuo Header.css) e una classe aggiuntiva back-button per stili specifici se necessario.
+Handler onClick: L'evento onClick del nuovo pulsante è impostato direttamente sulla prop onBack, in modo che la funzione passata dal componente genitore venga eseguita al click.
+Titolo: Aggiunto un attributo title per fornire un tooltip al passaggio del mouse.
+Ora, quando utilizzi il componente Header nel tuo RicambiManagerDialog4.jsx (o in qualsiasi altro componente), puoi passargli la funzione onClose (o qualsiasi altra funzione per tornare indietro) tramite la prop onBack, e il pulsante apparirà automaticamente.
+
+Esempio in RicambiManagerDialog4.jsx (come già fatto nella risposta precedente):
+
+jsx
+<Header
+  // ... altre props ...
+  onManageBOM={handleManageBOM}
+  onBack={onClose} // Passa la funzione onClose qui
+/>
+Se non passi la prop onBack (ad esempio, nella vista principale dei ricambi), il pulsante "Indietro" non verrà mostrato nell'header.
+
+Potresti voler aggiungere qualche stile specifico per il pulsante "Indietro" nel tuo Header.css, ad esempio per posizionarlo all'inizio o dargli un colore diverso se necessario.

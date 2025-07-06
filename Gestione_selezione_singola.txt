@@ -1,0 +1,91 @@
+Perfetto! Ti guiderò passo-passo per:
+
+Aggiungere una checkbox per selezionare una riga nella tabella.
+
+Consentire l'eliminazione solo se una riga è selezionata.
+
+Collegare il bottone CgTrash del componente Header alla cancellazione della riga selezionata.
+
+✅ 1. Aggiungi uno stato selectedId in RicambiManagerDialog3.jsx
+Aggiungi in cima allo stato:
+
+js
+Copia codice
+const [selectedId, setSelectedId] = useState(null);
+✅ 2. Modifica la tabella per includere le checkbox
+Nel thead, aggiungi una colonna in testa:
+
+jsx
+Copia codice
+<th>
+  <input
+    type="checkbox"
+    checked={currentTableData.every(row => row.id === selectedId)}
+    onChange={() => setSelectedId(null)}
+    title="Deseleziona tutto"
+/>
+</th>
+Nel tbody, modifica la map così:
+
+jsx
+Copia codice
+{currentTableData.map((row) => (
+  <tr key={row.id} className={row.id === selectedId ? "selected-row" : ""}>
+    <td>
+      <input
+        type="checkbox"
+        checked={row.id === selectedId}
+        onChange={() =>
+          setSelectedId((prev) => (prev === row.id ? null : row.id))
+        }
+      />
+    </td>
+    <td>{row.id}</td>
+    <td className="name-cell" title={row.name}>{row.name}</td>
+    <td className="description-cell" title={row.description}>{row.description}</td>
+    <td className="text-right">{row.quantita}</td>
+    <td className="text-right">{row.min}</td>
+    <td className="text-right">{row.max}</td>
+    <td className="text-center">
+      <button className="bmodifica" onClick={() => handleEdit(row)} disabled={loading}>
+        Modifica
+      </button>
+      <button className="bdelete" onClick={() => handleDelete(row.id)} disabled={loading}>
+        Elimina
+      </button>
+    </td>
+  </tr>
+))}
+✅ 3. Passa la funzione handleDelete a Header con selectedId
+Modifica il componente Header così:
+
+jsx
+Copia codice
+<Header
+  onAdd={handleNew}
+  onDelete={() => {
+    if (!selectedId) {
+      alert("Seleziona una riga da eliminare.");
+      return;
+    }
+    handleDelete(selectedId);
+    setSelectedId(null); // reset dopo cancellazione
+  }}
+/>
+✅ 4. (Opzionale) Stile per la riga selezionata
+Nel CSS (RicambiManager.css):
+
+css
+Copia codice
+.selected-row {
+  background-color: #f5faff;
+}
+✅ 5. Componente Header.jsx resta invariato:
+Già pronto a ricevere le props onAdd e onDelete.
+
+🔄 Risultato
+✅ L'utente può selezionare una sola riga.
+
+🗑️ Cliccando sull’icona CgTrash viene eliminata la riga selezionata.
+
+➕ L’icona CgAdd apre il form per inserire un nuovo elemento.
