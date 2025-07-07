@@ -1,277 +1,195 @@
 //============================================================
 //File: Ordini.jsx
-//Componente per la gestione della pagina Ordini
+//Componente che gestisce la visualizzazione e la modifica
+//degli ordini, combinando una vista master (lista ordini)
+//con una vista detail (testata e righe ordine).
 //@author: "villari.andrea@libero.it"
-//@version: "1.0.0 2025-07-05"
+//@version: "1.0.0 2025-07-07"
 //============================================================
 
-import React, { useState, useCallback, useMemo } from "react";
-import HeadDocument from "./HeadDocument2"; // Utilizzo la versione con react-hook-form
-import TableGrid from "./TableGrid";
-import Header from "./Header";
-import "../css/Ordini.css";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import ordiniApi from '../api/ordiniApi';
+import ordiniRigheApi from '../api/ordiniRigheApi'; // API per le righe
+import Header from './Header';
+import TableGrid from './TableGrid';
+import HeadDocument from './HeadDocument2'; // Usiamo la versione più recente
+import Pagination from './Pagination1';
+import '../css/ArticoliTable.css'; // Riusiamo lo stile per coerenza
 
-const Ordini = ({ currentUser, Logout, currentLocation }) => {
-  // 1. Configurazione per HeadDocument basata sulla tabella `ordini`
-  const headConfig = {
-    titolo: "Dati Ordine Fornitore",
+const rowsPerPageOptions = [5, 10, 20];
+
+const Ordini = ({ currentUser, currentLocation, onLogout }) => {
+  // --- STATI ---
+  const [ordiniList, setOrdiniList] = useState([]); // Lista di tutti gli ordini (master)
+  const [selectedOrdine, setSelectedOrdine] = useState(null); // Dati della testata dell'ordine selezionato
+  const [ordineRighe, setOrdineRighe] = useState([]); // Righe dell'ordine selezionato
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // --- CONFIGURAZIONI ---
+  // Colonne per la tabella master degli ordini
+  const masterColumns = useMemo(() => [
+    { key: 'id', label: 'ID Ordine', cellClassName: 'text-center' },
+    { key: 'ordine_num', label: 'Numero Ordine', cellClassName: 'text-left' },
+    { key: 'data_ordine', label: 'Data', cellClassName: 'text-center' },
+    { key: 'nome_fornitore', label: 'Fornitore', cellClassName: 'text-left' }, // Assumendo che la SP fornisca questo campo
+    { key: 'stato', label: 'Stato', cellClassName: 'text-center' },
+  ], []);
+
+  // Colonne per la tabella delle righe d'ordine
+  const detailColumns = useMemo(() => [
+    { key: 'id', label: 'ID Riga', cellClassName: 'text-center' },
+    { key: 'id_articolo', label: 'ID Articolo', cellClassName: 'text-center' },
+    { key: 'nome_articolo', label: 'Nome Articolo', cellClassName: 'text-left' }, // Assumendo che la SP fornisca questo
+    { key: 'quantita', label: 'Quantità', cellClassName: 'text-right' },
+    { key: 'prezzo_unitario', label: 'Prezzo', cellClassName: 'text-right' },
+  ], []);
+
+  // Configurazione per il componente HeadDocument
+  const headDocumentConfig = useMemo(() => ({
+    titolo: "Dettaglio Testata Ordine",
     fields: [
-      {
-        name: "num_ordine",
-        label: "Numero Ordine",
-        type: "text",
-        required: true,
-        placeholder: "Es. 2025/001",
-      },
-      {
-        name: "data_ordine",
-        label: "Data Ordine",
-        type: "date",
-        required: true,
-      },
-      {
-        name: "fornitore_id",
-        label: "Fornitore",
-        type: "select",
-        required: true,
-        api: "http://localhost:3001/api/fornitori",
-      },
-      {
-        name: "stato",
-        label: "Stato",
-        type: "select",
-        options: ["APERTO", "INVIATO", "CHIUSO", "ANNULLATO"],
-        required: true,
-      },
-      {
-        name: "note",
-        label: "Note",
-        type: "textarea",
-        placeholder: "Inserisci eventuali note...",
-      },
-    ],
-  };
+      { name: 'ordine_num', label: 'Numero Ordine', type: 'text', required: true },
+      { name: 'data_ordine', label: 'Data Ordine', type: 'date', required: true },
+      { name: 'id_fornitore', label: 'Fornitore', type: 'select', api: 'http://localhost:3001/api/fornitori', required: true }, // API ipotetica
+      { name: 'stato', label: 'Stato', type: 'select', options: ['Aperto', 'Chiuso', 'Annullato'], required: true },
+      { name: 'note', label: 'Note', type: 'textarea' },
+    ]
+  }), []);
 
-  // 2. Gestione dello stato per testa e righe
-  const [headData, setHeadData] = useState({});
-  const [rows, setRows] = useState([]);
-  const [selectedRowIds, setSelectedRowIds] = useState([]);
-  const [nextRowId, setNextRowId] = useState(1); // Per ID temporanei lato client
-
-  // 3. Handler per le modifiche
-  const handleHeadChange = useCallback((data) => {
-    setHeadData(data);
+  // --- FUNZIONI DI FETCH ---
+  const fetchOrdiniList = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await ordiniApi.fetchAll();
+      // Formattiamo la data per la visualizzazione
+      const formattedData = data.map(o => ({
+        ...o,
+        data_ordine: new Date(o.data_ordine).toLocaleDateString('it-IT')
+      }));
+      setOrdiniList(formattedData);
+    } catch (err) {
+      setError(`Errore nel caricamento degli ordini: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleAddNewRow = useCallback(() => {
-    const newRow = {
-      id: `temp_${nextRowId}`, // ID temporaneo per le nuove righe
-      id_riga: null,
-      cod_articolo: "",
-      descrizione: "",
-      qta: 1,
-      prezzo_unitario: 0,
-      totale_riga: 0,
-    };
-    setRows((prevRows) => [...prevRows, newRow]);
-    setNextRowId((prevId) => prevId + 1);
-  }, [nextRowId]);
+  // Fetch iniziale della lista ordini
+  useEffect(() => {
+    fetchOrdiniList();
+  }, [fetchOrdiniList]);
 
-  const handleDeleteSelectedRows = useCallback(() => {
-    if (selectedRowIds.length === 0) {
-      alert("Selezionare almeno una riga da eliminare.");
+  // --- GESTORI EVENTI ---
+  const handleOrdineSelect = useCallback(async (ordineId) => {
+    if (!ordineId) {
+      setSelectedOrdine(null);
+      setOrdineRighe([]);
       return;
     }
-    if (
-      window.confirm(
-        `Confermi l'eliminazione di ${selectedRowIds.length} righe?`
-      )
-    ) {
-      setRows((prevRows) =>
-        prevRows.filter((row) => !selectedRowIds.includes(row.id))
-      );
-      setSelectedRowIds([]);
+
+    setLoading(true);
+    setError('');
+    try {
+      // Recupera sia la testata che le righe in parallelo
+      const [testata, righe] = await Promise.all([
+        ordiniApi.fetchById(ordineId),
+        ordiniRigheApi.fetchByOrdineId(ordineId) // Nuovo metodo API
+      ]);
+      
+      // Formatta la data per il componente HeadDocument (che vuole YYYY-MM-DD)
+      testata.data_ordine = new Date(testata.data_ordine).toISOString().split('T')[0];
+
+      setSelectedOrdine(testata);
+      setOrdineRighe(righe);
+    } catch (err) {
+      setError(`Errore nel caricamento dei dettagli dell'ordine: ${err.message}`);
+      setSelectedOrdine(null);
+      setOrdineRighe([]);
+    } finally {
+      setLoading(false);
     }
-  }, [selectedRowIds]);
-
-  const handleRowUpdate = useCallback((rowId, field, value) => {
-    setRows((prevRows) =>
-      prevRows.map((row) => {
-        if (row.id === rowId) {
-          const updatedRow = { ...row, [field]: value };
-          // Ricalcola il totale se qta o prezzo cambiano
-          if (field === "qta" || field === "prezzo_unitario") {
-            const qta = parseFloat(updatedRow.qta) || 0;
-            const prezzo = parseFloat(updatedRow.prezzo_unitario) || 0;
-            updatedRow.totale_riga = qta * prezzo;
-          }
-          return updatedRow;
-        }
-        return row;
-      })
-    );
   }, []);
 
-  const handleSaveOrder = useCallback(() => {
-    // Qui si dovrebbe validare e inviare i dati al backend
-    console.log("Salvataggio Ordine:");
-    console.log("Testa:", headData);
-    console.log("Righe:", rows);
-    alert("Ordine salvato! (Controlla la console)");
-  }, [headData, rows]);
-
-  // Handler per i pulsanti dell'Header
-  const handleEditOrder = () => {
-    alert("Funzione di modifica dell'ordine non ancora implementata.");
+  const handleBackToMaster = () => {
+    setSelectedOrdine(null);
+    setOrdineRighe([]);
   };
 
-  const handleSeardhOrder = () => {
-    alert("Funzione di ricerca dell'ordine non ancora implementata.");
+  const handleHeadChange = (updatedHeadData) => {
+    // Qui puoi gestire l'aggiornamento della testata in tempo reale o preparare i dati per un salvataggio
+    console.log("Dati testata aggiornati:", updatedHeadData);
+    setSelectedOrdine(prev => ({ ...prev, ...updatedHeadData }));
   };
 
-  // 4. Colonne per TableGrid con input modificabili
-  const rowsColumns = useMemo(
-    () => [
-      {
-        key: "cod_articolo",
-        label: "Cod. Articolo",
-        render: (row) => (
-          <input
-            type="text"
-            value={row.cod_articolo}
-            onChange={(e) =>
-              handleRowUpdate(row.id, "cod_articolo", e.target.value)
-            }
-            className="editable-cell-input"
-          />
-        ),
-      },
-      {
-        key: "descrizione",
-        label: "Descrizione",
-        render: (row) => (
-          <input
-            type="text"
-            value={row.descrizione}
-            onChange={(e) =>
-              handleRowUpdate(row.id, "descrizione", e.target.value)
-            }
-            className="editable-cell-input"
-          />
-        ),
-      },
-      {
-        key: "qta",
-        label: "Q.tà",
-        cellClassName: "text-right",
-        render: (row) => (
-          <input
-            type="number"
-            value={row.qta}
-            onChange={(e) => handleRowUpdate(row.id, "qta", e.target.value)}
-            className="editable-cell-input text-right"
-            step="0.01"
-          />
-        ),
-      },
-      {
-        key: "prezzo_unitario",
-        label: "Prezzo",
-        cellClassName: "text-right",
-        render: (row) => (
-          <input
-            type="number"
-            value={row.prezzo_unitario}
-            onChange={(e) =>
-              handleRowUpdate(row.id, "prezzo_unitario", e.target.value)
-            }
-            className="editable-cell-input text-right"
-            step="0.01"
-          />
-        ),
-      },
-      {
-        key: "totale_riga",
-        label: "Totale",
-        cellClassName: "text-right",
-        render: (row) => (
-          <span>{parseFloat(row.totale_riga).toFixed(2)} €</span>
-        ),
-      },
-    ],
-    [handleRowUpdate]
-  );
-
-  // Handler per la selezione delle righe
-  const handleRowSelectionChange = useCallback((id, checked) => {
-    setSelectedRowIds((prev) =>
-      checked ? [...prev, id] : prev.filter((selId) => selId !== id)
-    );
-  }, []);
-
-  const areAllCurrentPageRowsSelected = useMemo(
-    () =>
-      rows.length > 0 && rows.every((row) => selectedRowIds.includes(row.id)),
-    [rows, selectedRowIds]
-  );
-
-  const handleSelectAllCurrentPageRowsChange = useCallback(
-    (checked) => {
-      setSelectedRowIds(checked ? rows.map((row) => row.id) : []);
-    },
-    [rows]
-  );
+  // --- DATI PER LA VISUALIZZAZIONE ---
+  const paginatedOrdiniList = useMemo(() => {
+    const firstPageIndex = page * rowsPerPage;
+    const lastPageIndex = firstPageIndex + rowsPerPage;
+    return ordiniList.slice(firstPageIndex, lastPageIndex);
+  }, [page, rowsPerPage, ordiniList]);
 
   return (
-    <div className="ordini-container">
+    <>
       <Header
-        onEditOrder={handleEditOrder}
-        onSearchOrder={handleSeardhOrder}
+        onBack={selectedOrdine ? handleBackToMaster : null} // Mostra "Indietro" solo in vista dettaglio
+        // Aggiungi altri bottoni se necessario (es. onAdd per un nuovo ordine)
         currentUser={currentUser}
-        onLogout={Logout}
         currentLocation={currentLocation}
+        onLogout={onLogout}
       />
-
-      <div className="ordini-actions-header">
+      <div className="container">
         <h1>Gestione Ordini</h1>
-        <button onClick={handleSaveOrder} className="btn-save">
-          Salva Ordine
-        </button>
-      </div>
+        {error && <div className="message-error">{error}</div>}
 
-      <HeadDocument
-        config={headConfig}
-        onChange={handleHeadChange}
-        className="doc-header"
-      />
-
-      <div className="ordini-righe-container">
-        <h2>Righe Ordine</h2>
-        <div className="righe-actions">
-          <button onClick={handleAddNewRow}>Aggiungi Riga</button>
-          <button
-            onClick={handleDeleteSelectedRows}
-            disabled={selectedRowIds.length === 0}
-          >
-            Elimina Selezionate
-          </button>
-        </div>
-        <TableGrid
-          columns={rowsColumns}
-          rows={rows}
-          selectedIds={selectedRowIds}
-          onRowSelectionChange={handleRowSelectionChange}
-          areAllCurrentPageRowsSelected={areAllCurrentPageRowsSelected}
-          onSelectAllCurrentPageRowsChange={
-            handleSelectAllCurrentPageRowsChange
-          }
-          onSort={() => {}}
-          sortKey={""}
-          sortOrder="asc"
-          loading={false} // Non carichiamo dati da un server in questo esempio
-        />
+        {selectedOrdine ? (
+          // --- VISTA DETAIL ---
+          <div className="ordine-detail-view">
+            <HeadDocument
+              config={headDocumentConfig}
+              initialData={selectedOrdine}
+              onChange={handleHeadChange}
+              readOnly={false} // o basato sui permessi/stato ordine
+            />
+            
+            <h2>Righe Ordine</h2>
+            <div className="table-wrapper">
+              <TableGrid
+                columns={detailColumns}
+                rows={ordineRighe}
+                loading={loading}
+                // Aggiungi props per selezione, modifica, eliminazione righe se necessario
+              />
+            </div>
+          </div>
+        ) : (
+          // --- VISTA MASTER ---
+          <div className="ordine-master-view">
+            <h2>Elenco Ordini</h2>
+            <div className="table-wrapper">
+              <TableGrid
+                columns={masterColumns}
+                rows={paginatedOrdiniList}
+                loading={loading}
+                onRowClick={(rowId) => handleOrdineSelect(rowId)} // Azione al click sulla riga
+              />
+            </div>
+            <div className="pagination-bar">
+              <Pagination
+                currentPage={page + 1}
+                totalCount={ordiniList.length}
+                pageSize={rowsPerPage}
+                onPageChange={(newPage) => setPage(newPage - 1)}
+              />
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </>
   );
 };
 
