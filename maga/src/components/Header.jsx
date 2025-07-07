@@ -2,11 +2,11 @@
 //File: Header.jsx
 //Componente che gestisce i l'header della pagina
 //@author: "villari.andrea@libero.it"
-//@version: "1.0.0 2025-06-09"
+//@version: "1.1.0 2025-07-08"
 //========================================
 import React from "react";
 import { CgAdd, CgTrash } from "react-icons/cg"; // Assicurati che queste icone siano ancora necessarie
-import { CiEdit, CiSearch, CiBoxList, CiCircleChevLeft, CiUser } from "react-icons/ci"; // Importa l'icona Indietro
+import { CiEdit, CiSearch, CiBoxList, CiCircleChevLeft, CiUser, CiSaveDown2 } from "react-icons/ci"; // Importa l'icona Indietro e Salva
 import "../css/Header.css";
 //import { on } from "../../../server/db/db";
 
@@ -16,6 +16,7 @@ const Header = ({
   onEdit,
   onSearch,
   onManageBOM,
+  onSave, // Nuova prop per il salvataggio
   onBack,
   currentUser,
   currentLocation, // Accetta currentLocation come prop
@@ -40,6 +41,11 @@ const Header = ({
       <button className="icon-button" onClick={onAdd} title="Aggiungi">
         <CgAdd />
       </button>
+      {onSave && ( // Mostra il pulsante Salva solo se la prop onSave è definita
+        <button className="icon-button" onClick={onSave} title="Salva">
+          <CiSaveDown2 />
+        </button>
+      )}
       <button className="icon-button" onClick={onEdit} title="Aggiorna" disabled={disableEditAndDelete}>
         <CiEdit />
       </button>

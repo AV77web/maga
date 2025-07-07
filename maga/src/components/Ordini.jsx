@@ -85,6 +85,20 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   }, [fetchOrdiniList]);
 
   // --- GESTORI EVENTI ---
+  const handleNewOrdine = useCallback(() => {
+    // Prepara un oggetto vuoto per la creazione di un nuovo ordine
+    const newOrdineTemplate = {
+      id: null, // L'ID sarà null per un nuovo record
+      ordine_num: '',
+      data_ordine: new Date().toISOString().split('T')[0], // Data di oggi come default
+      id_fornitore: '',
+      stato: 'Aperto', // Stato di default
+      note: ''
+    };
+    setSelectedOrdine(newOrdineTemplate);
+    setOrdineRighe([]); // Le righe sono ovviamente vuote
+  }, []);
+
   const handleOrdineSelect = useCallback(async (ordineId) => {
     if (!ordineId) {
       setSelectedOrdine(null);
@@ -120,6 +134,41 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
     setOrdineRighe([]);
   };
 
+  const handleSaveOrdine = useCallback(async () => {
+    if (!selectedOrdine) {
+      setError("Nessun ordine da salvare.");
+      return;
+    }
+
+    // Aggiungi qui una validazione più robusta se necessario
+    if (!selectedOrdine.ordine_num || !selectedOrdine.data_ordine || !selectedOrdine.id_fornitore || !selectedOrdine.stato) {
+      setError("Compila tutti i campi obbligatori della testata (Numero, Data, Fornitore, Stato).");
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      if (selectedOrdine.id) {
+        // Modalità UPDATE
+        await ordiniApi.update(selectedOrdine.id, selectedOrdine);
+        setMessage('✅ Ordine aggiornato con successo!');
+      } else {
+        // Modalità CREATE
+        const { id, ...dataToInsert } = selectedOrdine; // Rimuovi l'ID nullo
+        await ordiniApi.insert(dataToInsert);
+        setMessage('✅ Ordine creato con successo!');
+      }
+      // Dopo il salvataggio, ricarica la lista e torna alla vista master
+      fetchOrdiniList();
+      handleBackToMaster();
+    } catch (err) {
+      setError(`❌ Errore nel salvataggio dell'ordine: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedOrdine, fetchOrdiniList]);
+
   const handleHeadChange = (updatedHeadData) => {
     // Qui puoi gestire l'aggiornamento della testata in tempo reale o preparare i dati per un salvataggio
     console.log("Dati testata aggiornati:", updatedHeadData);
@@ -137,7 +186,8 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
     <>
       <Header
         onBack={selectedOrdine ? handleBackToMaster : null} // Mostra "Indietro" solo in vista dettaglio
-        // Aggiungi altri bottoni se necessario (es. onAdd per un nuovo ordine)
+        onAdd={!selectedOrdine ? handleNewOrdine : null} // Mostra "Aggiungi" solo nella vista master
+        onSave={selectedOrdine ? handleSaveOrdine : null} // Mostra "Salva" solo nella vista dettaglio
         currentUser={currentUser}
         currentLocation={currentLocation}
         onLogout={onLogout}

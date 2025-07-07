@@ -1,6 +1,6 @@
 //===================================
 //File: index.js
-//Script per avviare il serve Express
+//Script per avviare il server Express
 //@author: "villari.andrea@libero.it"
 //@version: "1.0.0 2025-06-09"
 //===================================
@@ -14,6 +14,7 @@ const causaliRoutes = require("./routes/causaliroutes"); // Importa le rotte del
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes'); // Importa le rotte degli utenti
 const dibaRoutes = require('./routes/dibaroutes');
+const ordiniRoutes = require('./routes/ordini.js'); // Importa le rotte per gli ordini 
 const errorHandler = require('./middleware/errorHandler');
 const pool = require("./db/db"); // Importa il pool di connessioni al DB
 
@@ -77,6 +78,9 @@ app.use("/api/users", authenticateToken, userRoutes); // Rotte per gli utenti
 
 console.log("🟠 index.js: Caricamento dibaRoues" , typeof dibaRoutes, dibaRoutes instanceof require('express').Router ? 'è un Router Express' : 'NON è un Router Express', Object.keys(dibaRoutes) );
 app.use("/api/diba", authenticateToken, dibaRoutes); // tutte le rotte per le diba iniziano con /api/diba);
+
+console.log("🟠 index.js: Caricamento ordiniRoutes" , typeof ordiniRoutes, ordiniRoutes instanceof require('express').Router ? 'è un Router Express' : 'NON è un Router Express', Object.keys(ordiniRoutes) );
+app.use("/api/ordini", authenticateToken, ordiniRoutes); // tutte le rotte per le diba iniziano con /api/diba);
 
 // Middleware di gesrtione degli errori centralizzato
 app.use(errorHandler);

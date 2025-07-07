@@ -26,8 +26,10 @@ function validateOrdineInput(data, operation) {
     if (!data_ordine) { // Controllo base, può essere migliorato con validazione della data
         return "Il campo 'data_ordine' è obbligatorio.";
     }
-    if (id_fornitore === undefined || typeof id_fornitore !== 'number') {
-        return "Il campo 'id_fornitore' è obbligatorio e deve essere un numero.";
+    // Converte l'ID fornitore in numero per una validazione robusta
+    const fornitoreId = Number(id_fornitore);
+    if (id_fornitore === undefined || isNaN(fornitoreId) || fornitoreId <= 0) {
+        return "Il campo 'id_fornitore' è obbligatorio e deve essere un numero valido.";
     }
     if (!stato || !['Aperto', 'Chiuso', 'Annullato'].includes(stato)) {
         return "Il campo 'stato' è obbligatorio e deve essere 'Aperto', 'Chiuso', o 'Annullato'.";
@@ -90,13 +92,19 @@ exports.getOrdineRighe = async (req, res, next) => {
 // POST: crea un nuovo ordine
 exports.insertOrdine = async (req, res, next) => {
   try {
-    const validationError = validateOrdineInput(req.body, "create");
+    // Crea una copia del body per poter convertire i tipi senza modificare l'originale
+    const dataToValidate = { ...req.body };
+    if (dataToValidate.id_fornitore) {
+        dataToValidate.id_fornitore = Number(dataToValidate.id_fornitore);
+    }
+
+    const validationError = validateOrdineInput(dataToValidate, "create");
     if (validationError) {
       return res.status(400).json({ success: false, message: validationError });
     }
 
-    const { ordine_num, data_ordine, id_fornitore, stato, note } = req.body;
-
+    const { ordine_num, data_ordine, id_fornitore, stato, note } = dataToValidate;
+    
     // Assumendo una SP 'InsertOrdine'
     const [results] = await db.query("CALL InsertOrdine(?, ?, ?, ?, ?)", [
       ordine_num,
@@ -119,16 +127,22 @@ exports.insertOrdine = async (req, res, next) => {
 exports.updateOrdine = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const validationError = validateOrdineInput(req.body, "update");
+
+    const dataToValidate = { ...req.body };
+    if (dataToValidate.id_fornitore) {
+        dataToValidate.id_fornitore = Number(dataToValidate.id_fornitore);
+    }
+
+    const validationError = validateOrdineInput(dataToValidate, "update");
     if (validationError) {
       return res.status(400).json({ success: false, message: validationError });
     }
 
-    const { ordine_num, data_ordine, id_fornitore, stato, note } = req.body;
+    const { ordine_num, data_ordine, id_fornitore, stato, note } = dataToValidate;
 
     // Assumendo una SP 'UpdateOrdine'
-    const [result] = await db.query("CALL UpdateOrdine(?, ?, ?, ?, ?, ?)", [ id, ordine_num, data_ordine, id_fornitore, stato, note || null ]);
-
+    const [result] = await db.query("CALL UpdateOrdine(?, ?, ?, ?, ?, ?)", [ id, ordine_num, data_ordine, id_fornitore, stato, note || null]);
+    
     if (result.affectedRows === 0) {
         return res.status(404).json({ success: false, message: "Ordine non trovato per l'aggiornamento." });
     }
