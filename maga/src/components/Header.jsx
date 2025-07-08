@@ -32,26 +32,34 @@ const Header = ({
           <CiCircleChevLeft />
         </button>
       )}
-      <button className="icon-button" onClick={onManageBOM} title="Distinta Base">
+      
+      {onManageBOM && (
+        <button className="icon-button" onClick={onManageBOM} title="Distinta Base">
         <CiBoxList />
-      </button>
-      <button className="icon-button" onClick={onSearch} title="Cerca">
+        </button>
+      )}
+      {onSearch && (
+        <button className="icon-button" onClick={onSearch} title="Cerca">
         <CiSearch />
-      </button>
-      <button className="icon-button" onClick={onAdd} title="Aggiungi">
+        </button>)}
+      {onAdd &&  (
+        <button className="icon-button" onClick={onAdd} title="Aggiungi">
         <CgAdd />
-      </button>
+        </button>)}
       {onSave && ( // Mostra il pulsante Salva solo se la prop onSave è definita
         <button className="icon-button" onClick={onSave} title="Salva">
           <CiSaveDown2 />
         </button>
       )}
-      <button className="icon-button" onClick={onEdit} title="Aggiorna" disabled={disableEditAndDelete}>
+      { onEdit && (
+        <button className="icon-button" onClick={onEdit} title="Aggiorna" disabled={disableEditAndDelete}>
         <CiEdit />
-      </button>
-      <button className="icon-button" onClick={onDelete} title="Elimina" disabled={disableEditAndDelete}>
+        </button>
+      )}      
+      {onDelete && (
+        <button className="icon-button" onClick={onDelete} title="Elimina" disabled={disableEditAndDelete}>
         <CgTrash />
-      </button>
+      </button>)}
       {currentUser && currentUser.username && (
         <button className="icon-button user-button" title={`Logout User: ${currentUser.username}`} onClick={onLogout}>
           <CiUser />
