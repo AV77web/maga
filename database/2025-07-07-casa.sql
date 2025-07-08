@@ -1,0 +1,1205 @@
+-- MySQL dump 10.13  Distrib 8.4.5, for Win64 (x86_64)
+--
+-- Host: localhost    Database: magazzino
+-- ------------------------------------------------------
+-- Server version	8.4.5
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `articoli`
+--
+
+DROP TABLE IF EXISTS `articoli`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `articoli` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `description` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
+  `quantita` decimal(12,2) DEFAULT NULL,
+  `min` decimal(12,2) DEFAULT NULL,
+  `max` decimal(12,2) DEFAULT NULL,
+  `supplier` varchar(100) NOT NULL,
+  `has_diba` enum('S','N') NOT NULL DEFAULT 'N',
+  `um` varchar(10) DEFAULT NULL,
+  `prezzo` decimal(12,2) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `articoli`
+--
+
+LOCK TABLES `articoli` WRITE;
+/*!40000 ALTER TABLE `articoli` DISABLE KEYS */;
+INSERT INTO `articoli` VALUES (1,'Vite M6','vite metrica 6mm in acciaio',100.00,30.00,30.00,'SIEMENS','N',NULL,21.57),(2,'Rondella Ø5','Rondella zincata',500.00,100.00,2000.00,'Bulloneria Srl','N',NULL,43.50),(3,'Piastra Supporto','Piastra in acciaio 100x50mm',35.00,10.00,100.00,'Metaltech','N',NULL,52.78),(4,'Motore 230V','Motore monofase 230V',8.00,2.00,15.00,'ElettroPower','S',NULL,33.41),(5,'Cavo 3x1.5mm²','Cavo multipolare nero',120.00,30.00,500.00,'Cavi Italia','N',NULL,88.72),(6,'Connettore 4 pin','Connettore per motore',75.00,20.00,300.00,'ElettroPower','N',NULL,63.36),(7,'Involucro ABS','Box in plastica ABS',60.00,10.00,200.00,'PlastTech','N',NULL,40.65),(8,'Pannello LED','Modulo LED 12V',42.00,10.00,100.00,'LucePro','N',NULL,93.18),(9,'Scheda controllo','PCB controller v1.2',22.00,5.00,50.00,'PCB Factory','N',NULL,63.92),(10,'Gruppo montaggio A','Assemblato con motore e supporti',10.00,0.00,30.00,'Assemblaggi Spa','S',NULL,30.09),(16,'eee','fff',9000.00,0.00,0.00,'OMRON','N',NULL,38.69),(19,'product 70','descrizione prodotto 70',0.00,0.00,58900000.00,'','N',NULL,93.16),(20,'product 80','descrizione prodotto 80 jljljllljlkjlj ljljljljljljllklkjlkjljlk',0.00,0.00,0.00,'','N',NULL,69.76),(21,'product 90000','descrizione prodotto 90000 della lista dei prodotti',665.00,9.00,100.00,'','N',NULL,59.29),(22,'999999','ojeojojoijoi',988.00,8.00,12.00,'BAXI','N',NULL,77.18),(25,'KHKJHKHKHKJgggggggggggggggggppppppppppppppppppppppppppppppppppp','KHKHKJHKHKHKHKJHK',78788.00,778.00,79.00,'','N',NULL,18.01),(26,'HJKGHKGHKGQ','OJOJGLJ',71810.00,7.00,8.00,'','N',NULL,28.54),(27,'NJKHH','HKJHKJHK',8.00,8.00,8.00,'','N',NULL,78.65),(28,'JLKJLJLKJLKJLKJ','LKJLJL',908.00,8.00,8.00,'SIEMENS','N',NULL,27.64),(29,'UOUO','OUOUOI',8.00,8.00,8.00,'','N',NULL,72.25),(30,'ORITTOU','OUORTUOTU',197.00,7.00,7.00,'SIEMENS','N',NULL,88.32),(31,'RTRTRE','RTR',100.00,20.00,250.00,'','N',NULL,34.84),(32,'78787878','questo è il prodotto di codice 78787878 della lista dei prodotti',21008.00,10.00,200.00,'OMRON','N',NULL,79.24),(33,'88888888','questo è il prodotto numero 88888888 della lista dei prdotti',1820233.00,70.00,800.00,'BAXI','N',NULL,11.71);
+/*!40000 ALTER TABLE `articoli` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `causali`
+--
+
+DROP TABLE IF EXISTS `causali`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `causali` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `codice` varchar(3) NOT NULL,
+  `description` varchar(250) NOT NULL,
+  `tipo` enum('C','S') NOT NULL,
+  `attiva` tinyint DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `causali`
+--
+
+LOCK TABLES `causali` WRITE;
+/*!40000 ALTER TABLE `causali` DISABLE KEYS */;
+INSERT INTO `causali` VALUES (1,'CAR','Carico da fornitore','C',1),(2,'RET','Rientro produzione','C',1),(3,'INV','Rettifica inventariale (carico)','C',1),(4,'PRE','Prelievo produzione','S',1),(5,'VEN','Vendita cliente','S',1),(6,'INV','Rettifica inventariale (scarico)','S',1),(7,'RSF','Reso a fornitore','S',1),(8,'RCL','Reso da cliente','C',1);
+/*!40000 ALTER TABLE `causali` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `clienti`
+--
+
+DROP TABLE IF EXISTS `clienti`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `clienti` (
+  `cliente_id` int NOT NULL AUTO_INCREMENT,
+  `nome` varchar(255) NOT NULL,
+  `cf` varchar(20) NOT NULL,
+  `indirizzo` text,
+  `telefono` varchar(30) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `contatto` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`cliente_id`),
+  UNIQUE KEY `cf` (`cf`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `clienti`
+--
+
+LOCK TABLES `clienti` WRITE;
+/*!40000 ALTER TABLE `clienti` DISABLE KEYS */;
+/*!40000 ALTER TABLE `clienti` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `ddt`
+--
+
+DROP TABLE IF EXISTS `ddt`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ddt` (
+  `id_ddt` int NOT NULL AUTO_INCREMENT,
+  `num_ddt` varchar(20) NOT NULL,
+  `data_ddt` date NOT NULL,
+  `cliente_id` int NOT NULL,
+  `stato` enum('DA_SPEDIRE','SPEDITO','ANNULLATO') DEFAULT 'DA_SPEDIRE',
+  `note` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_ddt`),
+  UNIQUE KEY `num_ddt` (`num_ddt`),
+  KEY `fk_ddt_clienti` (`cliente_id`),
+  CONSTRAINT `fk_ddt_clienti` FOREIGN KEY (`cliente_id`) REFERENCES `clienti` (`cliente_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ddt`
+--
+
+LOCK TABLES `ddt` WRITE;
+/*!40000 ALTER TABLE `ddt` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ddt` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `ddt_righe`
+--
+
+DROP TABLE IF EXISTS `ddt_righe`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ddt_righe` (
+  `id_riga` int NOT NULL AUTO_INCREMENT,
+  `id_ddt` int NOT NULL,
+  `cod_articolo` varchar(30) NOT NULL,
+  `descrizione` varchar(255) DEFAULT NULL,
+  `qta` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`id_riga`),
+  KEY `fk_righe_ddt` (`id_ddt`),
+  CONSTRAINT `fk_righe_ddt` FOREIGN KEY (`id_ddt`) REFERENCES `ddt` (`id_ddt`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ddt_righe`
+--
+
+LOCK TABLES `ddt_righe` WRITE;
+/*!40000 ALTER TABLE `ddt_righe` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ddt_righe` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `diba`
+--
+
+DROP TABLE IF EXISTS `diba`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `diba` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `id_father` int NOT NULL,
+  `id_son` int NOT NULL,
+  `quantita` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `id_father` (`id_father`),
+  KEY `id_son` (`id_son`),
+  CONSTRAINT `diba_ibfk_1` FOREIGN KEY (`id_father`) REFERENCES `articoli` (`id`),
+  CONSTRAINT `diba_ibfk_2` FOREIGN KEY (`id_son`) REFERENCES `articoli` (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `diba`
+--
+
+LOCK TABLES `diba` WRITE;
+/*!40000 ALTER TABLE `diba` DISABLE KEYS */;
+INSERT INTO `diba` VALUES (1,10,4,1.00),(2,10,3,2.00),(3,10,6,4.00),(4,10,7,1.00),(5,10,9,1.00),(6,10,8,1.00),(7,4,2,10.00),(8,4,2,130.00);
+/*!40000 ALTER TABLE `diba` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `fonrnitori`
+--
+
+DROP TABLE IF EXISTS `fonrnitori`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `fonrnitori` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `codice` varchar(10) NOT NULL,
+  `rag_soc` varchar(255) NOT NULL,
+  `partita_iva` varchar(20) NOT NULL,
+  `cf` varchar(20) NOT NULL,
+  `indirizzo` varchar(255) DEFAULT NULL,
+  `citta` varchar(100) DEFAULT NULL,
+  `cap` varchar(10) DEFAULT NULL,
+  `pv` varchar(2) DEFAULT NULL,
+  `nazione` varchar(50) DEFAULT NULL,
+  `telefono` varchar(20) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `sito_web` varchar(100) DEFAULT NULL,
+  `note` text,
+  `data_creazione` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `data_modifica` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `codice` (`codice`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `fonrnitori`
+--
+
+LOCK TABLES `fonrnitori` WRITE;
+/*!40000 ALTER TABLE `fonrnitori` DISABLE KEYS */;
+/*!40000 ALTER TABLE `fonrnitori` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `fornitori`
+--
+
+DROP TABLE IF EXISTS `fornitori`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `fornitori` (
+  `fornitore_id` int NOT NULL AUTO_INCREMENT,
+  `ragione_sociale` varchar(255) NOT NULL,
+  `piva` varchar(20) NOT NULL,
+  `indirizzo` text,
+  `telefono` varchar(30) DEFAULT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `contatto` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`fornitore_id`),
+  UNIQUE KEY `piva` (`piva`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `fornitori`
+--
+
+LOCK TABLES `fornitori` WRITE;
+/*!40000 ALTER TABLE `fornitori` DISABLE KEYS */;
+INSERT INTO `fornitori` VALUES (1,'Alfa Srl','IT12345678901','Via Roma 10, Milano','+39 02 1234567','info@alfasrl.it','Mario Rossi','2025-07-07 21:38:54','2025-07-07 21:38:54'),(2,'Beta Spa','IT98765432109','Corso Venezia 5, Torino','+39 011 7654321','contatti@betaspa.it','Luigi Bianchi','2025-07-07 21:38:54','2025-07-07 21:38:54'),(3,'Gamma SRL','IT13579246801','Via Garibaldi 22, Bologna','+39 051 234567','gamma@gammasrl.it','Laura Verdi','2025-07-07 21:38:54','2025-07-07 21:38:54'),(4,'Delta SNC','IT24681357902','Piazza Duomo 1, Firenze','+39 055 987654','delta@deltasnc.it','Paolo Neri','2025-07-07 21:38:54','2025-07-07 21:38:54'),(5,'Epsilon Srl','IT10293847561','Viale Europa 15, Napoli','+39 081 112233','epsilon@epsilonsrl.it','Chiara Gallo','2025-07-07 21:38:54','2025-07-07 21:38:54'),(6,'Zeta Srl','IT56473829104','Via Manzoni 8, Genova','+39 010 445566','zeta@zetasrl.it','Giovanni Russo','2025-07-07 21:38:54','2025-07-07 21:38:54'),(7,'Eta Spa','IT91827364501','Via Verdi 30, Palermo','+39 091 778899','eta@etaspa.it','Angela Conti','2025-07-07 21:38:54','2025-07-07 21:38:54'),(8,'Theta SNC','IT19283746502','Via Dante 12, Bari','+39 080 334455','theta@thetasnc.it','Francesco Moretti','2025-07-07 21:38:54','2025-07-07 21:38:54'),(9,'Iota Srl','IT31415926535','Corso Italia 50, Venezia','+39 041 556677','iota@iotasrl.it','Martina Lombardi','2025-07-07 21:38:54','2025-07-07 21:38:54'),(10,'Kappa SRL','IT16180339887','Via Po 7, Verona','+39 045 998877','kappa@kappasrl.it','Stefano De Luca','2025-07-07 21:38:54','2025-07-07 21:38:54'),(11,'Lambda Spa','IT27182818284','Via Mazzini 18, Trieste','+39 040 223344','lambda@lambdaspa.it','Roberta Ferri','2025-07-07 21:38:54','2025-07-07 21:38:54'),(12,'Mu SNC','IT14142135623','Piazza San Marco 3, Padova','+39 049 445566','mu@musnc.it','Davide Rizzi','2025-07-07 21:38:54','2025-07-07 21:38:54'),(13,'Nu Srl','IT16117234567','Via Vittorio Veneto 9, Parma','+39 0521 556677','nu@nusrl.it','Elisa Grandi','2025-07-07 21:38:54','2025-07-07 21:38:54'),(14,'Xi Spa','IT10111213141','Viale Marconi 40, Modena','+39 059 778899','xi@xispa.it','Riccardo Leone','2025-07-07 21:38:54','2025-07-07 21:38:54'),(15,'Omicron SRL','IT21222324252','Via Cavour 25, Reggio Emilia','+39 0522 998877','omicron@omicronsrl.it','Alessia Gatti','2025-07-07 21:38:54','2025-07-07 21:38:54'),(16,'Pi SNC','IT31323334362','Piazza Libertà 6, Brescia','+39 030 334455','pi@pisnc.it','Giorgio Vitali','2025-07-07 21:38:54','2025-07-07 21:38:54'),(17,'Rho Srl','IT41424344472','Via Matteotti 14, Lecce','+39 0832 445566','rho@rhosrl.it','Federica Bellini','2025-07-07 21:38:54','2025-07-07 21:38:54'),(18,'Sigma Spa','IT51525354582','Corso Garibaldi 60, Perugia','+39 075 556677','sigma@sigmaspa.it','Lorenzo Marchetti','2025-07-07 21:38:54','2025-07-07 21:38:54'),(19,'Tau SRL','IT61626364692','Via XX Settembre 11, Catania','+39 095 778899','tau@tausrl.it','Valentina Esposito','2025-07-07 21:38:54','2025-07-07 21:38:54'),(20,'Upsilon SNC','IT71727374702','Viale della Repubblica 99, Livorno','+39 0586 112233','upsilon@upsilonsnc.it','Marco Fabbri','2025-07-07 21:38:54','2025-07-07 21:38:54');
+/*!40000 ALTER TABLE `fornitori` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `login`
+--
+
+DROP TABLE IF EXISTS `login`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `login` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `user` varchar(100) NOT NULL,
+  `pwd` varchar(60) NOT NULL,
+  `role` varchar(10) NOT NULL DEFAULT 'user',
+  UNIQUE KEY `id` (`id`,`user`) USING BTREE
+) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `login`
+--
+
+LOCK TABLES `login` WRITE;
+/*!40000 ALTER TABLE `login` DISABLE KEYS */;
+INSERT INTO `login` VALUES (2,'villari.andrea@libero.it','$2b$10$O6Z..94zCelmspklOd4pf.m0.Ag9yT7.QcwSJA.o623Zo5czkmEKy','admin'),(3,'pinco@pallino.it','$2b$10$uWz1EzuRfT6A9FROA8oCQukGln7A4xCgL3WZqTTr0q3rOigYPr/52','user'),(4,'oml@sales.it','$2b$10$Fzf5G3XUsYrqLUO7vgTOJuZcPRG7fS0KmSP/LWAtfKYTYChC1RbKO','user');
+/*!40000 ALTER TABLE `login` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `movimenti`
+--
+
+DROP TABLE IF EXISTS `movimenti`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `movimenti` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `data` date NOT NULL,
+  `tipo` enum('C','S') NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `quantita` decimal(12,2) DEFAULT NULL,
+  `codice_cau` varchar(3) NOT NULL DEFAULT '',
+  `idart` int NOT NULL,
+  `note` text,
+  `descriptioncau` varchar(250) DEFAULT NULL,
+  `descriptionart` varchar(100) DEFAULT NULL,
+  `user` varchar(100) DEFAULT NULL,
+  `timestamp` varchar(19) DEFAULT NULL,
+  `um` varchar(10) DEFAULT NULL,
+  UNIQUE KEY `id` (`id`) USING BTREE
+) ENGINE=MyISAM AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `movimenti`
+--
+
+LOCK TABLES `movimenti` WRITE;
+/*!40000 ALTER TABLE `movimenti` DISABLE KEYS */;
+INSERT INTO `movimenti` VALUES (1,'2025-06-15','C','Acquisto iniziale',100.00,'CAR',1,'','Carico da fornitore','Vite M5x20','villari.andrea@libero.it','2025-06-15 07:03:17',NULL),(2,'2025-06-16','C','Acquisto iniziale',500.00,'CAR',2,'','Carico da fornitore','Rondella Ø5','villari.andrea@libero.it','2025-06-16 07:39:20',NULL),(3,'2025-06-17','S','Utilizzo per montaggio',30.00,'PRE',1,'Commessa #1234','Prelievo produzione','Vite M5x20','villari.andrea@libero.it','2025-06-17 18:50:54',NULL),(4,'2025-06-18','C','Restock',20.00,'CAR',3,'','Carico da fornitore','Piastra Supporto','villari.andrea@libero.it','2025-06-18 00:16:24',NULL),(5,'2025-06-19','S','Utilizzo produzione',5.00,'PRE',3,'','Prelievo produzione','Piastra Supporto','villari.andrea@libero.it','2025-06-19 04:42:59',NULL),(6,'2025-06-19','C','Nuovo stock',5.00,'CAR',4,'','Carico da fornitore','Motore 230V','villari.andrea@libero.it','2025-06-19 20:17:53',NULL),(7,'2025-06-20','S','Montaggio kit A',3.00,'PRE',4,'','Prelievo produzione','Motore 230V','villari.andrea@libero.it','2025-06-20 14:19:50',NULL),(8,'2025-06-21','C','Ricevuto nuovo lotto',50.00,'CAR',5,'','Carico da fornitore','Cavo 3x1.5mm²','villari.andrea@libero.it','2025-06-21 05:39:32',NULL),(9,'2025-06-21','S','Produzione LED kit',10.00,'PRE',5,'','Prelievo produzione','Cavo 3x1.5mm²','villari.andrea@libero.it','2025-06-21 18:11:41',NULL),(10,'2025-06-22','C','Riassortimento magazzino',40.00,'CAR',6,'','Carico da fornitore','Connettore 4 pin','villari.andrea@libero.it','2025-06-22 20:16:46',NULL),(11,'2025-06-23','S','Montaggio gruppo A',20.00,'PRE',6,'','Prelievo produzione','Connettore 4 pin','villari.andrea@libero.it','2025-06-23 00:52:16',NULL),(12,'2025-06-23','C','Restock case',25.00,'CAR',7,'','Carico da fornitore','Involucro ABS','villari.andrea@libero.it','2025-06-23 17:48:53',NULL),(13,'2025-06-24','S','Prelievo assemblaggio',10.00,'PRE',7,'','Prelievo produzione','Involucro ABS','villari.andrea@libero.it','2025-06-24 00:21:44',NULL),(14,'2025-06-25','C','LED ricevuti',15.00,'CAR',8,'','Carico da fornitore','Pannello LED','villari.andrea@libero.it','2025-06-25 15:02:15',NULL),(15,'2025-06-25','S','Montaggio',10.00,'PRE',8,'','Prelievo produzione','Pannello LED','villari.andrea@libero.it','2025-06-25 04:04:51',NULL),(16,'2025-06-26','C','Reso cliente difettoso',2.00,'RCL',4,'Motore rumoroso restituito','Reso da cliente','Motore 230V','villari.andrea@libero.it','2025-06-26 02:53:10',NULL),(17,'2025-06-26','C','Reso cliente errato',5.00,'RCL',1,'Codice errato in spedizione','Reso da cliente','Vite M5x20','villari.andrea@libero.it','2025-06-26 05:35:14',NULL),(18,'2025-06-27','S','Reso a fornitore per difetto',3.00,'RSF',6,'Pin piegati','Reso a fornitore','Connettore 4 pin','villari.andrea@libero.it','2025-06-27 11:42:03',NULL),(19,'2025-06-27','S','Reso a fornitore per overstock',10.00,'RSF',5,'Quantità eccessiva in magazzino','Reso a fornitore','Cavo 3x1.5mm²','villari.andrea@libero.it','2025-06-27 04:41:55',NULL),(20,'2025-06-28','C','Reso da cliente',1.00,'RCL',10,'Cliente ha restituito kit montaggio','Reso da cliente','Gruppo montaggio A','villari.andrea@libero.it','2025-06-28 13:57:08',NULL),(21,'2025-06-28','S','Reso a fornitore',2.00,'RSF',3,'Piastra graffiata','Reso a fornitore','Piastra Supporto','villari.andrea@libero.it','2025-06-28 20:51:44',NULL);
+/*!40000 ALTER TABLE `movimenti` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `ordini`
+--
+
+DROP TABLE IF EXISTS `ordini`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ordini` (
+  `id_ordine` int NOT NULL AUTO_INCREMENT,
+  `num_ordine` varchar(20) NOT NULL,
+  `data_ordine` date NOT NULL,
+  `fornitore_id` int NOT NULL,
+  `stato` enum('APERTO','INVIATO','CHIUSO','ANNULLATO') DEFAULT 'APERTO',
+  `note` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_ordine`),
+  UNIQUE KEY `num_ordine` (`num_ordine`),
+  KEY `fk_ordini_fornitori` (`fornitore_id`),
+  CONSTRAINT `fk_ordini_fornitori` FOREIGN KEY (`fornitore_id`) REFERENCES `fornitori` (`fornitore_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ordini`
+--
+
+LOCK TABLES `ordini` WRITE;
+/*!40000 ALTER TABLE `ordini` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ordini` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `ordini_righe`
+--
+
+DROP TABLE IF EXISTS `ordini_righe`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ordini_righe` (
+  `id_riga` int NOT NULL AUTO_INCREMENT,
+  `id_ordine` int NOT NULL,
+  `descrizione` varchar(255) DEFAULT NULL,
+  `prezzo_unitario` decimal(10,2) NOT NULL,
+  `nome_articolo` varchar(100) NOT NULL,
+  `quantita` decimal(12,2) DEFAULT NULL,
+  `totale_righe` decimal(12,2) GENERATED ALWAYS AS ((`quantita` * `prezzo_unitario`)) STORED,
+  PRIMARY KEY (`id_riga`),
+  KEY `fk_righe_ordini` (`id_ordine`),
+  CONSTRAINT `fk_righe_ordini` FOREIGN KEY (`id_ordine`) REFERENCES `ordini` (`id_ordine`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ordini_righe`
+--
+
+LOCK TABLES `ordini_righe` WRITE;
+/*!40000 ALTER TABLE `ordini_righe` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ordini_righe` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Dumping events for database 'magazzino'
+--
+
+--
+-- Dumping routines for database 'magazzino'
+--
+/*!50003 DROP PROCEDURE IF EXISTS `DeleteArticoli` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = cp850 */ ;
+/*!50003 SET character_set_results = cp850 */ ;
+/*!50003 SET collation_connection  = cp850_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `DeleteArticoli`(
+IN p_id INT
+)
+BEGIN
+DELETE FROM `articoli`
+WHERE `id` = p_id;
+-- Restituisce un messaggio di errore
+SELECT 'Ricambio eliminato con successo' AS message;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `DeleteCausali` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = cp850 */ ;
+/*!50003 SET character_set_results = cp850 */ ;
+/*!50003 SET collation_connection  = cp850_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `DeleteCausali`(
+IN p_id INT
+)
+BEGIN
+DELETE FROM `causali`
+WHERE `id` = p_id;
+
+SELECT 'Ricambio eliminato con successo' AS message;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `DeleteDiba` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = cp850 */ ;
+/*!50003 SET character_set_results = cp850 */ ;
+/*!50003 SET collation_connection  = cp850_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `DeleteDiba`(
+    IN p_id INT
+)
+BEGIN
+    DELETE FROM diba WHERE id = p_id;
+    SELECT ROW_COUNT() as affectedRows;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `DeleteMovimento` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `DeleteMovimento`(
+    IN p_id INT
+)
+BEGIN
+    DECLARE v_idart INT;
+    DECLARE v_quantita DECIMAL(10, 2);
+    DECLARE v_tipo CHAR(1);
+    DECLARE v_affected_rows INT;
+
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    
+    SELECT idart, quantita, tipo INTO v_idart, v_quantita, v_tipo
+    FROM movimenti
+    WHERE id = p_id
+    FOR UPDATE;
+
+    
+    IF FOUND_ROWS() = 0 THEN
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Movimento non trovato.';
+    END IF;
+
+    
+    IF v_tipo = 'C' THEN
+        
+        UPDATE articoli SET quantita = quantita - v_quantita WHERE id = v_idart;
+    ELSEIF v_tipo = 'S' THEN
+        
+        UPDATE articoli SET quantita = quantita + v_quantita WHERE id = v_idart;
+    ELSE
+        
+        ROLLBACK;
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Tipo movimento del record da eliminare non valido.';
+    END IF;
+
+    
+    DELETE FROM movimenti WHERE id = p_id;
+    SET v_affected_rows = ROW_COUNT();
+
+    COMMIT;
+
+    
+    SELECT v_affected_rows as affectedRows;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `FetchArticoli` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `FetchArticoli`(
+	IN `p_name` VARCHAR(255),
+	IN `p_description` VARCHAR(255),
+	IN `p_supplier` VARCHAR(255)
+)
+BEGIN
+    SELECT
+        `id`,
+        `name`,
+        `description`,
+        `quantita`,
+        `min`,
+        `max`,
+        `supplier`,
+        `has_diba`
+    FROM
+        `articoli`
+    WHERE
+        (p_name IS NULL OR p_name = '' OR `name` LIKE CONCAT('%', p_name, '%'))
+        AND (p_description IS NULL OR p_description = '' OR `description` LIKE CONCAT('%', p_description, '%'))
+        AND (p_supplier IS NULL OR p_supplier = '' OR `supplier` LIKE CONCAT('%', p_supplier, '%'))
+    ORDER BY
+        `name` ASC;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `FetchCausali` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = cp850 */ ;
+/*!50003 SET character_set_results = cp850 */ ;
+/*!50003 SET collation_connection  = cp850_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `FetchCausali`(
+     in p_codice varchar(3),
+     in p_description varchar(255),
+     in p_tipo enum('C','S')
+     )
+begin
+     select
+     `codice`,
+     `description`,
+     `tipo`
+     from
+     `causali`
+     where
+     (p_codice is null or p_codice = '' or `codice` like concat('%', p_codice ,'%'))
+     and (p_description is null or p_description ='' or `description` like concat('%', p_description,'%'))
+     and (p_tipo is null or p_tipo='' or `tipo` like concat('%', p_tipo, '%'))
+     order by
+     `codice` asc;
+     end ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `FetchDiba` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = cp850 */ ;
+/*!50003 SET character_set_results = cp850 */ ;
+/*!50003 SET collation_connection  = cp850_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `FetchDiba`(
+    IN p_id INT,
+    IN p_id_father INT,
+    IN p_id_son INT
+)
+BEGIN
+    SELECT
+        d.id,
+        d.id_father,
+        father.name AS father_name,
+        father.description AS father_description,
+        d.id_son,
+        son.name AS son_name,
+        son.description AS son_description,
+        d.quantita
+    FROM
+        diba d
+    JOIN
+        articoli father ON d.id_father = father.id
+    JOIN
+        articoli son ON d.id_son = son.id
+    WHERE
+        (p_id IS NULL OR d.id = p_id) AND
+        (p_id_father IS NULL OR d.id_father = p_id_father) AND
+        (p_id_son IS NULL OR d.id_son = p_id_son)
+    ORDER BY
+        father.name, son.name;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `FetchFornitori` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = cp850 */ ;
+/*!50003 SET character_set_results = cp850 */ ;
+/*!50003 SET collation_connection  = cp850_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `FetchFornitori`(
+    IN `p_ragione_sociale` VARCHAR(255),
+    IN `p_piva` VARCHAR(20),
+    IN `p_contatto` VARCHAR(100)
+)
+BEGIN
+    SELECT
+        `fornitore_id`,
+        `ragione_sociale`,
+        `piva`,
+        `indirizzo`,
+        `telefono`,
+        `email`,
+        `contatto`
+    FROM
+        `fornitori`
+    WHERE
+        (p_ragione_sociale IS NULL OR p_ragione_sociale = '' OR `ragione_sociale` LIKE CONCAT('%', p_ragione_sociale, '%'))
+        AND (p_piva IS NULL OR p_piva = '' OR `piva` LIKE CONCAT('%', p_piva, '%'))
+AND (p_contatto IS NULL OR p_contatto ='' OR contatto LIKE CONCAT('%',p_contatto,'%'))
+    ORDER BY
+        `ragione_sociale` ASC;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `FetchMovimenti` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `FetchMovimenti`(
+	IN `p_idart` INT,
+	IN `p_data_da` DATE,
+	IN `p_data_a` DATE,
+	IN `p_tipo` ENUM('C','S'),
+	IN `p_codice_cau` VARCHAR(3),
+	IN `p_user` VARCHAR(100)
+)
+BEGIN
+SELECT
+m.id,
+m.data,
+m.quantita,
+m.tipo,
+m.note,
+m.idart,
+m.codice_cau,
+m.user,
+m.timestamp,
+a.name AS descriptionart,
+c.description AS descriptioncau
+FROM
+movimenti m
+JOIN
+articoli a ON m.idart = a.id
+JOIN
+causali c ON m.codice_cau = c.codice
+WHERE 
+(p_idart IS NULL OR p_idart = '' OR m.idart = p_idart) AND
+(p_data_da IS NULL OR m.data >= p_data_da) AND
+(p_data_a IS NULL OR m.data <= p_data_a) AND
+(p_tipo IS NULL OR m.tipo = p_tipo) AND
+(p_codice_cau IS NULL OR m.codice_cau = codice_cau) AND
+(p_user IS NULL OR p_user = '' OR m.user = p_user)
+ORDER BY
+m.data DESC, m.id DESC;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `FetchOrdini` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = cp850 */ ;
+/*!50003 SET character_set_results = cp850 */ ;
+/*!50003 SET collation_connection  = cp850_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `FetchOrdini`(
+p_num_ordine VARCHAR(20),
+p_data_da DATE,
+p_data_a DATE,
+p_fornitore_id INT,
+p_stato ENUM('APERTO','INVIATO','CHIUSO','ANNULLATO')
+)
+begin
+select 
+
+id_ordine,
+num_ordine,
+data_ordine,
+fornitore_id,
+stato,
+note
+from ordini o
+where 
+(p_num_ordine is null or p_num_ordine = "" or o.num_ordine = p_num_ordine) and
+(p_data_da is null or o.data_ordine >= p_data_da) and
+(p_data_a is null or o.data_ordine <= p_data_a) and
+(p_fornitore_id is null or p_fornitore_id = "" or o.fornitore_id = p_fornitore_id) and
+(p_stato is null or p_stato = "" or o.stato = p_stato)
+order by
+o.data_ordine desc;
+
+end ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `FetchUsers` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = cp850 */ ;
+/*!50003 SET character_set_results = cp850 */ ;
+/*!50003 SET collation_connection  = cp850_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `FetchUsers`(
+    
+     IN p_id INT,
+         IN p_username VARCHAR(255)
+     )
+BEGIN
+    
+         SELECT
+             id,
+             user AS username,
+             role
+         FROM
+             login
+         WHERE
+    
+             (p_id IS NULL OR id = p_id)
+         AND
+    
+             (p_username IS NULL OR user = p_username)
+         ORDER BY
+             username;
+     END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `InsertArticolo` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = cp850 */ ;
+/*!50003 SET character_set_results = cp850 */ ;
+/*!50003 SET collation_connection  = cp850_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertArticolo`(
+           IN p_name VARCHAR(255),
+   IN p_description VARCHAR(255),
+   IN p_quantita INT,
+   IN p_min INT,
+   IN p_max INT,
+   IN p_supplier VARCHAR(255)
+   )
+BEGIN
+INSERT INTO `articoli` (`name`,`description`,`quantita`,`min`,`max`,`supplier`)
+VALUES (p_name, p_description, p_quantita, p_min, p_max, p_supplier);
+SELECT LAST_INSERT_ID() AS id;
+ END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `InsertCausale` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertCausale`(
+IN p_codice varchar(3),
+IN p_description varchar(255),
+IN p_tipo enum('C','S')
+)
+begin
+insert into `causali` (`codice`, `description`,`tipo`)
+values (p_codice, p_description, p_tipo);
+select last_insert_id() as id;
+end ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `InsertDiBa` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertDiBa`(
+	IN `p_id_father` INT,
+	IN `p_id_son` INT,
+	IN `p_quantita` decimal(12,2)
+)
+BEGIN 
+
+DECLARE EXIT HANDLER FOR SQLEXCEPTION
+	BEGIN 
+		 ROLLBACK;
+		 RESIGNAL;
+	END;
+	
+	-- Inserisci la nuova riga nella distinta base
+	START TRANSACTION; 
+	INSERT INTO `diba` (`id_father`, `id_son`, `quantita`)
+	VALUES (p_id_father, p_id_son, p_quantita);
+	
+	-- Aggiorna l'articolo padre per segnalare che ora ha una distinta base
+	UPDATE articoli
+	SET has_diba = 'S'
+	WHERE id = p_id_father;
+		
+	COMMIT;
+
+	SELECT LAST_INSERT_ID()AS id;
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `InsertMovimento` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertMovimento`(
+	IN `p_idart` INT,
+	IN `p_codice_cau` VARCHAR(3),
+	IN `p_data` DATE,
+	IN `p_quantita` DECIMAL(10, 2),
+	IN `p_tipo` CHAR(1),
+	IN `p_note` TEXT
+)
+BEGIN
+    DECLARE current_quantita DECIMAL(10, 2);
+    DECLARE new_id INT;
+
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL; -- Rilancia l'eccezione al chiamante
+    END;
+
+    START TRANSACTION;
+
+    
+    IF p_tipo = 'S' THEN
+        
+        SELECT quantita INTO current_quantita FROM articoli WHERE id = p_idart FOR UPDATE;
+
+        IF current_quantita IS NULL THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Articolo non trovato.';
+        END IF;
+
+        IF current_quantita < p_quantita THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Quantit� insufficiente per lo scarico.';
+        END IF;
+    END IF;
+
+    
+    INSERT INTO movimenti (idart, codice_cau, data, quantita, tipo, note)
+    VALUES (p_idart, p_codice_cau, p_data, p_quantita, p_tipo, p_note);
+
+    SET new_id = LAST_INSERT_ID();
+
+    
+    IF p_tipo = 'C' THEN
+        UPDATE articoli SET quantita = quantita + p_quantita WHERE id = p_idart;
+    ELSEIF p_tipo = 'S' THEN
+        UPDATE articoli SET quantita = quantita - p_quantita WHERE id = p_idart;
+    END IF;
+
+    COMMIT;
+
+    
+    SELECT new_id as insertId;
+
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `Insert_Movimento` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `Insert_Movimento`(
+	IN `p_idart` INT,
+	IN `p_codice_cau` VARCHAR(3),
+	IN `p_data` DATE,
+	IN `p_quantita` DECIMAL(10,2),
+	IN `p_tipo` CHAR(1),
+	IN `p_note` TEXT,
+	IN `p_user` VARCHAR(100),
+	IN `p_timestamp` VARCHAR(19)
+)
+BEGIN
+    DECLARE current_quantita DECIMAL(10, 2);
+    DECLARE new_id INT;
+    DECLARE v_has_diba ENUM('S','N');
+    DECLARE v_id_son INT;
+    DECLARE v_qta_per_son DECIMAL(10,2);
+    DECLARE done INT DEFAULT FALSE;
+    DECLARE total_movimento DECIMAL(10,2);
+    DECLARE v_error_msg TEXT;
+
+    DECLARE cur CURSOR FOR
+        SELECT id_son, quantita FROM diba WHERE id_father = p_idart;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    -- Controllo giacenza solo per gli scarichi del padre
+    IF p_tipo = 'S' THEN
+        SELECT quantita INTO current_quantita FROM articoli WHERE id = p_idart FOR UPDATE;
+
+        IF current_quantita IS NULL THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Articolo padre non trovato.';
+        END IF;
+
+        IF current_quantita < p_quantita THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Quantità insufficiente per lo scarico dell\'articolo padre.';
+        END IF;
+    END IF;
+
+    -- Inserisci il movimento principale (padre)
+    INSERT INTO movimenti (idart, codice_cau, data, quantita, tipo, note , user, timestamp)
+    VALUES (p_idart, p_codice_cau, p_data, p_quantita, p_tipo, p_note, p_user, p_timestamp);
+
+    SET new_id = LAST_INSERT_ID();
+
+    -- Aggiorna giacenza padre
+    IF p_tipo = 'C' THEN
+        UPDATE articoli SET quantita = quantita + p_quantita WHERE id = p_idart;
+    ELSEIF p_tipo = 'S' THEN
+        UPDATE articoli SET quantita = quantita - p_quantita WHERE id = p_idart;
+    END IF;
+
+    -- Verifica se ha distinta base
+    SELECT has_diba INTO v_has_diba FROM articoli WHERE id = p_idart;
+
+    IF v_has_diba = 'S' THEN
+        OPEN cur;
+
+        fetch_loop: LOOP
+            FETCH cur INTO v_id_son, v_qta_per_son;
+
+            IF done THEN
+                LEAVE fetch_loop;
+            END IF;
+
+            SET total_movimento = v_qta_per_son * p_quantita;
+
+            -- Controlla giacenza figlio SOLO in caso di scarico
+            IF p_tipo = 'S' THEN
+                SELECT quantita INTO current_quantita FROM articoli WHERE id = v_id_son FOR UPDATE;
+
+                IF current_quantita IS NULL THEN
+                    SET v_error_msg = CONCAT('Articolo figlio ID ', v_id_son, ' non trovato.');
+                    ROLLBACK;
+                    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
+                END IF;
+
+                IF current_quantita < total_movimento THEN
+                    SET v_error_msg = CONCAT('Quantità insufficiente per lo scarico del figlio ID ', v_id_son);
+                    ROLLBACK;
+                    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error_msg;
+                END IF;
+            END IF;
+
+            -- Aggiorna giacenza figlio
+            IF p_tipo = 'C' THEN
+                UPDATE articoli
+                SET quantita = quantita + total_movimento
+                WHERE id = v_id_son;
+            ELSEIF p_tipo = 'S' THEN
+                UPDATE articoli
+                SET quantita = quantita - total_movimento
+                WHERE id = v_id_son;
+            END IF;
+
+            -- Inserisci movimento anche per il figlio
+            INSERT INTO movimenti (idart, codice_cau, data, quantita, tipo, note , user, timestamp)
+            VALUES (
+                v_id_son,
+                p_codice_cau,
+                p_data,
+                total_movimento,
+                p_tipo,
+                CONCAT(
+                IF(p_tipo = 'C', 'Carico ', 'Scarico '),
+                'da distinta base per articolo padre ID: ', p_idart
+                ),
+                p_user,
+                p_timestamp
+            );
+
+        END LOOP;
+
+        CLOSE cur;
+    END IF;
+
+    COMMIT;
+
+    SELECT new_id AS insertId;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `UpdateArticolo` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = cp850 */ ;
+/*!50003 SET character_set_results = cp850 */ ;
+/*!50003 SET collation_connection  = cp850_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateArticolo`(
+IN p_id INT,
+IN p_name VARCHAR(255),
+IN p_description TEXT,
+IN p_quantita INT,
+IN p_min INT,
+IN p_max INT,
+IN p_supplier VARCHAR(255)
+)
+BEGIN
+UPDATE `articoli`
+SET 
+`name` = p_name,
+`description` = p_description,
+`quantita` = p_quantita,
+`min` = p_min,
+`max` = p_max,
+`supplier`= p_supplier
+WHERE 
+`id` = p_id;
+
+SELECT 'Ricambio aggiornato con successo' AS message;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 DROP PROCEDURE IF EXISTS `UpdateDiba` */;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = cp850 */ ;
+/*!50003 SET character_set_results = cp850 */ ;
+/*!50003 SET collation_connection  = cp850_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateDiba`(
+    IN p_id INT,
+    IN p_quantita DECIMAL(10, 2) -- O INT
+)
+BEGIN
+    UPDATE diba
+    SET
+        quantita = p_quantita
+    WHERE id = p_id;
+
+    SELECT ROW_COUNT() as affectedRows;
+END ;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2025-07-08  0:48:25
