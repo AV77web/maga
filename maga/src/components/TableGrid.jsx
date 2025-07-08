@@ -10,6 +10,7 @@ import TableHead from './TableHead';
 import TableBody from './TableBody';
 
 const TableGrid = ({
+  title,
   columns,
   rows,
   selectedIds,
@@ -32,6 +33,8 @@ const TableGrid = ({
   const colSpanForBody = columns.length + 1;
 
   return (
+    <>
+    <h2>{title}</h2>
     <table className="ricambi-table">
       <TableHead
         columns={columns}
@@ -54,6 +57,7 @@ const TableGrid = ({
         droppableId={droppableId} // <-- Passa la prop a TableBody
       />
     </table>
+  </>
   );
 };
 

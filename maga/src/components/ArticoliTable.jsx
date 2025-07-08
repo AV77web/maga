@@ -569,7 +569,7 @@ export default function ArticoliTable({
         
 
         <div className="container">
-          <h1>Gestione Articoli</h1>
+          {/*<h2 className={viewMode === 'bom'? "article-title" : ""}>Gestione Articoli</h2>*/}
           {showSearch && (
             <FilterSearch
               fields={ricambiFilterFields}
@@ -579,8 +579,9 @@ export default function ArticoliTable({
 
           {message && <div className="message-info">{message}</div>}
           <div className={viewMode==='bom' ? 'bom-view-container': ''}>
-          <div className="table-wrapper">
+          {/*<div className="table-wrapper">*/}
             <TableGrid
+              title="Gestione Articoli"
               columns={tableColumns}
               rows={currentTableData}
               selectedIds={selectedIds}
@@ -610,7 +611,7 @@ export default function ArticoliTable({
                 viewMode === "bom" ? "articoli-disponibili" : undefined
               }
             />
-          </div>
+          {/*</div>*/}
             {/* Sezione Distinta Base */}
           {viewMode === "bom" && currentRicambioForBOM && (
             <DiBaTable

@@ -336,7 +336,7 @@ return (
           {...provided.droppableProps}
           className={`container bom-panel ${snapshot.isDraggingOver && !formVisible ? 'drop-zone-active' : ''}`}
         >
-          <h1>Distinta Base per: {ricambioPadre ? ricambioPadre.name : 'N/D'} (ID: {ricambioPadre ? ricambioPadre.id : 'N/D'})</h1>
+          {/*<h2 className="diba-title" >Distinta Base per: {ricambioPadre ? ricambioPadre.name : 'N/D'} (ID: {ricambioPadre ? ricambioPadre.id : 'N/D'})</h2>*/}
 
           {message && (
             <div
@@ -352,6 +352,7 @@ return (
 
           <div className="table-wrapper">
             <TableGrid
+              title={`Distinta base per: ${ricambioPadre} ? ${ricambioPadre.name} : 'N/D'} (ID: ${ricambioPadre} ? ${ricambioPadre.id} : 'N/D'})`}
               columns={tableColumns}
               rows={currentTableData}
               selectedIds={selectedIds}
