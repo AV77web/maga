@@ -21,8 +21,6 @@ const TableGrid = ({
   sortKey,
   sortOrder,
   onSort,
-  onEdit,
-  onDelete,
   loading,
   onClearAllSelections, // Prop per RicambiTableHead (se implementa la funzionalità)
   areAnyRowsSelected,   // Prop per RicambiTableHead (se implementa la funzionalità)
@@ -47,11 +45,11 @@ const TableGrid = ({
         areAnyRowsSelected={areAnyRowsSelected}
       />
       <TableBody
-        columns={columns} // Passa le colonne a RicambiTableBody
+        columns={columns} // Passa le colonne a TableBody
         rows={rows}
         selectedIds={selectedIds}
         onRowSelectionChange={onRowSelectionChange}
-        onRowClick={onRowClick} // Passa la prop onRowClick a RicambiTableBody
+        onRowClick={onRowClick} // Passa la prop onRowClick a TableBody
         loading={loading}
         colSpan={colSpanForBody}
         droppableId={droppableId} // <-- Passa la prop a TableBody

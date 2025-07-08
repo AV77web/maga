@@ -341,6 +341,7 @@ export default function ArticoliTable({
           key: "diba_icon",
           label: "", // Nessuna etichetta per la colonna
           cellClassName: "text-center",
+          headerClassName: "col-icon",
           render: (row) => {
             if (row.has_diba === "S") {
               return (
@@ -381,12 +382,14 @@ export default function ArticoliTable({
           key: "name",
           label: "Nome",
           cellClassName: "name-cell",
+          headerClassName: "col-name",
           titleAccessor: (row) => row.name,
         },
         {
           key: "description",
           label: "Descrizione",
           cellClassName: "description-cell",
+          headerClassName: "col-description",
           titleAccessor: (row) => row.description,
         },
         { key: "quantita", label: "Quantità", cellClassName: "text-right" },
@@ -569,7 +572,6 @@ export default function ArticoliTable({
         
 
         <div className="container">
-          {/*<h2 className={viewMode === 'bom'? "article-title" : ""}>Gestione Articoli</h2>*/}
           {showSearch && (
             <FilterSearch
               fields={ricambiFilterFields}
@@ -579,7 +581,8 @@ export default function ArticoliTable({
 
           {message && <div className="message-info">{message}</div>}
           <div className={viewMode==='bom' ? 'bom-view-container': ''}>
-          {/*<div className="table-wrapper">*/}
+          <div className="table-wrapper">
+            <div className="table-panel articoli-panel">
             <TableGrid
               title="Gestione Articoli"
               columns={tableColumns}
@@ -611,30 +614,7 @@ export default function ArticoliTable({
                 viewMode === "bom" ? "articoli-disponibili" : undefined
               }
             />
-          {/*</div>*/}
-            {/* Sezione Distinta Base */}
-          {viewMode === "bom" && currentRicambioForBOM && (
-            <DiBaTable
-              ricambioPadre={currentRicambioForBOM}
-              onClose={() => {
-                setViewMode("ricambi");
-                setCurrentRicambioForBOM(null);
-                setSelectedIds([]); // Deseleziona anche l'ID
-              }}
-              // Passiamo l'articolo trascinato e una funzione per resettarlo
-              droppedArticle={droppedArticle}
-              onDropProcessed={() => setDroppedArticle(null)}
-            />
-          )}
-          </div>
-          {/* Renderizza il Popover della DiBa */}
-          <DiBaPopover
-            anchorEl={popoverAnchorEl}
-            open={Boolean(popoverAnchorEl)}
-            onClose={handlePopoverClose}
-            data={popoverData}
-            loading={popoverLoading}
-          />
+          
           <div className="pagination-bar">
             <Pagination
               currentPage={page + 1}
@@ -661,6 +641,34 @@ export default function ArticoliTable({
               </select>
             </label>
           </div>
+          </div>
+          </div>
+            {/* Sezione Distinta Base */}
+          {viewMode === "bom" && currentRicambioForBOM && (
+          <div className="diba-table-wrapper">
+            <DiBaTable
+              ricambioPadre={currentRicambioForBOM}
+              onClose={() => {
+                setViewMode("ricambi");
+                setCurrentRicambioForBOM(null);
+                setSelectedIds([]); // Deseleziona anche l'ID
+              }}
+              // Passiamo l'articolo trascinato e una funzione per resettarlo
+              droppedArticle={droppedArticle}
+              onDropProcessed={() => setDroppedArticle(null)}
+            />
+          </div>
+          )}
+          </div>
+          {/* Renderizza il Popover della DiBa */}
+          <DiBaPopover
+            anchorEl={popoverAnchorEl}
+            open={Boolean(popoverAnchorEl)}
+            onClose={handlePopoverClose}
+            data={popoverData}
+            loading={popoverLoading}
+          />
+          
           <DialogCustom
             open={formVisible && viewMode === "ricambi"} // Mostra solo se non siamo in modalità BOM
             onClose={() => setFormVisible(false)}

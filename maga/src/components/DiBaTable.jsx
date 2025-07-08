@@ -273,8 +273,8 @@ const sortedDiBa = useMemo(() => {
   const tableColumns = useMemo(() => [
     { key: "id", label: "ID Riga", cellClassName: "text-center" },
     { key: "id_son", label: "Articolo Figlio ID", cellClassName: "text-left" },
-    { key: "son_name", label: "Nome Art. Figlio", cellClassName: "text-left" },
-    { key: "son_description", label: "Descr. Art Figlio", cellClassName: "text-left" },
+    { key: "son_name", label: "Nome Art. Figlio", cellClassName: "text-left", headerClassName: "col-name" },
+    { key: "son_description", label: "Descr. Art Figlio", cellClassName: "text-left", headerClassName: "col-description" },
     { key: "quantita", label: "Quantità", cellClassName: "text-right" }
   ], []);
 
@@ -294,8 +294,8 @@ const sortedDiBa = useMemo(() => {
 
 return (
   <>
-    <Header
-      /*onAdd={handleNew}*/
+    {/*<Header
+      onAdd={handleNew}
       onBack={onClose}
       onEdit={() => {
         console.log("[Header onEdit] Triggered. Current selectedIds:", selectedIds);
@@ -327,16 +327,15 @@ return (
           setSelectedIds([]);
         }
       }}
-    />
+    /> */}
 
     <Droppable droppableId="diba-components" isDropDisabled={formVisible}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
           {...provided.droppableProps}
-          className={`container bom-panel ${snapshot.isDraggingOver && !formVisible ? 'drop-zone-active' : ''}`}
+          className={`table-panel bom-panel ${snapshot.isDraggingOver && !formVisible ? 'drop-zone-active' : ''}`}
         >
-          {/*<h2 className="diba-title" >Distinta Base per: {ricambioPadre ? ricambioPadre.name : 'N/D'} (ID: {ricambioPadre ? ricambioPadre.id : 'N/D'})</h2>*/}
 
           {message && (
             <div
@@ -352,7 +351,7 @@ return (
 
           <div className="table-wrapper">
             <TableGrid
-              title={`Distinta base per: ${ricambioPadre} ? ${ricambioPadre.name} : 'N/D'} (ID: ${ricambioPadre} ? ${ricambioPadre.id} : 'N/D'})`}
+              title={`Distinta base per: ${ricambioPadre ? ricambioPadre.name : 'N/D'} (ID: ${ricambioPadre ? ricambioPadre.id : 'N/D'})`}
               columns={tableColumns}
               rows={currentTableData}
               selectedIds={selectedIds}

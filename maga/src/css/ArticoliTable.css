@@ -248,6 +248,84 @@ h2 {
 .bom-view-container {
   display: flex;
   flex-direction: row;
+  gap: 24px;
+  align-items:flex-start;
+}
+
+/* Wrapper per la tabella principale degli articoli quando in modalità BOM */
+.bom-view-container > .table-wrapper {
+  flex: 1;
+  min-width: 0; /* Previene problemi di overflow con flexbox */
+}
+
+/* Wrapper per la sezione della distinta base (DiBa) che abbiamo aggiunto */
+.diba-table-wrapper {
+  flex: 1;
+  min-width: 0; /* Previene problemi di overflow con flexbox */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  /* Aggiunge spazio sopra la tabella della DiBa per allinearla visivamente */
+  margin-top: 50px; /* Allinea questo pannello con il pannello degli articoli */
+}
+
+/* Applica un layout fisso alle tabelle per controllare la larghezza delle colonne */
+.bom-view-container .ricambi-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+/*
+  Definizione delle larghezze per le colonne.
+  Usando le stesse classi in entrambe le tabelle, le colonne corrispondenti
+  avranno la stessa larghezza proporzionale rispetto al loro contenitore.
+  Poiché i contenitori delle tabelle hanno `flex: 1`, avranno la stessa larghezza,
+  e di conseguenza le colonne si allineeranno visivamente.
+*/
+.bom-view-container .col-icon { width: 10%; }
+.bom-view-container .col-name { width: 40%; }
+.bom-view-container .col-description { width: 50%; }
+
+/*
+  Aggiunge un'altezza fissa alle celle per allineare le righe tra le due tabelle.
+  Questo assicura che anche le righe con contenuto più piccolo (testo)
+  abbiano la stessa altezza di quelle con contenuto più grande (icone).
+*/
+.bom-view-container .ricambi-table td {
+  height: 25px;
+}
+
+/* Le altre colonne in DiBaTable si divideranno lo spazio rimanente */
+
+
+/* Il pannello della DiBa (che contiene la tabella) deve crescere per riempire lo spazio */
+.diba-table-wrapper .bom-panel {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* La tabella dentro il pannello della DiBa deve essere scrollabile se necessario */
+.diba-table-wrapper .bom-panel .table-wrapper {
+  flex-grow: 1;
+  overflow: auto;
+}
+
+/* Nuova classe condivisa per entrambi i pannelli delle tabelle */
+.table-panel {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(90, 90, 90, 0.5);
+  padding: 16px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Stili specifici per il pannello degli articoli */
+.articoli-panel {
+  margin-top: 50px;
 }
 
 /* Responsive table - optional uncommented section
