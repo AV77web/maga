@@ -60,9 +60,20 @@ const HeadDocument = ({
       const results = await Promise.all(
         selectFields.map(async (f) => {
           try {
-            const res = await fetch(f.api);
-            const data = await res.json();
-            return { name: f.name, data };
+            let data;
+            if (typeof f.api === 'string') {
+              const res = await fetch(f.api);
+              if (!res.ok) {
+                throw new Error(`API request failed with status ${res.status}`);
+              }
+              data = await res.json();
+            } else if (typeof f.api === 'function') {
+              data = await f.api();
+            } else {
+              data = [];
+            }
+            // Ensure data is an array to prevent .map errors
+            return { name: f.name, data: Array.isArray(data) ? data : [] };
           } catch (err) {
             console.error(`Errore caricamento dati per ${f.name}:`, err);
             return { name: f.name, data: [] };

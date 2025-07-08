@@ -10,7 +10,7 @@ const express = require("express");
 const router = express.Router();
 console.log("🔵 routes/fornitori.js: File caricato, router creato.");
 
-const fornitoriController = require("./controllers/fonrnitoricontrollers");
+const fornitoriController = require("../controllers/fornitoricontrollers");
 
 router.get("/", fornitoriController.getFornitori);
 router.post("/", fornitoriController.insertFornitore);

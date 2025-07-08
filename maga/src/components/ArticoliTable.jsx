@@ -335,67 +335,77 @@ export default function ArticoliTable({
   }, [fetchRicambi, formData, isEditing]);
 
   const tableColumns = useMemo(
-    () => [
-      {
-        key: "diba_icon",
-        label: "", // Nessuna etichetta per la colonna
-        cellClassName: "text-center",
-        render: (row) => {
-          if (row.has_diba === "S") {
-            return (
-              <span
-                style={{
-                  color: "green",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                  fontSize: "1.5em",
-                }}
-                title="Questo articolo ha una distinta base"
-                onClick={(event) => handleDibaIconClick(event, row)}
-              >
-                +
-              </span>
-            );
-          }
-          if (row.has_diba === "N") {
-            return (
-              <span
-                style={{
-                  color: "red",
-                  fontWeight: "bold",
-                  cursor: "default",
-                  fontSize: "1.8em",
-                }}
-                title="Questo articolo non ha una distinta base"
-              >
-                -
-              </span>
-            );
-          }
-          return null;
+    () => {
+      const allColumns = [
+        {
+          key: "diba_icon",
+          label: "", // Nessuna etichetta per la colonna
+          cellClassName: "text-center",
+          render: (row) => {
+            if (row.has_diba === "S") {
+              return (
+                <span
+                  style={{
+                    color: "green",
+                    fontWeight: "bold",
+                    cursor: "pointer",
+                    fontSize: "1.8em",
+                  }}
+                  title="Questo articolo ha una distinta base"
+                  onClick={(event) => handleDibaIconClick(event, row)}
+                >
+                  +
+                </span>
+              );
+            }
+            if (row.has_diba === "N") {
+              return (
+                <span
+                  style={{
+                    color: "red",
+                    fontWeight: "bold",
+                    cursor: "default",
+                    fontSize: "1.8em",
+                  }}
+                  title="Questo articolo non ha una distinta base"
+                >
+                  -
+                </span>
+              );
+            }
+            return null;
+          },
         },
-      },
-      { key: "id", label: "ID", cellClassName: "text-center" },
-      {
-        key: "name",
-        label: "Nome",
-        cellClassName: "name-cell",
-        titleAccessor: (row) => row.name,
-      },
-      {
-        key: "description",
-        label: "Descrizione",
-        cellClassName: "description-cell",
-        titleAccessor: (row) => row.description,
-      },
-      { key: "quantita", label: "Quantità", cellClassName: "text-right" },
-      { key: "um", label: "UM", cellClassName: "text-left" },
-      { key: "prezzo", label: "Prezzo", cellClassName: "text-right" },
-      { key: "min", label: "Minimo", cellClassName: "text-right" },
-      { key: "max", label: "Massimo", cellClassName: "text-right" },
-      { key: "supplier", label: "Fornitore", cellClassName: "text-left" }, // Esempio, puoi usare text-right se preferisci
-    ],
-    [handleDibaIconClick] // Aggiungi la dipendenza
+        { key: "id", label: "ID", cellClassName: "text-center" },
+        {
+          key: "name",
+          label: "Nome",
+          cellClassName: "name-cell",
+          titleAccessor: (row) => row.name,
+        },
+        {
+          key: "description",
+          label: "Descrizione",
+          cellClassName: "description-cell",
+          titleAccessor: (row) => row.description,
+        },
+        { key: "quantita", label: "Quantità", cellClassName: "text-right" },
+        { key: "um", label: "UM", cellClassName: "text-left" },
+        { key: "prezzo", label: "Prezzo", cellClassName: "text-right" },
+        { key: "min", label: "Minimo", cellClassName: "text-right" },
+        { key: "max", label: "Massimo", cellClassName: "text-right" },
+        { key: "supplier", label: "Fornitore", cellClassName: "text-left" }, // Esempio, puoi usare text-right se preferisci
+      ];
+
+      if (viewMode === "bom") {
+        return allColumns.filter((col) =>
+          ["diba_icon", "name", "description"].includes(col.key)
+        );
+      }
+
+      return allColumns;
+    },
+    [handleDibaIconClick, viewMode]
   );
 
   // Definisci i campi per il filtro dei ricambi
@@ -556,6 +566,8 @@ export default function ArticoliTable({
       />
 
       <DragDropContext onDragEnd={onDragEnd}>
+        
+
         <div className="container">
           <h1>Gestione Articoli</h1>
           {showSearch && (
@@ -566,6 +578,7 @@ export default function ArticoliTable({
           )}
 
           {message && <div className="message-info">{message}</div>}
+          <div className={viewMode==='bom' ? 'bom-view-container': ''}>
           <div className="table-wrapper">
             <TableGrid
               columns={tableColumns}
@@ -598,7 +611,29 @@ export default function ArticoliTable({
               }
             />
           </div>
-
+            {/* Sezione Distinta Base */}
+          {viewMode === "bom" && currentRicambioForBOM && (
+            <DiBaTable
+              ricambioPadre={currentRicambioForBOM}
+              onClose={() => {
+                setViewMode("ricambi");
+                setCurrentRicambioForBOM(null);
+                setSelectedIds([]); // Deseleziona anche l'ID
+              }}
+              // Passiamo l'articolo trascinato e una funzione per resettarlo
+              droppedArticle={droppedArticle}
+              onDropProcessed={() => setDroppedArticle(null)}
+            />
+          )}
+          </div>
+          {/* Renderizza il Popover della DiBa */}
+          <DiBaPopover
+            anchorEl={popoverAnchorEl}
+            open={Boolean(popoverAnchorEl)}
+            onClose={handlePopoverClose}
+            data={popoverData}
+            loading={popoverLoading}
+          />
           <div className="pagination-bar">
             <Pagination
               currentPage={page + 1}
@@ -700,29 +735,9 @@ export default function ArticoliTable({
               autoComplete="organization"
             />
           </DialogCustom>
-          {/* Sezione Distinta Base */}
-          {viewMode === "bom" && currentRicambioForBOM && (
-            <DiBaTable
-              ricambioPadre={currentRicambioForBOM}
-              onClose={() => {
-                setViewMode("ricambi");
-                setCurrentRicambioForBOM(null);
-                setSelectedIds([]); // Deseleziona anche l'ID
-              }}
-              // Passiamo l'articolo trascinato e una funzione per resettarlo
-              droppedArticle={droppedArticle}
-              onDropProcessed={() => setDroppedArticle(null)}
-            />
-          )}
-          {/* Renderizza il Popover della DiBa */}
-          <DiBaPopover
-            anchorEl={popoverAnchorEl}
-            open={Boolean(popoverAnchorEl)}
-            onClose={handlePopoverClose}
-            data={popoverData}
-            loading={popoverLoading}
-          />
+          
         </div>
+        
       </DragDropContext>
     </>
   );

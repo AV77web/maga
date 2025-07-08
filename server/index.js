@@ -8,7 +8,7 @@
 require("dotenv").config(); // carica le variabili d'ambiente
 const express = require("express");
 const cors = require("cors");
-const fornitorRoutes = require("./routes/fornitori"); // Importe le rotte dei fornitori
+const fornitoriRoutes = require("./routes/fornitori"); // Importe le rotte dei fornitori
 const ricambiRoutes = require("./routes/ricambi");
 const movimentiRoutes = require("./routes/movimentiroutes"); // Importa le rotte dei movimenti
 const causaliRoutes = require("./routes/causaliroutes"); // Importa le rotte delle causali
@@ -74,7 +74,7 @@ app.use("/api/auth", authRoutes);
 
 console.log(
   "🟠 index.js: Caricamento fornitoriRoutes:",
-  typeof fornitoriiRoutes,
+  typeof fornitoriRoutes,
   fornitoriRoutes instanceof require("express").Router
     ? "è un Router Express"
     : "NON è un Router Express",

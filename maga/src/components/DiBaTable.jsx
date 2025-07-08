@@ -295,7 +295,7 @@ const sortedDiBa = useMemo(() => {
 return (
   <>
     <Header
-      onAdd={handleNew}
+      /*onAdd={handleNew}*/
       onBack={onClose}
       onEdit={() => {
         console.log("[Header onEdit] Triggered. Current selectedIds:", selectedIds);

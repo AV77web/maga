@@ -26,11 +26,13 @@ function validateFornitoreInput(data) {
 exports.getFornitori = async (req, res, next) => {
   try {
     // Estrai i possibili filtri da req.query
-    const { ragione_sociale, piva } = req.query;
+    const { ragione_sociale, piva, cf, citta } = req.query;
 
     // Prepara i parametri per la stored procedure. Se un filtro non è presente, passa NULL.
     const p_ragione_sociale = ragione_sociale || null;
     const p_piva = piva || null;
+    const p_cf = cf || null;
+    const p_citta = citta || null;
 
     console.log(
       "[FornitoriController] Chiamata alla Stored Procedure FetchFornitori con parametri:",
@@ -38,9 +40,11 @@ exports.getFornitori = async (req, res, next) => {
     );
 
     // Chiama la stored procedure con i parametri
-    const [results] = await db.query("CALL FetchFornitori(?,?)", [
+    const [results] = await db.query("CALL FetchFornitori(?,?,?,?)", [
       p_ragione_sociale,
       p_piva,
+      p_cf,
+      p_citta,
     ]);
 
     // La libreria mysql2 restituisce un array di array per le stored procedures,
@@ -48,7 +52,7 @@ exports.getFornitori = async (req, res, next) => {
     const rows = results[0];
 
     console.log("[FornitoriController] Righe dal DB:", rows.length);
-    res.json({ success: true, result: rows });
+    res.json({ success: true, data: rows });
   } catch (error) {
     console.error("Errore nel recupero dei fornitori:", error.message);
     next(error);

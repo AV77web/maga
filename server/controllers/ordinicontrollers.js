@@ -106,7 +106,7 @@ exports.insertOrdine = async (req, res, next) => {
     const { ordine_num, data_ordine, id_fornitore, stato, note } = dataToValidate;
     
     // Assumendo una SP 'InsertOrdine'
-    const [results] = await db.query("CALL InsertOrdine(?, ?, ?, ?, ?)", [
+    const [results] = await db.query("CALL InsertOrdini(?, ?, ?, ?, ?)", [
       ordine_num,
       data_ordine,
       id_fornitore,

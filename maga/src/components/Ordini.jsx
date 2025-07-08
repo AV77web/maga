@@ -10,6 +10,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ordiniApi from '../api/ordiniApi';
 import ordiniRigheApi from '../api/ordiniRigheApi'; // API per le righe
+import fornitoriApi from '../api/fornitoriApi'; // API per i fornitori
 import Header from './Header';
 import TableGrid from './TableGrid';
 import HeadDocument from './HeadDocument2'; // Usiamo la versione più recente
@@ -26,6 +27,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
@@ -54,7 +56,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
     fields: [
       { name: 'ordine_num', label: 'Numero Ordine', type: 'text', required: true },
       { name: 'data_ordine', label: 'Data Ordine', type: 'date', required: true },
-      { name: 'id_fornitore', label: 'Fornitore', type: 'select', api: 'http://localhost:3001/api/fornitori', required: true }, // API ipotetica
+      { name: 'id_fornitore', label: 'Fornitore', type: 'select', api: fornitoriApi.fetchAll, required: true },
       { name: 'stato', label: 'Stato', type: 'select', options: ['Aperto', 'Chiuso', 'Annullato'], required: true },
       { name: 'note', label: 'Note', type: 'textarea' },
     ]
@@ -148,6 +150,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
 
     setLoading(true);
     setError('');
+    setMessage('');
     try {
       if (selectedOrdine.id) {
         // Modalità UPDATE
@@ -195,6 +198,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
       <div className="container">
         <h1>Gestione Ordini</h1>
         {error && <div className="message-error">{error}</div>}
+        {message && <div className="message-success">{message}</div>}
 
         {selectedOrdine ? (
           // --- VISTA DETAIL ---

@@ -234,6 +234,10 @@ h1 {
   width: 100%;
 }
 
+.bom-view-container {
+  display: flex;
+  flex-direction: row;
+}
 
 /* Responsive table - optional uncommented section
   @media (max-width: 768px) {
