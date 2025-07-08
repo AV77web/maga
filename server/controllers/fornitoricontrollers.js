@@ -26,13 +26,14 @@ function validateFornitoreInput(data) {
 exports.getFornitori = async (req, res, next) => {
   try {
     // Estrai i possibili filtri da req.query
-    const { ragione_sociale, piva, cf, citta } = req.query;
+    const { rag_soc, partita_iva, cf, citta, contatto } = req.query;
 
     // Prepara i parametri per la stored procedure. Se un filtro non è presente, passa NULL.
-    const p_ragione_sociale = ragione_sociale || null;
-    const p_piva = piva || null;
+    const p_ragione_sociale = rag_soc || null;
+    const p_piva = partita_iva || null;
     const p_cf = cf || null;
     const p_citta = citta || null;
+    const p_contatto = contatto || null;
 
     console.log(
       "[FornitoriController] Chiamata alla Stored Procedure FetchFornitori con parametri:",
@@ -40,9 +41,10 @@ exports.getFornitori = async (req, res, next) => {
     );
 
     // Chiama la stored procedure con i parametri
-    const [results] = await db.query("CALL FetchFornitori(?,?,?,?)", [
+    const [results] = await db.query("CALL FetchFornitori(?,?,?,?,?)", [
       p_ragione_sociale,
       p_piva,
+      p_contatto,
       p_cf,
       p_citta,
     ]);
@@ -67,12 +69,12 @@ exports.insertFornitore = async (req, res, next) => {
       return res.status(400).json({ success: false, error: validationError });
     }
 
-    const { ragione_sociale, piva, indirizzo, telefono, email, contatto } =
+    const { rag_soc, partita_iva, indirizzo, telefono, email, contatto } =
       req.body;
 
     const [results] = await db.query("CALL InsertFornitore(?,?,?,?,?,?)", [
-      ragione_sociale,
-      piva,
+      rag_soc,
+      partita_iva,
       indirizzo,
       telefono,
       email,
@@ -101,13 +103,13 @@ exports.updateFornitore = async (req, res, next) => {
       return res.status(400).json({ success: false, error: validationError });
     }
 
-    const { ragione_sociale, piva, indirizzo, telefono, email, contatto } =
+    const { rag_soc, partita_iva, indirizzo, telefono, email, contatto } =
       req.body;
 
     await db.query("CALL UpdateFornitore(?,?,?,?,?,?,?)", [
       id,
-      ragione_sociale,
-      piva,
+      rag_soc,
+      partita_iva,
       indirizzo,
       telefono,
       email,
