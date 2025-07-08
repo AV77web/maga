@@ -14,7 +14,7 @@ import Header from './Header';
 import TableGrid from './TableGrid';
 import HeadDocument from './HeadDocument2'; // Usiamo la versione più recente
 import Pagination from './Pagination1';
-import '../css/ArticoliTable.css'; // Riusiamo lo stile per coerenza
+import '../css/Ordini.css'; // Riusiamo lo stile per coerenza
 
 const rowsPerPageOptions = [5, 10, 20];
 
@@ -204,6 +204,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
               initialData={selectedOrdine}
               onChange={handleHeadChange}
               readOnly={false} // o basato sui permessi/stato ordine
+              className="doc-header"
             />
             
             <h2>Righe Ordine</h2>
