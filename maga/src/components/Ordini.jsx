@@ -214,13 +214,11 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
     } finally {
       setLoading(false);
     }
-  }, [selectedOrdine, fetchOrdiniList]);
+  }, [selectedOrdine, fetchOrdiniList, handleBackToMaster]);
 
-  const handleHeadChange = (updatedHeadData) => {
-    // Qui puoi gestire l'aggiornamento della testata in tempo reale o preparare i dati per un salvataggio
-    console.log("Dati testata aggiornati:", updatedHeadData);
+  const handleHeadChange = useCallback((updatedHeadData) => {
     setSelectedOrdine(prev => ({ ...prev, ...updatedHeadData }));
-  };
+  }, []);
 
   // Handler per la selezione delle righe nella tabella master
   const handleMasterSelectionChange = useCallback((id, checked) => {
