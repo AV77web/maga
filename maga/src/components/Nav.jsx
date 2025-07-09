@@ -30,6 +30,9 @@ const Nav = ({ onLogout, currentUser }) => {
         {/* Aggiunto per coerenza con App.jsx */}
         Movimenti
       </Link>
+      <Link to="/clienti" className="mylink">
+        Clienti
+      </Link>
       {currentUser && currentUser.role === "admin" && (
         <Link to="/register" className="mylink">
           Registra Utente

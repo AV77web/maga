@@ -45,10 +45,7 @@ icon-button:active {
   background-color: #ddd;
 }
 
-/* Specific styles for the user button initials */
-.user-button {
-  /* No specific styles needed here unless different from other icon-buttons */
-}
+
 
 .user-initials {
   font-size: 0.5em; /* Smaller font size relative to icon */

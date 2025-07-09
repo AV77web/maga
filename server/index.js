@@ -8,6 +8,7 @@
 require("dotenv").config(); // carica le variabili d'ambiente
 const express = require("express");
 const cors = require("cors");
+const clientiRoutes = require("./routes/clienti")  // Importa le rotte dei clienti;
 const fornitoriRoutes = require("./routes/fornitori"); // Importe le rotte dei fornitori
 const ricambiRoutes = require("./routes/ricambi");
 const movimentiRoutes = require("./routes/movimentiroutes"); // Importa le rotte dei movimenti
@@ -81,6 +82,17 @@ console.log(
   Object.keys(fornitoriRoutes)
 );
 app.use("/api/fornitori", authenticateToken, fornitoriRoutes); // tutte le rotte per i ricambi iniziano con /api/fornitori
+
+
+console.log(
+  "🟠 index.js: Caricamento clientiRoutes:",
+  typeof clientiRoutes,
+  clientiRoutes instanceof require("express").Router
+    ? "è un Router Express"
+    : "NON è un Router Express",
+  Object.keys(clientiRoutes)
+);
+app.use("/api/clienti", authenticateToken, clientiRoutes); // tutte le rotte per i ricambi iniziano con /api/clienti
 
 console.log(
   "🟠 index.js: Caricamento ricambiRoutes:",

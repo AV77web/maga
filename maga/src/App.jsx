@@ -17,6 +17,7 @@ import {
 } from "react-router-dom"; // ✅ basta questo
 import ArticoliTable from "./components/ArticoliTable";
 import CausaliTable from "./components/CausaliTable";
+import ClientiTable from "./components/ClientiTable";
 import Ordini from "./components/Ordini";
 import Login from "./components/Login";
 import MovimentiTable from "./components/MovimentiTable";
@@ -170,6 +171,18 @@ function App() {
           element={
             <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
               <Ordini
+                currentUser={currentUser}
+                onLogout={handleLogout}
+                currentLocation={location.pathname}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/clienti"
+          element={
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <ClientiTable
                 currentUser={currentUser}
                 onLogout={handleLogout}
                 currentLocation={location.pathname}
