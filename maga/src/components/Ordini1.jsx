@@ -35,6 +35,7 @@ const Ordini = ({ currentUser, onLogout, currentLocation }) => {
         type: "select",
         required: true,
         api: "http://localhost:3001/api/fornitori",
+        optionLabel: "rag_soc",
       },
       {
         name: "stato",

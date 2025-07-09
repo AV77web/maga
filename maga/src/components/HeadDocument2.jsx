@@ -60,20 +60,31 @@ const HeadDocument = ({
       const results = await Promise.all(
         selectFields.map(async (f) => {
           try {
-            let data;
+            let apiResponse;
             if (typeof f.api === 'string') {
               const res = await fetch(f.api);
               if (!res.ok) {
                 throw new Error(`API request failed with status ${res.status}`);
               }
-              data = await res.json();
+              apiResponse = await res.json();
             } else if (typeof f.api === 'function') {
-              data = await f.api();
+              apiResponse = await f.api();
             } else {
-              data = [];
+              apiResponse = { data: [] };
             }
-            // Ensure data is an array to prevent .map errors
-            return { name: f.name, data: Array.isArray(data) ? data : [] };
+            // Rilevamento robusto dell'array di opzioni
+            let optionsData;
+            if (Array.isArray(apiResponse)) {
+              // Caso 1: L'API restituisce direttamente l'array, es: fetchAll restituisce response.data.data
+              optionsData = apiResponse;
+            } else if (apiResponse && Array.isArray(apiResponse.data)) {
+              // Caso 2: L'API restituisce un oggetto come { data: [...] }
+              optionsData = apiResponse.data;
+            } else {
+              console.warn(`Dati per il campo select "${f.name}" non sono in un formato array atteso. Ricevuto:`, apiResponse);
+              optionsData = [];
+            }
+            return { name: f.name, data: optionsData };
           } catch (err) {
             console.error(`Errore caricamento dati per ${f.name}:`, err);
             return { name: f.name, data: [] };
@@ -130,7 +141,7 @@ const HeadDocument = ({
                     </option>
                   ) : (
                     <option key={opt.id} value={opt.id}>
-                      {opt.nome}
+                      {opt[f.optionLabel || 'nome']}
                     </option>
                   )
                 )}

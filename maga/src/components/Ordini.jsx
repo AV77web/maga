@@ -24,6 +24,8 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   const [ordiniList, setOrdiniList] = useState([]); // Lista di tutti gli ordini (master)
   const [selectedOrdine, setSelectedOrdine] = useState(null); // Dati della testata dell'ordine selezionato
   const [ordineRighe, setOrdineRighe] = useState([]); // Righe dell'ordine selezionato
+  const [selectedMasterIds, setSelectedMasterIds] = useState([]); // ID selezionati nella tabella master
+  const [selectedDetailIds, setSelectedDetailIds] = useState([]); // ID selezionati nella tabella detail
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -35,9 +37,9 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   // Colonne per la tabella master degli ordini
   const masterColumns = useMemo(() => [
     { key: 'id', label: 'ID Ordine', cellClassName: 'text-center' },
-    { key: 'ordine_num', label: 'Numero Ordine', cellClassName: 'text-left' },
+    { key: 'num_ordine', label: 'Numero Ordine', cellClassName: 'text-left' },
     { key: 'data_ordine', label: 'Data', cellClassName: 'text-center' },
-    { key: 'nome_fornitore', label: 'Fornitore', cellClassName: 'text-left' }, // Assumendo che la SP fornisca questo campo
+    { key: 'fornitore_id', label: 'Fornitore', cellClassName: 'text-left' }, // Assumendo che la SP fornisca questo campo
     { key: 'stato', label: 'Stato', cellClassName: 'text-center' },
   ], []);
 
@@ -54,9 +56,9 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   const headDocumentConfig = useMemo(() => ({
     titolo: "Dettaglio Testata Ordine",
     fields: [
-      { name: 'ordine_num', label: 'Numero Ordine', type: 'text', required: true },
+      { name: 'num_ordine', label: 'Numero Ordine', type: 'text', required: true },
       { name: 'data_ordine', label: 'Data Ordine', type: 'date', required: true },
-      { name: 'id_fornitore', label: 'Fornitore', type: 'select', api: fornitoriApi.fetchAll, required: true },
+      { name: 'fornitore_id', label: 'Fornitore', type: 'select', api: fornitoriApi.fetchAll, optionLabel: 'rag_soc', required: true },
       { name: 'stato', label: 'Stato', type: 'select', options: ['Aperto', 'Chiuso', 'Annullato'], required: true },
       { name: 'note', label: 'Note', type: 'textarea' },
     ]
@@ -68,9 +70,28 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
     setError('');
     try {
       const data = await ordiniApi.fetchAll();
+
+      // --- INIZIO BLOCCO DI DEBUG ---
+      const ids = new Set();
+      const duplicates = [];
+      data.forEach(item => {
+        if (item.id_ordine === undefined || item.id_ordine === null) {
+          console.warn('Trovato ordine con ID mancante:', item);
+        }
+        if (ids.has(item.id_ordine)) {
+          duplicates.push(item.id_ordine);
+        }
+        ids.add(item.id_ordine);
+      });
+      if (duplicates.length > 0) {
+        console.error('Trovati ID duplicati nella lista ordini:', duplicates);
+      }
+      // --- FINE BLOCCO DI DEBUG ---
+
       // Formattiamo la data per la visualizzazione
       const formattedData = data.map(o => ({
         ...o,
+        id: o.id_ordine, // Standardizziamo l'ID per il frontend
         data_ordine: new Date(o.data_ordine).toLocaleDateString('it-IT')
       }));
       setOrdiniList(formattedData);
@@ -93,12 +114,13 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
       id: null, // L'ID sarà null per un nuovo record
       ordine_num: '',
       data_ordine: new Date().toISOString().split('T')[0], // Data di oggi come default
-      id_fornitore: '',
+      fornitore_id: '',
       stato: 'Aperto', // Stato di default
       note: ''
     };
     setSelectedOrdine(newOrdineTemplate);
     setOrdineRighe([]); // Le righe sono ovviamente vuote
+    setSelectedDetailIds([]); // Pulisce la selezione delle righe
   }, []);
 
   const handleOrdineSelect = useCallback(async (ordineId) => {
@@ -116,12 +138,30 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
         ordiniApi.fetchById(ordineId),
         ordiniRigheApi.fetchByOrdineId(ordineId) // Nuovo metodo API
       ]);
+
+      // --- INIZIO BLOCCO DI DEBUG ---
+      const righeIds = new Set();
+      const righeDuplicates = [];
+      righe.forEach(item => {
+        if (item.id === undefined || item.id === null) {
+          console.warn(`Trovata riga ordine con ID mancante per l'ordine ${ordineId}:`, item);
+        }
+        if (righeIds.has(item.id)) {
+          righeDuplicates.push(item.id);
+        }
+        righeIds.add(item.id);
+      });
+      if (righeDuplicates.length > 0) {
+        console.error(`Trovati ID duplicati nelle righe dell'ordine ${ordineId}:`, righeDuplicates);
+      }
+      // --- FINE BLOCCO DI DEBUG ---
       
       // Formatta la data per il componente HeadDocument (che vuole YYYY-MM-DD)
       testata.data_ordine = new Date(testata.data_ordine).toISOString().split('T')[0];
 
       setSelectedOrdine(testata);
       setOrdineRighe(righe);
+      setSelectedDetailIds([]); // Pulisce la selezione delle righe quando si cambia ordine
     } catch (err) {
       setError(`Errore nel caricamento dei dettagli dell'ordine: ${err.message}`);
       setSelectedOrdine(null);
@@ -134,6 +174,8 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   const handleBackToMaster = () => {
     setSelectedOrdine(null);
     setOrdineRighe([]);
+    setSelectedMasterIds([]); // Pulisce la selezione master
+    setSelectedDetailIds([]); // Pulisce la selezione detail
   };
 
   const handleSaveOrdine = useCallback(async () => {
@@ -143,7 +185,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
     }
 
     // Aggiungi qui una validazione più robusta se necessario
-    if (!selectedOrdine.ordine_num || !selectedOrdine.data_ordine || !selectedOrdine.id_fornitore || !selectedOrdine.stato) {
+    if (!selectedOrdine.num_ordine || !selectedOrdine.data_ordine || !selectedOrdine.fornitore_id || !selectedOrdine.stato) {
       setError("Compila tutti i campi obbligatori della testata (Numero, Data, Fornitore, Stato).");
       return;
     }
@@ -159,6 +201,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
       } else {
         // Modalità CREATE
         const { id, ...dataToInsert } = selectedOrdine; // Rimuovi l'ID nullo
+        console.log(dataToInsert);
         await ordiniApi.insert(dataToInsert);
         setMessage('✅ Ordine creato con successo!');
       }
@@ -166,6 +209,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
       fetchOrdiniList();
       handleBackToMaster();
     } catch (err) {
+      console.log(dataToInsert);
       setError(`❌ Errore nel salvataggio dell'ordine: ${err.message}`);
     } finally {
       setLoading(false);
@@ -177,6 +221,20 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
     console.log("Dati testata aggiornati:", updatedHeadData);
     setSelectedOrdine(prev => ({ ...prev, ...updatedHeadData }));
   };
+
+  // Handler per la selezione delle righe nella tabella master
+  const handleMasterSelectionChange = useCallback((id, checked) => {
+    setSelectedMasterIds((prev) =>
+      checked ? [...prev, id] : prev.filter((selId) => selId !== id)
+    );
+  }, []);
+
+  // Handler per la selezione delle righe nella tabella detail
+  const handleDetailSelectionChange = useCallback((id, checked) => {
+    setSelectedDetailIds((prev) =>
+      checked ? [...prev, id] : prev.filter((selId) => selId !== id)
+    );
+  }, []);
 
   // --- DATI PER LA VISUALIZZAZIONE ---
   const paginatedOrdiniList = useMemo(() => {
@@ -215,8 +273,9 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
             <div className="table-wrapper">
               <TableGrid
                 columns={detailColumns}
-                rows={ordineRighe}
-                loading={loading}
+                rows={ordineRighe}                
+                selectedIds={selectedDetailIds}
+                onRowSelectionChange={handleDetailSelectionChange}
                 // Aggiungi props per selezione, modifica, eliminazione righe se necessario
               />
             </div>
@@ -229,7 +288,9 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
               <TableGrid
                 columns={masterColumns}
                 rows={paginatedOrdiniList}
+                selectedIds={selectedMasterIds}
                 loading={loading}
+                onRowSelectionChange={handleMasterSelectionChange}
                 onRowClick={(rowId) => handleOrdineSelect(rowId)} // Azione al click sulla riga
               />
             </div>

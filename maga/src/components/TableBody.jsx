@@ -1,17 +1,17 @@
-// File: c:\maga\maga\src\components\RicambiTableBody.jsx
-//==========================================
-//File: RicambiTableBody.jsx
-//Componente per il corpo della tabella dei ricambi.
+// File: c:\maga\maga\src\components\TableBody.jsx
+//============================================================================
+//File: TableBody.jsx
+//Componente generico per il corpo delle tabelle (articoli, movimenti ecc...).
 //@author: "villari.andrea@libero.it"
 //@version: "1.0.0 2025-06-11"
-//===========================================
+//============================================================================
 import React from 'react';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 
 const TableBody = ({
   columns, // NUOVA PROP: array di oggetti colonna
   rows,
-  selectedIds,
+  selectedIds = [], // Aggiunto valore di default per evitare errori
   onRowSelectionChange,
   onRowClick, // Nuova prop per gestire il click sulla riga
   loading,
@@ -45,7 +45,7 @@ const TableBody = ({
         {(provided) => (
           <tbody ref={provided.innerRef} {...provided.droppableProps}>
             {rows.map((row, index) => (
-              <Draggable key={row.id} draggableId={row.id.toString()} index={index}>
+              <Draggable key={row.id ?? `dnd-row-${index}`} draggableId={(row.id ?? `dnd-row-${index}`).toString()} index={index}>
                 {(provided, snapshot) => (
                   <tr
                     ref={provided.innerRef}
@@ -54,7 +54,7 @@ const TableBody = ({
                     className={`${selectedIds.includes(row.id) ? "selected-row" : ""} ${snapshot.isDragging ? "dragging-row" : ""}`}
                     style={{ ...provided.draggableProps.style }}
                   >
-                    <td>
+                    <td key="selection-cell">
                       <input type="checkbox" checked={selectedIds.includes(row.id)} onChange={(e) => onRowSelectionChange(row.id, e.target.checked)} aria-label={`Seleziona riga ${row.id}`} />
                     </td>
                     {columns.map((column) => (
@@ -76,14 +76,14 @@ const TableBody = ({
   // Altrimenti, renderizza un normale tbody non draggabile
   return (
     <tbody>
-      {rows.map((row) => (
+      {rows.map((row, index) => (
         <tr
-          key={row.id}
+          key={row.id ?? `row-${index}`}
           className={selectedIds.includes(row.id) ? "selected-row" : ""}
           onClick={(e) => { if (onRowClick && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && !e.target.closest('button')) { onRowClick(row.id); } }}
           style={{ cursor: onRowClick ? 'pointer' : 'default' }}
         >
-          <td>
+          <td key="selection-cell">
             <input type="checkbox" checked={selectedIds.includes(row.id)} onChange={(e) => onRowSelectionChange(row.id, e.target.checked)} aria-label={`Seleziona riga ${row.id}`} />
           </td>
           {columns.map((column) => (

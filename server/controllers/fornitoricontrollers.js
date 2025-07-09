@@ -55,6 +55,7 @@ exports.getFornitori = async (req, res, next) => {
 
     console.log("[FornitoriController] Righe dal DB:", rows.length);
     res.json({ success: true, data: rows });
+    console.log(rows);
   } catch (error) {
     console.error("Errore nel recupero dei fornitori:", error.message);
     next(error);

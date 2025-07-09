@@ -19,17 +19,17 @@ const db = require("../db/db");
 
 // Funzione di validazione specifica per gli ordini
 function validateOrdineInput(data, operation) {
-    const { ordine_num, data_ordine, id_fornitore, stato } = data;
-    if (!ordine_num || typeof ordine_num !== 'string' || ordine_num.trim() === '') {
+    const { num_ordine, data_ordine, fornitore_id, stato } = data;
+    if (!num_ordine || typeof num_ordine !== 'string' || num_ordine.trim() === '') {
         return "Il campo 'ordine_num' è obbligatorio e deve essere una stringa non vuota.";
     }
     if (!data_ordine) { // Controllo base, può essere migliorato con validazione della data
         return "Il campo 'data_ordine' è obbligatorio.";
     }
     // Converte l'ID fornitore in numero per una validazione robusta
-    const fornitoreId = Number(id_fornitore);
-    if (id_fornitore === undefined || isNaN(fornitoreId) || fornitoreId <= 0) {
-        return "Il campo 'id_fornitore' è obbligatorio e deve essere un numero valido.";
+    const fornitoreId = Number(fornitore_id);
+    if (fornitore_id === undefined || isNaN(fornitoreId) || fornitoreId <= 0) {
+        return "Il campo 'fornitore_id' è obbligatorio e deve essere un numero valido.";
     }
     if (!stato || !['Aperto', 'Chiuso', 'Annullato'].includes(stato)) {
         return "Il campo 'stato' è obbligatorio e deve essere 'Aperto', 'Chiuso', o 'Annullato'.";
@@ -42,12 +42,12 @@ function validateOrdineInput(data, operation) {
 exports.getOrdini = async (req, res, next) => {
   try {
     // Estrai i possibili filtri da req.query
-    const { ordine_num, id_fornitore, stato, data_da, data_a } = req.query;
+    const { num_ordine, fornitore_id, stato, data_da, data_a } = req.query;
 
     // Prepara i parametri per la stored procedure. Se un filtro non è presente, passa NULL.
     const params = [
-      ordine_num || null,
-      id_fornitore || null,
+      num_ordine || null,
+      fornitore_id || null,
       stato || null,
       data_da || null,
       data_a || null
@@ -55,7 +55,7 @@ exports.getOrdini = async (req, res, next) => {
 
     console.log(
       "[OrdiniController] Chiamata alla Stored Procedure FetchOrdini con parametri:",
-      { ordine_num, id_fornitore, stato, data_da, data_a }
+      { num_ordine, fornitore_id, stato, data_da, data_a }
     );
 
     // Assumendo che esista una SP 'FetchOrdini' che accetta questi filtri
@@ -94,8 +94,8 @@ exports.insertOrdine = async (req, res, next) => {
   try {
     // Crea una copia del body per poter convertire i tipi senza modificare l'originale
     const dataToValidate = { ...req.body };
-    if (dataToValidate.id_fornitore) {
-        dataToValidate.id_fornitore = Number(dataToValidate.id_fornitore);
+    if (dataToValidate.fornitore_id) {
+        dataToValidate.fornitore_id = Number(dataToValidate.fornitore_id);
     }
 
     const validationError = validateOrdineInput(dataToValidate, "create");
@@ -103,20 +103,20 @@ exports.insertOrdine = async (req, res, next) => {
       return res.status(400).json({ success: false, message: validationError });
     }
 
-    const { ordine_num, data_ordine, id_fornitore, stato, note } = dataToValidate;
+    const { num_ordine, data_ordine, fornitore_id, stato, note } = dataToValidate;
     
     // Assumendo una SP 'InsertOrdine'
     const [results] = await db.query("CALL InsertOrdini(?, ?, ?, ?, ?)", [
-      ordine_num,
+      num_ordine,
       data_ordine,
-      id_fornitore,
+      fornitore_id,
       stato,
       note || null,
     ]);
 
-    const newId = results[0][0].id; // Assumendo che la SP restituisca l'ID
+    const newId = results[0][0].id_ordine; // Assumendo che la SP restituisca l'ID
 
-    res.status(201).json({ success: true, id: newId, message: "Ordine creato con successo." });
+    res.status(201).json({ success: true, id_ordine: newId, message: "Ordine creato con successo." });
   } catch (error) {
     console.error("Errore nell'inserimento dell'ordine:", error.message);
     next(error);
@@ -126,11 +126,11 @@ exports.insertOrdine = async (req, res, next) => {
 // PUT: aggiorna un ordine esistente
 exports.updateOrdine = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const { id_ordine } = req.params;
 
     const dataToValidate = { ...req.body };
-    if (dataToValidate.id_fornitore) {
-        dataToValidate.id_fornitore = Number(dataToValidate.id_fornitore);
+    if (dataToValidate.fornitore_id) {
+        dataToValidate.fornitore_id = Number(dataToValidate.fornitore_id);
     }
 
     const validationError = validateOrdineInput(dataToValidate, "update");
@@ -138,10 +138,10 @@ exports.updateOrdine = async (req, res, next) => {
       return res.status(400).json({ success: false, message: validationError });
     }
 
-    const { ordine_num, data_ordine, id_fornitore, stato, note } = dataToValidate;
+    const { num_ordine, data_ordine, fornitore_id, stato, note } = dataToValidate;
 
     // Assumendo una SP 'UpdateOrdine'
-    const [result] = await db.query("CALL UpdateOrdine(?, ?, ?, ?, ?, ?)", [ id, ordine_num, data_ordine, id_fornitore, stato, note || null]);
+    const [result] = await db.query("CALL UpdateOrdine(?, ?, ?, ?, ?, ?)", [ id_ordine, ordine_num, data_ordine, fornitore_id, stato, note || null]);
     
     if (result.affectedRows === 0) {
         return res.status(404).json({ success: false, message: "Ordine non trovato per l'aggiornamento." });
@@ -149,7 +149,7 @@ exports.updateOrdine = async (req, res, next) => {
 
     res.json({ success: true, message: "Ordine aggiornato con successo." });
   } catch (error) {
-    console.error(`Errore nell'aggiornamento dell'ordine con ID ${req.params.id}:`, error.message);
+    console.error(`Errore nell'aggiornamento dell'ordine con ID ${req.params.id_ordine}:`, error.message);
     next(error);
   }
 };
@@ -157,10 +157,10 @@ exports.updateOrdine = async (req, res, next) => {
 // DELETE: elimina un ordine
 exports.deleteOrdine = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const { id_ordine } = req.params;
 
     // Assumendo una SP 'DeleteOrdine'
-    const [result] = await db.query("CALL DeleteOrdine(?)", [id]);
+    const [result] = await db.query("CALL DeleteOrdine(?)", [id_ordine]);
 
     if (result.affectedRows === 0) {
         return res.status(404).json({ success: false, message: "Ordine non trovato per l'eliminazione." });
@@ -168,7 +168,7 @@ exports.deleteOrdine = async (req, res, next) => {
 
     res.json({ success: true, message: "Ordine eliminato con successo." });
   } catch (error) {
-    console.error(`Errore nell'eliminazione dell'ordine con ID ${req.params.id}:`, error.message);
+    console.error(`Errore nell'eliminazione dell'ordine con ID ${req.params.id_ordine}:`, error.message);
     next(error);
   }
 };
