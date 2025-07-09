@@ -1,175 +1,67 @@
-/*============================================================
-File: Ordini.css
-CSS per il componente Ordini
-@author: "villari.andrea@libero.it"
-@version: "1.0.0 2025-07-05"
-============================================================*/
 
-.ordini-container {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-  background-color: #fdfdfd;
-}
-h1 {
+.title-gestione-ordini {
   text-align: center;
+  margin-top: 20px;
+  font-size: 3rem; /* oppure quello che preferisci */
+  color: #333; /* colore opzionale */
 }
 
-.ordini-actions-header {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #ccc;
-}
 
-.ordini-actions-header h1 {
-  margin: 0;
-  color: #333;
-}
+/* Ordini.css - Styling per HeadDocument */
 
-.btn-save {
-  padding: 10px 20px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s;
-}
-
-.btn-save:hover {
-  background-color: #45a049;
-}
-
-.ordini-righe-container {
-  margin-top: 30px;
-  padding: 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 5px;
-  background-color: #fff;
-}
-
-.ordini-righe-container h2 {
-  margin-top: 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.righe-actions {
-  margin-bottom: 15px;
-  display: flex;
-  gap: 10px;
-}
-
-.righe-actions button {
-  padding: 8px 16px;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.righe-actions button:first-of-type {
-  background-color: #008cba;
-}
-
-.righe-actions button:first-of-type:hover {
-  background-color: #007b9a;
-}
-
-.righe-actions button:last-of-type {
-  background-color: #f44336;
-}
-
-.righe-actions button:last-of-type:hover {
-  background-color: #da190b;
-}
-
-.righe-actions button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-}
-
-/* Stili per le celle editabili nella tabella */
-.editable-cell-input {
-  width: 100%;
-  padding: 5px;
-  border: 1px solid transparent;
-  border-radius: 3px;
-  box-sizing: border-box;
-  background-color: #f9f9f9;
-  transition: all 0.2s ease-in-out;
-}
-
-.editable-cell-input:focus {
-  outline: none;
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-  background-color: #fff;
-}
-
-.text-right {
-  text-align: right;
-}
-
-/* Stili per HeadDocument */
 .doc-header {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* Due colonne di uguale larghezza */
-  gap: 20px; /* Spazio tra i campi */
-  padding: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-  margin-bottom: 20px;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
 }
 
-.doc-header h3 {
-  grid-column: 1 / -1; /* Il titolo occupa entrambe le colonne */
-  margin: 0 0 15px 0;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #ddd;
+.doc-title {
+  text-align: center; /* CENTRA IL TITOLO */
+  margin-bottom: 1.5rem;
+  font-size: 1.6rem;
+  font-weight: 600;
   color: #333;
 }
 
-.doc-header .field {
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.field {
   display: flex;
-  flex-direction: column; /* Etichetta sopra l'input */
+  flex-direction: column;
 }
 
-/* Assumendo che i campi siano in ordine, il 5° campo (Note) occuperà l'intera larghezza */
-.doc-header .field:nth-of-type(5) {
-  grid-column: 1 / -1;
-}
-
-.doc-header .field label {
-  margin-bottom: 5px;
-  font-weight: bold;
-  font-size: 14px;
+.field label {
+  margin-bottom: 0.25rem;
+  font-weight: 500;
   color: #555;
 }
 
-.doc-header .field input,
-.doc-header .field select,
-.doc-header .field textarea {
-  width: 100%;
-  padding: 8px;
+.field input,
+.field select,
+.field textarea {
+  padding: 0.5rem;
   border: 1px solid #ccc;
   border-radius: 4px;
-  box-sizing: border-box;
+  font-size: 1rem;
+  background: #fff;
+  transition: border-color 0.2s ease;
 }
 
-.doc-header .field textarea {
-  resize: vertical;
-  min-height: 60px;
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #007bff;
+  outline: none;
 }
 
-.doc-header .field .error {
-  color: #e02525;
-  font-size: 12px;
-  margin-top: 4px;
+.error {
+  color: #d9534f;
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
 }

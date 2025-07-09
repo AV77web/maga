@@ -254,19 +254,19 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
         onLogout={onLogout}
       />
       <div className="container">
-        <h1>Gestione Ordini</h1>
+        <h1 className="title-gestione-ordini">Gestione Ordini</h1>
         {error && <div className="message-error">{error}</div>}
         {message && <div className="message-success">{message}</div>}
 
         {selectedOrdine ? (
           // --- VISTA DETAIL ---
-          <div className="ordine-detail-view">
+          <>
             <HeadDocument
               config={headDocumentConfig}
               initialData={selectedOrdine}
               onChange={handleHeadChange}
               readOnly={false} // o basato sui permessi/stato ordine
-              className="doc-header"
+              
             />
             
             <h2>Righe Ordine</h2>
@@ -279,11 +279,11 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
                 // Aggiungi props per selezione, modifica, eliminazione righe se necessario
               />
             </div>
-          </div>
+          </>
         ) : (
           // --- VISTA MASTER ---
-          <div className="ordine-master-view">
-            <h2>Elenco Ordini</h2>
+          <>
+            
             <div className="table-wrapper">
               <TableGrid
                 columns={masterColumns}
@@ -302,7 +302,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
                 onPageChange={(newPage) => setPage(newPage - 1)}
               />
             </div>
-          </div>
+          </>
         )}
       </div>
     </>
