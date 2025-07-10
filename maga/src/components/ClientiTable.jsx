@@ -5,6 +5,8 @@
 //@version: "1.0.0 2025-07-08"
 //==================================
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import debounce from 'lodash/debounce';
+import DialogCustom from './DialogCustom';
 import clientiApi from '../api/clientiApi'; // Assumo esista un API per i clienti
 import Header from './Header';
 import TableGrid from './TableGrid';
@@ -20,13 +22,25 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
   const [clientiList, setClientiList] = useState([]);
   const [selectedCliente, setSelectedCliente] = useState(null); // Cliente selezionato per la modifica/visualizzazione
   const [selectedIds, setSelectedIds] = useState([]); // ID selezionati nella tabella
-
+  const [sortKey, setSortKey] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [showSearch, setShowSearch] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+    const toggleSort = (key) => {
+    if (key === sortKey) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortOrder("asc");
+    }
+    setPage(0);
+  };
 
   // --- CONFIGURAZIONI ---
   // Colonne per la tabella dei clienti
@@ -90,6 +104,8 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
 
   // --- GESTORI EVENTI ---
   const handleNewCliente = useCallback(() => {
+    setError('');
+    setMessage('');
     setSelectedCliente({
       id: null,
       codice: '',
@@ -115,8 +131,10 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
       setSelectedCliente(null);
       return;
     }
-    setLoading(true);
+    
     setError('');
+    setMessage('');
+    setLoading(true);
     try {
       const cliente = await clientiApi.fetchById(clienteId);
       setSelectedCliente(cliente);
@@ -131,6 +149,8 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
   const handleBackToMaster = () => {
     setSelectedCliente(null);
     setSelectedIds([]);
+    setError('');
+    setMessage('');
   };
 
   const handleSaveCliente = useCallback(async () => {
@@ -170,10 +190,11 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
       setError("Nessun cliente selezionato per l'eliminazione.");
       return;
     }
-    if (!window.confirm(`Confermi l'eliminazione di ${selectedIds.length} clienti?`)) {
-      return;
-    }
+    setShowDeleteDialog(true);
+  }, [selectedIds]);
 
+  const confirmDeleteClienti = async () => {
+    setShowDeleteDialog(false);
     setLoading(true);
     setError('');
     setMessage('');
@@ -187,7 +208,7 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
     } finally {
       setLoading(false);
     }
-  }, [selectedIds, fetchClienti]);
+  };
 
   const handleSearch = useCallback(async (filters) => {
     setLoading(true);
@@ -202,6 +223,17 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
       setLoading(false);
     }
   }, []);
+
+  const handleSearchDebounced = useMemo(
+    () => debounce(handleSearch, 500),
+    []
+  );
+
+  useEffect(() => {
+  return () => {
+    handleSearchDebounced.cancel();
+  };
+}, []);
 
   const handleHeadChange = useCallback((updatedData) => {
     setSelectedCliente(prev => ({ ...prev, ...updatedData }));
@@ -251,7 +283,7 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
             {showSearch && (
               <FilterSearch
                 fields={filterFields}
-                onSearch={handleSearch}
+                onSearch={handleSearchDebounced}
               />
             )}
             <div className="table-wrapper">
@@ -275,6 +307,13 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
           </>
         )}
       </div>
+      <DialogCustom
+        open={showDeleteDialog}
+        title="Conferma eliminazione"
+        message={`Confermi l'eliminazione di ${selectedIds.length} clienti?`}
+        onConfirm={confirmDeleteClienti}
+        onCancel={() => setShowDeleteDialog(false)}
+      />
     </>
   );
 };

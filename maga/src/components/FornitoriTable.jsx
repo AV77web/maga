@@ -15,6 +15,8 @@ import FilterSearch from './FilterSearch';
 const rowsPerPageOptions = [5, 10, 20, 50 ];
 
 const FornitoriTable = () => {
+
+    
     return(
         <>
         </>

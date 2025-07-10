@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "lodash": "^4.17.21",
     "mysql2": "^3.14.1"
   }
 }

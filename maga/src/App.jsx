@@ -157,6 +157,18 @@ function App() {
           }
         />
         <Route
+          path="/ordini"
+          element={
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <Ordini
+                currentUser={currentUser}
+                onLogout={handleLogout}
+                currentLocation={location.pathname}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/articoli"
           element={
             <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>

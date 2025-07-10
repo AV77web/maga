@@ -26,12 +26,30 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   const [ordineRighe, setOrdineRighe] = useState([]); // Righe dell'ordine selezionato
   const [selectedMasterIds, setSelectedMasterIds] = useState([]); // ID selezionati nella tabella master
   const [selectedDetailIds, setSelectedDetailIds] = useState([]); // ID selezionati nella tabella detail
-
+  const [sortKey, setSortKey] = useState(null);
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [showSearch, setShowSearch] = useState(false); // Stato per il panello di ricerca
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+
+   const toggleSort = (key) => {
+    if (key === sortKey) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortOrder("asc");
+    }
+    setPage(0);
+  };
+
+  const toggleSearchPanel = () => {
+    setShowSearch((prev) => !prev);
+  };
+
 
   // --- CONFIGURAZIONI ---
   // Colonne per la tabella master degli ordini
@@ -106,6 +124,28 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   useEffect(() => {
     fetchOrdiniList();
   }, [fetchOrdiniList]);
+
+  const sortedOrdini = useMemo(() => {
+    const sorted = [...ordiniList].sort((a, b) => {
+      const valA = a[sortKey];
+      const valB = b[sortKey];
+
+      if (typeof valA === "string" && typeof valB === "string") {
+        return sortOrder === "asc"
+          ? valA.localeCompare(valB)
+          : valB.localeCompare(valA);
+      }
+
+      if (typeof valA === "number" && typeof valB === "number") {
+        return sortOrder === "asc" ? valA - valB : valB - valA;
+      }
+
+      return 0; // fallback: se i tipi non corrispondono o sono uguali
+    });
+
+    return sorted;
+  }, [ordiniList, sortKey, sortOrder]);
+
 
   // --- GESTORI EVENTI ---
   const handleNewOrdine = useCallback(() => {
@@ -238,8 +278,8 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   const paginatedOrdiniList = useMemo(() => {
     const firstPageIndex = page * rowsPerPage;
     const lastPageIndex = firstPageIndex + rowsPerPage;
-    return ordiniList.slice(firstPageIndex, lastPageIndex);
-  }, [page, rowsPerPage, ordiniList]);
+    return sortedOrdini.slice(firstPageIndex, lastPageIndex);
+  }, [page, rowsPerPage, sortedOrdini]);
 
   return (
     <>
@@ -290,6 +330,9 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
                 loading={loading}
                 onRowSelectionChange={handleMasterSelectionChange}
                 onRowClick={(rowId) => handleOrdineSelect(rowId)} // Azione al click sulla riga
+                sortKey={sortKey}
+                sortOrder={sortOrder}
+                onSort={toggleSort}
               />
             </div>
             <div className="pagination-bar">
