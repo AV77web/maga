@@ -35,7 +35,7 @@ const Nav = ({ onLogout, currentUser }) => {
       </div>
       {/* Sotto-menu Movimenti */}
       <div className={`submenu ${openMenu === "movimenti" ? "open" : ""}`}>
-        <Link to="/movimenti/causali" className="mylink sublink">
+        <Link to="/causali" className="mylink sublink">
           Causali
         </Link>
       </div>

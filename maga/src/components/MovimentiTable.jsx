@@ -17,6 +17,7 @@ import causaliApi from "../api/causaliApi"; // API per le causali
 import userApi from "../api/userApi"; // API per gli utenti
 import "../css/ArticoliTable.css"; // importa il file css per coerenza
 import Header from "./Header"; // Aggiunto import per Header
+import { Outlet } from "react-router-dom";
 
 const rowsPerPageOptions = [5, 10, 20, 50];
 
@@ -789,6 +790,7 @@ export default function MovimentiTable({
           />
         </DialogCustom>
       </div>
+      <Outlet />
     </>
   );
 }
