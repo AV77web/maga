@@ -130,6 +130,13 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
       const valA = a[sortKey];
       const valB = b[sortKey];
 
+    // Aggiungiamo un caso specifico per 'num_ordine' per forzare l'ordinamento numerico
+    if (sortKey === 'num_ordine') {
+      const numA = parseInt(valA, 10);
+      const numB = parseInt(valB, 10);
+      return sortOrder === 'asc' ? numA - numB : numB - numA;
+    }
+
       if (typeof valA === "string" && typeof valB === "string") {
         return sortOrder === "asc"
           ? valA.localeCompare(valB)

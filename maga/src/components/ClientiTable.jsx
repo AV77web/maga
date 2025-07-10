@@ -42,6 +42,11 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
     setPage(0);
   };
 
+    const toggleSearchPanel = () => {
+    setShowSearch((prev) => !prev);
+  };
+
+
   // --- CONFIGURAZIONI ---
   // Colonne per la tabella dei clienti
   const masterColumns = useMemo(() => [
@@ -101,6 +106,34 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
   useEffect(() => {
     fetchClienti();
   }, [fetchClienti]);
+
+  const sortedClienti = useMemo(() => {
+    const sorted = [...clientiList].sort((a, b) => {
+      const valA = a[sortKey];
+      const valB = b[sortKey];
+
+    // Aggiungiamo un caso specifico per 'num_ordine' per forzare l'ordinamento numerico
+    if (sortKey === 'codice') {
+      const numA = parseInt(valA, 10);
+      const numB = parseInt(valB, 10);
+      return sortOrder === 'asc' ? numA - numB : numB - numA;
+    }
+
+      if (typeof valA === "string" && typeof valB === "string") {
+        return sortOrder === "asc"
+          ? valA.localeCompare(valB)
+          : valB.localeCompare(valA);
+      }
+
+      if (typeof valA === "number" && typeof valB === "number") {
+        return sortOrder === "asc" ? valA - valB : valB - valA;
+      }
+
+      return 0; // fallback: se i tipi non corrispondono o sono uguali
+    });
+
+    return sorted;
+  }, [clientiList, sortKey, sortOrder]);
 
   // --- GESTORI EVENTI ---
   const handleNewCliente = useCallback(() => {
@@ -249,8 +282,8 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
   const paginatedClientiList = useMemo(() => {
     const firstPageIndex = page * rowsPerPage;
     const lastPageIndex = firstPageIndex + rowsPerPage;
-    return clientiList.slice(firstPageIndex, lastPageIndex);
-  }, [page, rowsPerPage, clientiList]);
+    return sortedClienti.slice(firstPageIndex, lastPageIndex);
+  }, [page, rowsPerPage, sortedClienti]);
 
   return (
     <>
@@ -294,6 +327,9 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
                 loading={loading}
                 onRowSelectionChange={handleSelectionChange}
                 onRowClick={(rowId) => handleClienteSelect(rowId)}
+                sortKey={sortKey}
+                sortOrder={sortOrder}
+                onSort={toggleSort}
               />
             </div>
             <div className="pagination-bar">
