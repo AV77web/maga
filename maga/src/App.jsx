@@ -15,9 +15,11 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom"; // ✅ basta questo
+import Anagrafiche from "./components/Anagrafiche";
 import ArticoliTable from "./components/ArticoliTable";
 import CausaliTable from "./components/CausaliTable";
 import ClientiTable from "./components/ClientiTable";
+import FornitoriTable from "./components/FornitoriTable";
 import Ordini from "./components/Ordini";
 import Login from "./components/Login";
 import MovimentiTable from "./components/MovimentiTable";
@@ -167,32 +169,49 @@ function App() {
           }
         />
         <Route
-          path="/ordini"
+          path="/anagrafiche"
           element={
-            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
-              <Ordini
-                currentUser={currentUser}
-                onLogout={handleLogout}
-                currentLocation={location.pathname}
-              />
-            </ProtectedRoute>
+          <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+            <Anagrafiche
+            currentUser={currentUser}
+            onLogout={handleLogout}
+            currentLocation={location.pathname}
+          />
+          </ProtectedRoute>
           }
-        />
-        <Route
-          path="/clienti"
-          element={
-            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
-              <ClientiTable
-                currentUser={currentUser}
-                onLogout={handleLogout}
-                currentLocation={location.pathname}
-              />
-            </ProtectedRoute>
+          >
+          {/* Sotto-rotte */}
+          <Route
+            path="clienti"
+            element={
+            <ClientiTable
+            currentUser={currentUser}
+            onLogout={handleLogout}
+            currentLocation={location.pathname}
+            />
           }
-        />
-        <Route
-          path="/causali"
-          element={
+          />
+          <Route
+            path="fornitori"
+            element={
+            <FornitoriTable
+              currentUser={currentUser}
+              onLogout={handleLogout}
+              currentLocation={location.pathname}
+            />
+          }
+          />
+          {/* Rotta di default quando si va su /anagrafiche */}
+          <Route
+          index
+          element={<h2>Seleziona una sezione: Clienti o Fornitori</h2>}
+          />
+          </Route>
+
+          
+          <Route
+           path="/causali"
+           element={
             <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
               <CausaliTable
                 currentUser={currentUser}
@@ -200,14 +219,14 @@ function App() {
                 currentLocation={location.pathname}
               />
             </ProtectedRoute>
-          }
-        />
-        {/* Reindirizza qualsiasi altra rotta non definita alla home se loggato, o al login se non loggato */}
-        <Route
-          path="*"
-          element={<Navigate to={loggedIn ? "/" : "/login"} replace />}
-        />
-      </Routes>
+           }
+           />
+           {/* Reindirizza qualsiasi altra rotta non definita alla home se loggato, o al login se non loggato */}
+          <Route
+           path="*"
+           element={<Navigate to={loggedIn ? "/" : "/login"} replace />}
+          />
+        </Routes>
 
       {/*</Suspense>*/}
     </>

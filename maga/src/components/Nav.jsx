@@ -1,16 +1,15 @@
-//=====================================
-//File: Nav.jsx
-//Programma per la gestione del menu di
-//navigazione.
-//@author = "villari.andrea@libero.it"
-//@version = "1.0.0 2025-05-23"
-//=====================================
-import React from "react";
+import React, { useState } from "react";
 import { NavLink as Link } from "react-router-dom";
+import { RxTriangleRight, RxTriangleDown } from "react-icons/rx";
 import "../css/Nav.css";
 
 const Nav = ({ onLogout, currentUser }) => {
-  // Accetta onLogout e currentUser come prop
+  const [isAnagraficheOpen, setIsAnagraficheOpen] = useState(false);
+
+  const toggleAnagrafiche = () => {
+    setIsAnagraficheOpen(!isAnagraficheOpen);
+  };
+
   return (
     <nav>
       <Link to="/" className="mylink">
@@ -26,18 +25,33 @@ const Nav = ({ onLogout, currentUser }) => {
         Ordini
       </Link>
       <Link to="/movimenti" className="mylink">
-        {" "}
-        {/* Aggiunto per coerenza con App.jsx */}
         Movimenti
       </Link>
-      <Link to="/clienti" className="mylink">
-        Clienti
-      </Link>
+
+      {/* Voce padre Anagrafiche */}
+      <div className="mylink collapsible" onClick={toggleAnagrafiche}>
+        <span>Anagrafiche</span>
+        <span className="arrow">
+          {isAnagraficheOpen ? <RxTriangleDown /> : <RxTriangleRight />}
+        </span>
+      </div>
+
+      {/* Sotto-menu */}
+      <div className={`submenu ${isAnagraficheOpen ? "open" : ""}`}>
+        <Link to="/anagrafiche/clienti" className="mylink sublink">
+          Clienti
+        </Link>
+        <Link to="/anagrafiche/fornitori" className="mylink sublink">
+          Fornitori
+        </Link>
+      </div>
+
       {currentUser && currentUser.role === "admin" && (
         <Link to="/register" className="mylink">
           Registra Utente
         </Link>
       )}
+
       {onLogout && (
         <button onClick={onLogout} className="mylink logout-button">
           Logout
