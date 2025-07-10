@@ -4,40 +4,58 @@ import { RxTriangleRight, RxTriangleDown } from "react-icons/rx";
 import "../css/Nav.css";
 
 const Nav = ({ onLogout, currentUser }) => {
-  const [isAnagraficheOpen, setIsAnagraficheOpen] = useState(false);
+  const [openMenu, setOpenMenu] = useState(null); // null | "movimenti" | "anagrafiche"
 
-  const toggleAnagrafiche = () => {
-    setIsAnagraficheOpen(!isAnagraficheOpen);
+  const toggleMenu = (menuName) => {
+    setOpenMenu((prev) => (prev === menuName ? null : menuName));
   };
 
   return (
     <nav>
+      {/* Voci principali */}
       <Link to="/" className="mylink">
         Home
       </Link>
       <Link to="/articoli" className="mylink">
         Articoli
       </Link>
-      <Link to="/causali" className="mylink">
-        Causali
-      </Link>
       <Link to="/ordini" className="mylink">
         Ordini
       </Link>
-      <Link to="/movimenti" className="mylink">
-        Movimenti
-      </Link>
 
-      {/* Voce padre Anagrafiche */}
-      <div className="mylink collapsible" onClick={toggleAnagrafiche}>
-        <span>Anagrafiche</span>
+      {/* Voce padre Movimenti */}
+      <div
+        className="mylink collapsible"
+        onClick={() => toggleMenu("movimenti")}
+      >
+        <span>Movimenti</span>
         <span className="arrow">
-          {isAnagraficheOpen ? <RxTriangleDown /> : <RxTriangleRight />}
+          {openMenu === "movimenti" ? <RxTriangleDown /> : <RxTriangleRight />}
         </span>
       </div>
+      {/* Sotto-menu Movimenti */}
+      <div className={`submenu ${openMenu === "movimenti" ? "open" : ""}`}>
+        <Link to="/movimenti/causali" className="mylink sublink">
+          Causali
+        </Link>
+      </div>
 
-      {/* Sotto-menu */}
-      <div className={`submenu ${isAnagraficheOpen ? "open" : ""}`}>
+      {/* Voce padre Anagrafiche */}
+      <div
+        className="mylink collapsible"
+        onClick={() => toggleMenu("anagrafiche")}
+      >
+        <span>Anagrafiche</span>
+        <span className="arrow">
+          {openMenu === "anagrafiche" ? (
+            <RxTriangleDown />
+          ) : (
+            <RxTriangleRight />
+          )}
+        </span>
+      </div>
+      {/* Sotto-menu Anagrafiche */}
+      <div className={`submenu ${openMenu === "anagrafiche" ? "open" : ""}`}>
         <Link to="/anagrafiche/clienti" className="mylink sublink">
           Clienti
         </Link>
@@ -46,12 +64,14 @@ const Nav = ({ onLogout, currentUser }) => {
         </Link>
       </div>
 
-      {currentUser && currentUser.role === "admin" && (
+      {/* Admin only */}
+      {currentUser?.role === "admin" && (
         <Link to="/register" className="mylink">
           Registra Utente
         </Link>
       )}
 
+      {/* Logout */}
       {onLogout && (
         <button onClick={onLogout} className="mylink logout-button">
           Logout

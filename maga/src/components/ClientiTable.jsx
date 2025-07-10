@@ -243,7 +243,69 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
     }
   };
 
-  const handleSearch = useCallback(async (filters) => {
+ // Definisci i campi per il filtro dei ricambi
+  const clientiFilterFields = useMemo(
+    () => [
+      {
+        name: "codice",
+        label: "Codice Cliente",
+        type: "text",
+        placeholder: "Cerca per codice...",
+      },
+      
+      {
+        name: "name",
+        label: "Nome",
+        type: "text",
+        placeholder: "Cerca per nome...",
+      },
+      {
+        name: "tipo_cliente",
+        label: "Tipo cliente",
+        type: "select",
+        options: [
+          { value: "Privato", label: "Privato" },
+          { value: "Azienda", label: "Azienda" }
+        ],
+        placeholder: "-- Seleziona Tipo --",
+      },
+      {
+        name: "partita_iva",
+        label: "Partita IVA",
+        type: "text",
+        placeholder: "Cerca per prtita iva...",
+      },
+      {
+        name: "citta",
+        label: "Citta",
+        type: "text",
+        placeholder: "Cerca per città...",
+      },
+      {
+        name: "cf",
+        label: "Codice Fiscale",
+        type: "text",
+        placeholder: "Cerca per codice fiscale...",
+      },
+      {
+        name: "contatto",
+        label: "Contatto",
+        type: "text",
+        placeholder: "Cerca per contatto...",
+      },
+      {
+        name: "email",
+        label: "Email",
+        type: "text",
+        placeholder: "Cerca per email...",
+      },
+      // Aggiungi altri campi se necessario, es. per quantità min/max se l'API lo supporta
+    ],
+    []
+  );
+
+
+  /*const handleSearchClienti = useCallback(async (filters) => {
     setLoading(true);
     setError('');
     try {
@@ -255,10 +317,34 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
     } finally {
       setLoading(false);
     }
+  }, []);*/
+
+    // Funzione per gestire la ricerca dei clienti
+  const handleSearchClienti = useCallback(async (filterValues) => {
+    // Funzione unificata per ricerca e aggiornamento stato
+    setLoading(true);
+    setMessage("");
+    try {
+      const resultsFromSearch = await clientiApi.fetchByFilters(filterValues);
+      if (Array.isArray(resultsFromSearch)) {
+        setClientiList(resultsFromSearch); // Aggiorna lo stato con i risultati
+        if (resultsFromSearch.length === 0) {
+          setMessage("ℹ️ Nessun ordine trovato con i filtri specificati.");
+        }
+      } else {
+        throw new Error(resultsFromSearch.error || "Dati filtrati non validi.");
+      }
+    } catch (err) {
+      console.error("Errore nella ricerca clienti:", err);
+      setMessage(`❌ Errore ricerca clienti: ${err.message || err}`);
+      setClientiList([]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const handleSearchDebounced = useMemo(
-    () => debounce(handleSearch, 500),
+    () => debounce(handleSearchClienti, 500),
     []
   );
 
@@ -285,6 +371,8 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
     return sortedClienti.slice(firstPageIndex, lastPageIndex);
   }, [page, rowsPerPage, sortedClienti]);
 
+  
+
   return (
     <>
       <Header
@@ -298,6 +386,7 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
         onLogout={onLogout}
       />
       <div className="container">
+       
         <h1 className="title-gestione-ordini">Gestione Clienti</h1>
         {error && <div className="message-error">{error}</div>}
         {message && <div className="message-success">{message}</div>}
@@ -315,7 +404,7 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
           <>
             {showSearch && (
               <FilterSearch
-                fields={filterFields}
+                fields={clientiFilterFields}
                 onSearch={handleSearchDebounced}
               />
             )}
@@ -339,6 +428,23 @@ const ClientiTable = ({ currentUser, currentLocation, onLogout }) => {
                 pageSize={rowsPerPage}
                 onPageChange={(newPage) => setPage(newPage - 1)}
               />
+              <label>
+              Elementi per pagina:&nbsp;
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(parseInt(e.target.value, 10));
+                  setPage(0);
+                }}
+                disabled={loading}
+              >
+                {rowsPerPageOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
             </div>
           </>
         )}

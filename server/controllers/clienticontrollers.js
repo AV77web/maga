@@ -34,7 +34,7 @@ function validateClienteInput(data) {
 exports.getClienti = async (req, res, next) => {
   try {
     // Estrai i possibili filtri da req.query
-    const { codice, nome, tipo_cliente, partita_iva, cf, citta, contatto } = req.query;
+    const { codice, nome, tipo_cliente, partita_iva, cf, citta, contatto, email} = req.query;
 
     // Prepara i parametri per la stored procedure. Se un filtro non è presente, passa NULL.
     const p_codice = codice || null;
@@ -44,6 +44,7 @@ exports.getClienti = async (req, res, next) => {
     const p_cf = cf || null;
     const p_citta = citta || null;
     const p_contatto = contatto || null;
+    const p_email = email || null;
 
     console.log(
       "[ClientiController] Chiamata alla Stored Procedure FetchClienti con parametri:",
@@ -51,14 +52,15 @@ exports.getClienti = async (req, res, next) => {
     );
 
     // Chiama la stored procedure con i parametri (ipotizzando il nome FetchClienti)
-    const [results] = await db.query("CALL FetchClienti(?,?,?,?,?,?,?)", [
+    const [results] = await db.query("CALL FetchClienti(?,?,?,?,?,?,?,?)", [
       p_codice,
       p_nome,
       p_tipo_cliente,
       p_partita_iva,
       p_cf,
       p_citta,
-      p_contatto
+      p_contatto,
+      p_email
     ]);
 
     const rows = results[0];

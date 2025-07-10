@@ -7,14 +7,15 @@
 
 import React from "react";
 import { useState, useEffect, Suspense, lazy } from "react";
-import { logoutUser } from "./api/authApi"; // Importa la funzione di logout
 import {
   Routes,
   Route,
   Navigate,
   useNavigate,
   useLocation,
-} from "react-router-dom"; // ✅ basta questo
+} from "react-router-dom";
+import { logoutUser } from "./api/authApi";
+
 import Anagrafiche from "./components/Anagrafiche";
 import ArticoliTable from "./components/ArticoliTable";
 import CausaliTable from "./components/CausaliTable";
@@ -26,74 +27,53 @@ import MovimentiTable from "./components/MovimentiTable";
 import Register from "./components/Register";
 import Sidebar1 from "./components/Sidebar1";
 
-/*const RicambiTableGrid = lazy(() => import("./components/RicambiTableGrid"));*/
-
-//Componente per proteggere le rotte
+// Componente per proteggere le rotte
 const ProtectedRoute = ({ isLoggedIn, children, allowedRoles, userRole }) => {
   if (!isLoggedIn) {
     return <Navigate to="/login" replace />;
   }
-  // If allowedRoles are specified, check if the user's role is among them
   if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
-    // User is logged in but does not have the required role
-    // Redirect to home or an "Access Denied" page. For now, home.
     return <Navigate to="/" replace />;
   }
   return children;
 };
 
 function App() {
-  // Controlla se c'è un token in localStorage all'avvio per mantenere lo stato di login
   const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("authToken"));
   const [currentUser, setCurrentUser] = useState(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      try {
-        return JSON.parse(storedUser);
-      } catch (e) {
-        console.error("Error parsing user from localStorage", e);
-        localStorage.removeItem("user"); // Clear corrupted data if parsing fails
-        return null;
-      }
+    try {
+      return JSON.parse(localStorage.getItem("user")) || null;
+    } catch {
+      localStorage.removeItem("user");
+      return null;
     }
-    return null;
   });
   const [isSideBarOpen, setIsSideBarOpen] = useState(false);
+
   const navigate = useNavigate();
-  // const location = useLocation(); // No longer needed for the removed useEffect
+  const location = useLocation();
 
   const toggleSidebar = () => setIsSideBarOpen(!isSideBarOpen);
   const closeSidebar = () => setIsSideBarOpen(false);
 
   const handleLoginSuccess = () => {
     setLoggedIn(true);
-    const userJson = localStorage.getItem("user"); // User data should have been set by Login.jsx
-    if (userJson) {
-      try {
-        setCurrentUser(JSON.parse(userJson));
-      } catch (error) {
-        console.error(
-          "Failed to parse user from localStorage on login success",
-          error
-        );
-        setCurrentUser(null); // Fallback
-      }
+    try {
+      setCurrentUser(JSON.parse(localStorage.getItem("user")));
+    } catch {
+      setCurrentUser(null);
     }
-    navigate("/"); // Reindirizza alla home page o alla pagina precedente desiderata
+    navigate("/");
   };
 
   const handleLogout = async () => {
-    await logoutUser(); // Chiama l'API di logout
+    await logoutUser();
     localStorage.removeItem("authToken");
-    localStorage.removeItem("user"); // Rimuovi anche i dati utente se memorizzati
+    localStorage.removeItem("user");
     setLoggedIn(false);
-    setCurrentUser(null); // Clear current user state
+    setCurrentUser(null);
     navigate("/login");
   };
-  const location = useLocation(); // Get the current location object
-
-  // The useEffect that redirected logged-in users from /login or /register
-  // has been removed as route definitions now handle these cases.
 
   return (
     <>
@@ -108,16 +88,7 @@ function App() {
         currentLocation={location.pathname}
       />
 
-      {/*<Suspense fallback={<div>Caricamento...</div>}>*/}
-      {/* Potresti aggiungere un pulsante di Logout nella Sidebar o in un Header */}
-      {/* Esempio: loggedIn && <button onClick={handleLogout}>Logout</button> */}
-
       <Routes>
-        {/*Rotte precedenti all'introuzione della Registrazione con bcrypt}
-        {/*<Route path="/" element={<MovimentiTable />} />
-        <Route path="/articoli" element={<RicambiManagerDialog4 />} />
-        <Route path="/causali" element={<CausaliManager4/>}/>*/}
-
         {/* Rotte pubbliche */}
         <Route
           path="/login"
@@ -129,7 +100,6 @@ function App() {
             )
           }
         />
-        {/* The /register route is now protected below */}
 
         {/* Rotte protette */}
         <Route
@@ -143,7 +113,20 @@ function App() {
               />
             </ProtectedRoute>
           }
-        />
+        >
+          {/* Sottorotta /causali */}
+          <Route
+            path="causali"
+            element={
+              <CausaliTable
+                currentUser={currentUser}
+                onLogout={handleLogout}
+                currentLocation={location.pathname}
+              />
+            }
+          />
+        </Route>
+
         <Route
           path="/register"
           element={
@@ -183,64 +166,43 @@ function App() {
         <Route
           path="/anagrafiche"
           element={
-          <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
-            <Anagrafiche
-            currentUser={currentUser}
-            onLogout={handleLogout}
-            currentLocation={location.pathname}
-          />
-          </ProtectedRoute>
-          }
-          >
-          {/* Sotto-rotte */}
-          <Route
-            path="clienti"
-            element={
-            <ClientiTable
-            currentUser={currentUser}
-            onLogout={handleLogout}
-            currentLocation={location.pathname}
-            />
-          }
-          />
-          <Route
-            path="fornitori"
-            element={
-            <FornitoriTable
-              currentUser={currentUser}
-              onLogout={handleLogout}
-              currentLocation={location.pathname}
-            />
-          }
-          />
-          {/* Rotta di default quando si va su /anagrafiche */}
-          <Route
-          index
-          element={<h2>Seleziona una sezione: Clienti o Fornitori</h2>}
-          />
-          </Route>
-
-          
-          <Route
-           path="/causali"
-           element={
             <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
-              <CausaliTable
+              <Anagrafiche
                 currentUser={currentUser}
                 onLogout={handleLogout}
                 currentLocation={location.pathname}
               />
             </ProtectedRoute>
-           }
-           />
-           {/* Reindirizza qualsiasi altra rotta non definita alla home se loggato, o al login se non loggato */}
+          }
+        >
           <Route
-           path="*"
-           element={<Navigate to={loggedIn ? "/" : "/login"} replace />}
+            path="clienti"
+            element={
+              <ClientiTable
+                currentUser={currentUser}
+                onLogout={handleLogout}
+                currentLocation={location.pathname}
+              />
+            }
           />
-        </Routes>
+          <Route
+            path="fornitori"
+            element={
+              <FornitoriTable
+                currentUser={currentUser}
+                onLogout={handleLogout}
+                currentLocation={location.pathname}
+              />
+            }
+          />
+        </Route>
 
-      {/*</Suspense>*/}
+        {/* Catch-all */}
+        <Route
+          path="*"
+          element={<Navigate to={loggedIn ? "/" : "/login"} replace />}
+        />
+      </Routes>
     </>
   );
 }

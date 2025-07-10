@@ -26,9 +26,10 @@ function validateFornitoreInput(data) {
 exports.getFornitori = async (req, res, next) => {
   try {
     // Estrai i possibili filtri da req.query
-    const { rag_soc, partita_iva, cf, citta, contatto } = req.query;
+    const { codice, rag_soc, partita_iva, cf, citta, contatto } = req.query;
 
     // Prepara i parametri per la stored procedure. Se un filtro non è presente, passa NULL.
+    const p_codice = codice || null;
     const p_ragione_sociale = rag_soc || null;
     const p_piva = partita_iva || null;
     const p_cf = cf || null;
@@ -41,7 +42,8 @@ exports.getFornitori = async (req, res, next) => {
     );
 
     // Chiama la stored procedure con i parametri
-    const [results] = await db.query("CALL FetchFornitori(?,?,?,?,?)", [
+    const [results] = await db.query("CALL FetchFornitori(?,?,?,?,?,?)", [
+      p_codice,
       p_ragione_sociale,
       p_piva,
       p_contatto,
@@ -70,10 +72,11 @@ exports.insertFornitore = async (req, res, next) => {
       return res.status(400).json({ success: false, error: validationError });
     }
 
-    const { rag_soc, partita_iva, indirizzo, telefono, email, contatto } =
+    const { codice, rag_soc, partita_iva, indirizzo, telefono, email, contatto } =
       req.body;
 
-    const [results] = await db.query("CALL InsertFornitore(?,?,?,?,?,?)", [
+    const [results] = await db.query("CALL InsertFornitore(?,?,?,?,?,?.?)", [
+      codice,
       rag_soc,
       partita_iva,
       indirizzo,
@@ -107,8 +110,9 @@ exports.updateFornitore = async (req, res, next) => {
     const { rag_soc, partita_iva, indirizzo, telefono, email, contatto } =
       req.body;
 
-    await db.query("CALL UpdateFornitore(?,?,?,?,?,?,?)", [
+    await db.query("CALL UpdateFornitore(?,?,?,?,?,?,?,?)", [
       id,
+      codice,
       rag_soc,
       partita_iva,
       indirizzo,
