@@ -6,9 +6,8 @@
 //@version: "1.0.0 2025-06-12"
 //==================================
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import {}
 import DialogCustom from "./DialogCustom";
-import FilterSearch from"./FilterSearch";
+import FilterSearch from "./FilterSearch";
 import Pagination from "./Pagination1";
 import TableGrid from "./TableGrid";
 import movimentiApi from "../api/movimentiApi"; // API per le operazioni sui movimenti
@@ -27,6 +26,7 @@ const initialDialogFormData = {
   data: new Date().toISOString().slice(0, 10), // Data odierna di default YYYY-MM-DD
   quantita: "",
   tipo: "", // 'carico' o 'scarico'
+  um: "", // unità di misura
   note: "",
 };
 
@@ -68,7 +68,7 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
   const [loadingArticoli, setLoadingArticoli] = useState(false);
   const [loadingCausali, setLoadingCausali] = useState(false);
   const [loadingTable, setLoadingTable] = useState(false);
-  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false); // Used in fetchUsers function
   const [message, setMessage] = useState(""); // Stato per i messaggi all'utente
   const [movimenti, setMovimenti] = useState([]);
   const [page, setPage] = useState(0);
@@ -312,6 +312,7 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
       data:
         item.data || new Date().toISOString().slice(0, 10),
       quantita: item.quantita || "",
+      um: item.um || "",
       tipo: item.tipo || "",
       note: item.note || "",
     });
@@ -352,8 +353,7 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
       !dialogFormData.codice_cau ||
       !dialogFormData.data ||
       !dialogFormData.quantita ||
-      !dialogFormData.um 
-      ||
+      !dialogFormData.um ||
       !dialogFormData.tipo
     ) {
       //console.log(dialogFormData);
@@ -670,6 +670,19 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
         required
         min="1"
         disabled={isSubmitting || (isEditing && typeof dialogFormData.quantita !== "undefined")}
+        autoComplete="off"
+      />
+
+      <label htmlFor="MovimentiTable-um">Unità di Misura:</label>
+      <input
+        id="MovimentiTable-um"
+        type="text"
+        name="um"
+        placeholder="es. pz, kg, m"
+        value={dialogFormData.um || ""}
+        onChange={handleDialogChange}
+        required
+        disabled={isSubmitting || (isEditing && dialogFormData.um)}
         autoComplete="off"
       />
 
