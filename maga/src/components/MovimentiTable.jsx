@@ -6,9 +6,8 @@
 //@version: "1.0.0 2025-06-12"
 //==================================
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import {}
 import DialogCustom from "./DialogCustom";
-import FilterSearch from"./FilterSearch";
+import FilterSearch from "./FilterSearch";
 import Pagination from "./Pagination1";
 import TableGrid from "./TableGrid";
 import movimentiApi from "../api/movimentiApi"; // API per le operazioni sui movimenti
@@ -352,8 +351,6 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
       !dialogFormData.codice_cau ||
       !dialogFormData.data ||
       !dialogFormData.quantita ||
-      !dialogFormData.um 
-      ||
       !dialogFormData.tipo
     ) {
       //console.log(dialogFormData);
@@ -612,8 +609,8 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
             Caricamento articoli...
           </option>
         ) : (
-          articoliList.map((art) => (
-            <option key={`art-${art.id ?? Math.random()}`} value={art.id}>
+          articoliList.map((art, index) => (
+            <option key={`art-${art.id || index}`} value={art.id}>
               {art.name} (ID: {art.id})
             </option>
           ))
@@ -638,8 +635,8 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
             Caricamento causali...
           </option>
         ) : (
-          causaliList.map((cau) => (
-            <option key={`cau-${cau.id ?? Math.random()}`} value={cau.id}>
+          causaliList.map((cau, index) => (
+            <option key={`cau-${cau.id || index}`} value={cau.id}>
               {/*{cau.codice} - {cau.description} (ID: {cau.id})*/}
               {cau.codice}
             </option>
