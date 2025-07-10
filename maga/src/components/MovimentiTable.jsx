@@ -1,14 +1,14 @@
 //=================================
 //File: MovimentiTable.jsx
-//Componente per la gestione dei movimenti 
+//Componente per la gestione dei movimenti
 //di magazzino.
 //@author: "villari.andrea@libero.it"
 //@version: "1.0.0 2025-06-12"
 //==================================
+
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import {}
 import DialogCustom from "./DialogCustom";
-import FilterSearch from"./FilterSearch";
+import FilterSearch from "./FilterSearch";
 import Pagination from "./Pagination1";
 import TableGrid from "./TableGrid";
 import movimentiApi from "../api/movimentiApi"; // API per le operazioni sui movimenti
@@ -28,6 +28,7 @@ const initialDialogFormData = {
   quantita: "",
   tipo: "", // 'carico' o 'scarico'
   note: "",
+  um: "", // unità di misura
 };
 
 // Definizione colonne per la tabella
@@ -37,7 +38,7 @@ const tableColumns = [
   { key: "idart", label: "ID Art.", cellClassName: "text-center" },
   { key: "descriptionart", label: "Nome Articolo", cellClassName: "text-left" },
   { key: "quantita", label: "Q.tà", cellClassName: "text-right" },
-  { key: "um", label: "UM", cellClassName: "text-left"},
+  { key: "um", label: "UM", cellClassName: "text-left" },
   {
     key: "tipo",
     label: "Tipo",
@@ -52,13 +53,16 @@ const tableColumns = [
     },
   },
   { key: "descriptioncau", label: "Causale", cellClassName: "text-left" },
-  { key: "user", label: "Utente", cellClassName: "text-left"},
-  { key: "timestamp", label: "Timestamp", cellClassName: "text-left"},
+  { key: "user", label: "Utente", cellClassName: "text-left" },
+  { key: "timestamp", label: "Timestamp", cellClassName: "text-left" },
   { key: "note", label: "Note", cellClassName: "text-left" },
 ];
 
-export default function MovimentiTable({currentUser, currentLocation,onLogout}) {
-  
+export default function MovimentiTable({
+  currentUser,
+  currentLocation,
+  onLogout,
+}) {
   const [articoliList, setArticoliList] = useState([]);
   const [causaliList, setCausaliList] = useState([]);
   const [dialogFormData, setDialogFormData] = useState(initialDialogFormData);
@@ -83,17 +87,55 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
   };
 
   // Define filter fields for Movimenti
-  const movimentiFilterFields = useMemo(() => [
-    
-    { name: "idart", label: "Articolo", type: "select", options: articoliList.map(art => ({ value: art.id, label: `${art.name} (ID: ${art.id})` })), placeholder: "-- Seleziona Articolo --" },
-    { name: "codice_cau", label: "Causale", type: "select", options: causaliList.map(cau => ({ value: cau.id, label: `${cau.codice} - ${cau.description} (ID: ${cau.id})` })), placeholder: "-- Seleziona Causale --" },
-    { name: "tipo", label: "Tipo", type: "select", options: [{ value: "C", label: "Carico" }, { value: "S", label: "Scarico" }], placeholder: "-- Seleziona Tipo --" },
-    { name: "dataDa", label: "Data Da", type: "date" },
-    { name: "dataA", label: "Data A", type: "date" },
-    { name: "user", label: "Utente", type: "select", options: usersList.map(u => ({ value: u.username , label: u.username })), placeholder: "--Seleziona Utente--"}
-  ], [articoliList, causaliList, usersList]); // Dipendenze per rigenerare se liste cambiano
-   
-    // Function to handle the search triggered by FilterSearch
+  const movimentiFilterFields = useMemo(
+    () => [
+      {
+        name: "idart",
+        label: "Articolo",
+        type: "select",
+        options: articoliList.map((art) => ({
+          value: art.id,
+          label: `${art.name} (ID: ${art.id})`,
+        })),
+        placeholder: "-- Seleziona Articolo --",
+      },
+      {
+        name: "codice_cau",
+        label: "Causale",
+        type: "select",
+        options: causaliList.map((cau) => ({
+          value: cau.id,
+          label: `${cau.codice} - ${cau.description} (ID: ${cau.id})`,
+        })),
+        placeholder: "-- Seleziona Causale --",
+      },
+      {
+        name: "tipo",
+        label: "Tipo",
+        type: "select",
+        options: [
+          { value: "C", label: "Carico" },
+          { value: "S", label: "Scarico" },
+        ],
+        placeholder: "-- Seleziona Tipo --",
+      },
+      { name: "dataDa", label: "Data Da", type: "date" },
+      { name: "dataA", label: "Data A", type: "date" },
+      {
+        name: "user",
+        label: "Utente",
+        type: "select",
+        options: usersList.map((u) => ({
+          value: u.username,
+          label: u.username,
+        })),
+        placeholder: "--Seleziona Utente--",
+      },
+    ],
+    [articoliList, causaliList, usersList]
+  ); // Dipendenze per rigenerare se liste cambiano
+
+  // Function to handle the search triggered by FilterSearch
   // This function receives the filter values collected by FilterSearch
   const handleSearchMovimenti = async (filterValues) => {
     // log per veder i valori di filtro
@@ -112,23 +154,25 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
       //console.log("FilterValues ricevuti:", filterValues);
       //console.log("Query costruita per API:", query);
       const res = await movimentiApi.fetchByFilters(query); // This might return [dataArray, metadataObject] or just dataArray
-      
+
       //console.log("Risposta raw dall'API:", res); // Logga la risposta prima del .map
 
       let dataToProcess = res;
       // Check if the response is an array where the first element is the actual data array
-      if (Array.isArray(res) && Array.isArray(res[0]) && res.length === 2 && typeof res[1] === 'object') {
+      if (
+        Array.isArray(res) &&
+        Array.isArray(res[0]) &&
+        res.length === 2 &&
+        typeof res[1] === "object"
+      ) {
         dataToProcess = res[0];
       }
 
       if (Array.isArray(dataToProcess)) {
         const formattedData = dataToProcess.map((m) => ({
           ...m,
-          data: m.data
-            ? new Date(m.data).toISOString().slice(0, 10)
-            : "",
+          data: m.data ? new Date(m.data).toISOString().slice(0, 10) : "",
         }));
-        
 
         setMovimenti(formattedData);
         if (formattedData.length === 0) {
@@ -147,15 +191,19 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
   };
 
   const fetchMovimenti = useCallback(async () => {
-    
     setLoadingTable(true);
     setMessage("");
     try {
       const res = await movimentiApi.fetchAll(); // This might return [dataArray, metadataObject] or just dataArray
       //console.log('MO - Risposta API fetchMovimenti;', res.data);
-      
+
       let dataToProcess = res;
-      if (Array.isArray(res) && Array.isArray(res[0]) && res.length === 2 && typeof res[1] === 'object') {
+      if (
+        Array.isArray(res) &&
+        Array.isArray(res[0]) &&
+        res.length === 2 &&
+        typeof res[1] === "object"
+      ) {
         dataToProcess = res[0];
       }
 
@@ -164,9 +212,7 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
           dataToProcess.map((m) => ({
             ...m,
             // Assicurati che la data sia in formato YYYY-MM-DD per l'input e la visualizzazione semplice
-            data: m.data
-              ? new Date(m.data).toISOString().slice(0, 10)
-              : "",
+            data: m.data ? new Date(m.data).toISOString().slice(0, 10) : "",
           }))
         );
         //console.log('MO - Movimenti dopo mapping fetchMovimenti', dataToProcess);
@@ -239,8 +285,7 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
     } catch (err) {
       console.error("Errore nel caricamento utenti:", err);
       setMessage(
-        (prev) =>
-          prev + `\n⚠️ Errore caricamento utenti: ${err.message || err}`
+        (prev) => prev + `\n⚠️ Errore caricamento utenti: ${err.message || err}`
       );
       setUsersList([]);
     } finally {
@@ -309,11 +354,11 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
       idart: item.idart || "",
       codice_cau: item.codice_cau || "",
       // data è già YYYY-MM-DD dallo stato movimenti
-      data:
-        item.data || new Date().toISOString().slice(0, 10),
+      data: item.data || new Date().toISOString().slice(0, 10),
       quantita: item.quantita || "",
       tipo: item.tipo || "",
       note: item.note || "",
+      um: item.um || "", // <-- Add UM to edit logic
     });
     setIsEditing(true);
     setFormVisible(true);
@@ -352,8 +397,7 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
       !dialogFormData.codice_cau ||
       !dialogFormData.data ||
       !dialogFormData.quantita ||
-      !dialogFormData.um 
-      ||
+      !dialogFormData.um || // <-- Validate UM
       !dialogFormData.tipo
     ) {
       //console.log(dialogFormData);
@@ -403,13 +447,28 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
     }
   }, [isEditing, dialogFormData, fetchMovimenti, currentUser]);
 
-  const handleDialogChange = useCallback((e) => {
-    const { name, value } = e.target;
-    // log per verificare il valore nuovo quando cambio un campo tipo codice_cau, tipo etc.
-    //console.log(`[DEBUG] Cambio campo ${name}:` , value );
+  const handleDialogChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      // log per verificare il valore nuovo quando cambio un campo tipo codice_cau, tipo etc.
+      //console.log(`[DEBUG] Cambio campo ${name}:` , value );
 
-    setDialogFormData((prev) => ({ ...prev, [name]: value }));
-  }, []);
+      // If the user changes the articolo, update the UM automatically
+      if (name === "idart") {
+        const selectedArt = articoliList.find(
+          (art) => String(art.id) === value
+        );
+        setDialogFormData((prev) => ({
+          ...prev,
+          idart: value,
+          um: selectedArt ? selectedArt.um || "" : "", // <-- Set UM from articolo
+        }));
+      } else {
+        setDialogFormData((prev) => ({ ...prev, [name]: value }));
+      }
+    },
+    [articoliList]
+  );
 
   const handleSelectAllCurrentPageRowsChange = useCallback(
     (checked) => {
@@ -439,8 +498,8 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
     );
   }, [currentTableData, selectedIds]);
 
-    //console.log("articoliList:", articoliList);
-    //console.log("causaliList:", causaliList);
+  //console.log("articoliList:", articoliList);
+  //console.log("causaliList:", causaliList);
 
   return (
     <>
@@ -506,12 +565,11 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
       <div className="container">
         <h1>Gestione Movimenti</h1>
 
-      { showSearch && 
-        (
-        <FilterSearch
-          fields={movimentiFilterFields} // Pass the defined fields
-          onSearch={handleSearchMovimenti} // Pass the search handler function directly
-        ></FilterSearch>
+        {showSearch && (
+          <FilterSearch
+            fields={movimentiFilterFields} // Pass the defined fields
+            onSearch={handleSearchMovimenti} // Pass the search handler function directly
+          ></FilterSearch>
         )}
 
         {message && (
@@ -578,137 +636,159 @@ export default function MovimentiTable({currentUser, currentLocation,onLogout}) 
             </select>
           </label>
         </div>
-    <DialogCustom
-      open={formVisible}
-      onClose={() => setFormVisible(false)}
-      onSubmit={handleDialogSubmit}
-      title={isEditing ? "Modifica Movimento" : "Nuovo Movimento"}
-      submitButtonText={
-        isSubmitting
-          ? "Salvataggio..."
-          : isEditing
-          ? "Aggiorna Movimento"
-          : "Salva Movimento"
-      }
-      isSubmitting={isSubmitting}
-    >
-      {/* Campi del form */}
+        <DialogCustom
+          open={formVisible}
+          onClose={() => setFormVisible(false)}
+          onSubmit={handleDialogSubmit}
+          title={isEditing ? "Modifica Movimento" : "Nuovo Movimento"}
+          submitButtonText={
+            isSubmitting
+              ? "Salvataggio..."
+              : isEditing
+              ? "Aggiorna Movimento"
+              : "Salva Movimento"
+          }
+          isSubmitting={isSubmitting}
+        >
+          {/* Campi del form */}
 
-      <label htmlFor="MovimentiTable-idart">Articolo:</label>
-      <select
-        id="MovimentiTable-idart"
-        name="idart"
-        value={dialogFormData.idart || ""}
-        onChange={handleDialogChange}
-        required
-        disabled={loadingArticoli || isSubmitting || (isEditing && !dialogFormData.idart)}
-        autoComplete="off"
-      >
-        <option key="select-articolo-default" value="">
-          -- Seleziona Articolo --
-        </option>
-        {loadingArticoli ? (
-          <option key="loading-articoli" disabled>
-            Caricamento articoli...
-          </option>
-        ) : (
-          articoliList.map((art) => (
-            <option key={`art-${art.id ?? Math.random()}`} value={art.id}>
-              {art.name} (ID: {art.id})
+          <label htmlFor="MovimentiTable-idart">Articolo:</label>
+          <select
+            id="MovimentiTable-idart"
+            name="idart"
+            value={dialogFormData.idart || ""}
+            onChange={handleDialogChange}
+            required
+            disabled={
+              loadingArticoli ||
+              isSubmitting ||
+              (isEditing && !dialogFormData.idart)
+            }
+            autoComplete="off"
+          >
+            <option key="select-articolo-default" value="">
+              -- Seleziona Articolo --
             </option>
-          ))
-        )}
-      </select>
+            {loadingArticoli ? (
+              <option key="loading-articoli" disabled>
+                Caricamento articoli...
+              </option>
+            ) : (
+              articoliList.map((art) => (
+                <option key={`art-${art.id ?? Math.random()}`} value={art.id}>
+                  {art.name} (ID: {art.id})
+                </option>
+              ))
+            )}
+          </select>
 
-      <label htmlFor="MovimentiTable-codice_cau">Causale:</label>
-      <select
-        id="MovimentiTable-codice_cau"
-        name="codice_cau"
-        value={dialogFormData.codice_cau || ""}
-        onChange={handleDialogChange}
-        required
-        disabled={loadingCausali || isSubmitting || (isEditing && !dialogFormData.codice_cau)}
-        autoComplete="off"
-      >
-        <option key="select-causale-default" value="">
-          -- Seleziona Causale --
-        </option>
-        {loadingCausali ? (
-          <option key="loading-causali" disabled>
-            Caricamento causali...
-          </option>
-        ) : (
-          causaliList.map((cau) => (
-            <option key={`cau-${cau.id ?? Math.random()}`} value={cau.id}>
-              {/*{cau.codice} - {cau.description} (ID: {cau.id})*/}
-              {cau.codice}
+          {/* --- UM Field --- */}
+          <label htmlFor="MovimentiTable-um">UM:</label>
+          <input
+            id="MovimentiTable-um"
+            name="um"
+            type="text"
+            value={dialogFormData.um || ""}
+            onChange={handleDialogChange}
+            required
+            disabled={true} // Usually UM is determined by the articolo, so keep it read-only
+            autoComplete="off"
+          />
+
+          <label htmlFor="MovimentiTable-codice_cau">Causale:</label>
+          <select
+            id="MovimentiTable-codice_cau"
+            name="codice_cau"
+            value={dialogFormData.codice_cau || ""}
+            onChange={handleDialogChange}
+            required
+            disabled={
+              loadingCausali ||
+              isSubmitting ||
+              (isEditing && !dialogFormData.codice_cau)
+            }
+            autoComplete="off"
+          >
+            <option key="select-causale-default" value="">
+              -- Seleziona Causale --
             </option>
-          ))
-        )}
-      </select>
+            {loadingCausali ? (
+              <option key="loading-causali" disabled>
+                Caricamento causali...
+              </option>
+            ) : (
+              causaliList.map((cau) => (
+                <option key={`cau-${cau.id ?? Math.random()}`} value={cau.id}>
+                  {/*{cau.codice} - {cau.description} (ID: {cau.id})*/}
+                  {cau.codice}
+                </option>
+              ))
+            )}
+          </select>
 
-      <label htmlFor="MovimentiTable-data">Data Movimento:</label>
-      <input
-        id="MovimentiTable-data"
-        type="date"
-        name="data"
-        value={dialogFormData.data || ""}
-        onChange={handleDialogChange}
-        required
-        disabled={isSubmitting}
-        autoComplete="off"
-      />
+          <label htmlFor="MovimentiTable-data">Data Movimento:</label>
+          <input
+            id="MovimentiTable-data"
+            type="date"
+            name="data"
+            value={dialogFormData.data || ""}
+            onChange={handleDialogChange}
+            required
+            disabled={isSubmitting}
+            autoComplete="off"
+          />
 
-      <label htmlFor="MovimentiTable-quantita">Quantità:</label>
-      <input
-        id="MovimentiTable-quantita"
-        type="number"
-        name="quantita"
-        placeholder="Quantità"
-        value={dialogFormData.quantita || ""}
-        onChange={handleDialogChange}
-        required
-        min="1"
-        disabled={isSubmitting || (isEditing && typeof dialogFormData.quantita !== "undefined")}
-        autoComplete="off"
-      />
+          <label htmlFor="MovimentiTable-quantita">Quantità:</label>
+          <input
+            id="MovimentiTable-quantita"
+            type="number"
+            name="quantita"
+            placeholder="Quantità"
+            value={dialogFormData.quantita || ""}
+            onChange={handleDialogChange}
+            required
+            min="1"
+            disabled={
+              isSubmitting ||
+              (isEditing && typeof dialogFormData.quantita !== "undefined")
+            }
+            autoComplete="off"
+          />
 
-      <label htmlFor="MovimentiTable-tipo">Tipo Movimento:</label>
-      <select
-        id="MovimentiTable-tipo"
-        name="tipo"
-        value={dialogFormData.tipo || ""}
-        onChange={handleDialogChange}
-        required
-        disabled={isSubmitting || (isEditing && dialogFormData.tipo)}
-        autoComplete="off"
-      >
-        <option key="select-tipo-default" value="">
-          -- Seleziona Tipo --
-        </option>
-        <option key="tipo-C" value="C">
-          C
-        </option>
-        <option key="tipo-S" value="S">
-          S
-        </option>
-      </select>
+          <label htmlFor="MovimentiTable-tipo">Tipo Movimento:</label>
+          <select
+            id="MovimentiTable-tipo"
+            name="tipo"
+            value={dialogFormData.tipo || ""}
+            onChange={handleDialogChange}
+            required
+            disabled={isSubmitting || (isEditing && dialogFormData.tipo)}
+            autoComplete="off"
+          >
+            <option key="select-tipo-default" value="">
+              -- Seleziona Tipo --
+            </option>
+            <option key="tipo-C" value="C">
+              C
+            </option>
+            <option key="tipo-S" value="S">
+              S
+            </option>
+          </select>
 
-      <label htmlFor="MovimentiTable-note">Note:</label>
-      <textarea
-        id="MovimentiTable-note"
-        name="note"
-        placeholder="Note aggiuntive"
-        rows={3}
-        value={dialogFormData.note || ""}
-        onChange={handleDialogChange}
-        disabled={isSubmitting}
-        autoComplete="off"
-      />
-    </DialogCustom>
-
+          <label htmlFor="MovimentiTable-note">Note:</label>
+          <textarea
+            id="MovimentiTable-note"
+            name="note"
+            placeholder="Note aggiuntive"
+            rows={3}
+            value={dialogFormData.note || ""}
+            onChange={handleDialogChange}
+            disabled={isSubmitting}
+            autoComplete="off"
+          />
+        </DialogCustom>
       </div>
-      
     </>
   );
 }
