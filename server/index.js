@@ -5,9 +5,25 @@
 //@version: "1.0.0 2025-06-09"
 //===================================
 
-require("dotenv").config(); // carica le variabili d'ambiente
+let dotenvLoaded = false;
+try {
+  const dotenvSafe = require("dotenv-safe");
+  dotenvSafe.config({
+    allowEmptyValues: true, // in dev permetti valori vuoti
+  });
+  dotenvLoaded = true;
+} catch (err) {
+  // Se .env.example non esiste o altre issues, ripiega su dotenv classico
+  require("dotenv").config();
+  console.warn("⚠️  dotenv-safe non disponibile o errore, fallback a dotenv:", err.message);
+}
+
+const logger = require("./utils/logger");
+
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const clientiRoutes = require("./routes/clienti")  // Importa le rotte dei clienti;
 const fornitoriRoutes = require("./routes/fornitori"); // Importe le rotte dei fornitori
 const ricambiRoutes = require("./routes/ricambi");
@@ -21,17 +37,18 @@ const errorHandler = require("./middleware/errorHandler");
 const pool = require("./db/db"); // Importa il pool di connessioni al DB
 
 const app = express();
-app.use(
-  cors({
-    origin: "http://localhost:5173", //
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true, //
-  })
-);
+
+// HTTP security headers
+app.use(helmet());
+
+// Rate limiter di base: 100 richieste / 15 minuti per IP
+const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100, standardHeaders: true, legacyHeaders: false });
+app.use(apiLimiter);
+
 //Middleware di autenticazione JWT
 const authenticateToken = require("./middleware/authenticateToken");
-console.log("🟢 index.js: Caricamento di authenticateToke");
-console.log("ciao");
+logger.info("Caricato middleware authenticateToken");
+
 //Middleware per analizzare i corpi delle richieste json
 app.use(express.json());
 
@@ -41,14 +58,13 @@ app.use(express.urlencoded({ extended: true }));
 // 🔍 TEST connessione DB
 const checkDbConnection = async () => {
   try {
-    // @ts-ignore
-    const [rows] = await pool.query("SELECT 1 + 1 AS result"); // Usa 'pool' invece di 'db'
-    console.log("✅ Connessione al database OK:", rows[0]);
+    const [rows] = await pool.query("SELECT 1 + 1 AS result");
+    logger.info({ msg: "DB connection OK", result: rows[0] });
   } catch (err) {
-    console.error("❌ ERRORE connessione al DB:", err.message);
+    logger.error({ msg: "DB connection error", err: err.message });
   }
 };
-checkDbConnection(); // Esegui il test della connessione all'avvio
+checkDbConnection();
 
 // Middleware per loggare ogni richiesta in arrivo
 //app.use((req, res, next) => {
@@ -62,116 +78,46 @@ checkDbConnection(); // Esegui il test della connessione all'avvio
 //    res.send('Test route reached!');
 //});
 // Rotte pubbliche (non richiedono autenticazione)
-console.log(
-  "🟠 index.js: Caricamento authRoutes:",
-  typeof authRoutes,
-  authRoutes instanceof require("express").Router
-    ? "è un Router Express"
-    : "NON è un Router Express"
-);
+logger.info("Montaggio authRoutes");
 app.use("/api/auth", authRoutes);
 
 // Applicazione del middleware authenticateToken alle rotte protette
 
-console.log(
-  "🟠 index.js: Caricamento fornitoriRoutes:",
-  typeof fornitoriRoutes,
-  fornitoriRoutes instanceof require("express").Router
-    ? "è un Router Express"
-    : "NON è un Router Express",
-  Object.keys(fornitoriRoutes)
-);
+logger.info("Montaggio fornitoriRoutes");
 app.use("/api/fornitori", authenticateToken, fornitoriRoutes); // tutte le rotte per i ricambi iniziano con /api/fornitori
 
 
-console.log(
-  "🟠 index.js: Caricamento clientiRoutes:",
-  typeof clientiRoutes,
-  clientiRoutes instanceof require("express").Router
-    ? "è un Router Express"
-    : "NON è un Router Express",
-  Object.keys(clientiRoutes)
-);
+logger.info("Montaggio clientiRoutes");
 app.use("/api/clienti", authenticateToken, clientiRoutes); // tutte le rotte per i ricambi iniziano con /api/clienti
 
-console.log(
-  "🟠 index.js: Caricamento ricambiRoutes:",
-  typeof ricambiRoutes,
-  ricambiRoutes instanceof require("express").Router
-    ? "è un Router Express"
-    : "NON è un Router Express",
-  Object.keys(ricambiRoutes)
-);
+logger.info("Montaggio ricambiRoutes");
 app.use("/api/ricambi", authenticateToken, ricambiRoutes); // tutte le rotte per i ricambi iniziano con /api/ricambi
 
-console.log(
-  "🟠 index.js: Caricamento movimentiRoutes:",
-  typeof movimentiRoutes,
-  movimentiRoutes instanceof require("express").Router
-    ? "è un Router Express"
-    : "NON è un Router Express",
-  Object.keys(movimentiRoutes)
-);
+logger.info("Montaggio movimentiRoutes");
 app.use("/api/movimenti", authenticateToken, movimentiRoutes); // tutte le rotte per i movimenti iniziano con /api/movimenti
 
-console.log(
-  "🟠 index.js: Caricamento causaliRoutes:",
-  typeof causaliRoutes,
-  causaliRoutes instanceof require("express").Router
-    ? "è un Router Express"
-    : "NON è un Router Express",
-  Object.keys(causaliRoutes)
-);
+logger.info("Montaggio causaliRoutes");
 app.use("/api/causali", authenticateToken, causaliRoutes); // tutte le rotte per le causali iniziano con /api/causali
 
-console.log(
-  "🟠 index.js: Caricamento userRoutes:",
-  typeof userRoutes,
-  userRoutes instanceof require("express").Router
-    ? "è un Router Express"
-    : "NON è un Router Express"
-);
+logger.info("Montaggio userRoutes");
 app.use("/api/users", authenticateToken, userRoutes); // Rotte per gli utenti
 
-console.log(
-  "🟠 index.js: Caricamento dibaRoues",
-  typeof dibaRoutes,
-  dibaRoutes instanceof require("express").Router
-    ? "è un Router Express"
-    : "NON è un Router Express",
-  Object.keys(dibaRoutes)
-);
+logger.info("Montaggio dibaRoues");
 app.use("/api/diba", authenticateToken, dibaRoutes); // tutte le rotte per le diba iniziano con /api/diba);
 
-console.log(
-  "🟠 index.js: Caricamento ordiniRoutes",
-  typeof ordiniRoutes,
-  ordiniRoutes instanceof require("express").Router
-    ? "è un Router Express"
-    : "NON è un Router Express",
-  Object.keys(ordiniRoutes)
-);
+logger.info("Montaggio ordiniRoutes");
 app.use("/api/ordini", authenticateToken, ordiniRoutes); // tutte le rotte per le diba iniziano con /api/diba);
 
 // Middleware di gesrtione degli errori centralizzato
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 3001; // Usa la porta da .env se definita, altrimenti 3001
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, (err) => {
   if (err) {
-    console.error(
-      `❌ ERRORE durante l'avvio del server sulla porta ${PORT}:`,
-      err.message
-    );
+    logger.error({ msg: `Errore in ascolto sulla porta ${PORT}`, err: err.message });
   } else {
-    console.log(`🚀 Server avviato su http://localhost:${PORT}`);
-    console.log(
-      `🔑 JWT_SECRET caricato: ${
-        process.env.JWT_SECRET
-          ? "Sì, presente."
-          : 'No, ATTENZIONE! Verificare file .env e require("dotenv").config()'
-      }`
-    );
+    logger.info(`Server avviato su http://localhost:${PORT}`);
+    logger.info(`JWT_SECRET ${process.env.JWT_SECRET ? "presente" : "NON definito"}`);
   }
 });

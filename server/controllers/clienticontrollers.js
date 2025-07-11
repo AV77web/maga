@@ -5,6 +5,7 @@
 //@version: "1.0.0 2025-07-08"
 //==========================================
 const db = require("../db/db");
+const logger = require("../utils/logger");
 
 // Funzione di validazione specifica per i clienti
 function validateClienteInput(data) {
@@ -46,10 +47,7 @@ exports.getClienti = async (req, res, next) => {
     const p_contatto = contatto || null;
     const p_email = email || null;
 
-    console.log(
-      "[ClientiController] Chiamata alla Stored Procedure FetchClienti con parametri:",
-      { p_codice, p_nome, p_tipo_cliente }
-    );
+    logger.debug({ p_codice, p_nome, p_tipo_cliente }, "Call FetchClienti");
 
     // Chiama la stored procedure con i parametri (ipotizzando il nome FetchClienti)
     const [results] = await db.query("CALL FetchClienti(?,?,?,?,?,?,?,?)", [
@@ -65,7 +63,7 @@ exports.getClienti = async (req, res, next) => {
 
     const rows = results[0];
 
-    console.log("[ClientiController] Righe dal DB:", rows.length);
+    logger.debug({ rows: rows.length }, "Rows returned FetchClienti");
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error("Errore nel recupero dei clienti:", error.message);

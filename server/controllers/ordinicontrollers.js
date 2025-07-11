@@ -7,14 +7,15 @@
 //==============================================
 
 const db = require("../db/db");
+const logger = require("../utils/logger");
 
 (async () => {
-    try{
-        const [rows] = await db.query("SELECT 1 + 1 AS result");
-        console.log("✅ Connessione al database per ordini OK:" , rows[0]);
-    } catch (err) {
-        console.error("❌ ERRORE connessione al DB per ordini:", err.message);
-    }
+  try {
+    const [rows] = await db.query("SELECT 1 + 1 AS result");
+    logger.info({ msg: "Connessione DB ordini OK", result: rows[0] });
+  } catch (err) {
+    logger.error({ msg: "Errore connessione DB ordini", err: err.message });
+  }
 })();
 
 // Funzione di validazione specifica per gli ordini
@@ -53,17 +54,14 @@ exports.getOrdini = async (req, res, next) => {
       data_a || null
     ];
 
-    console.log(
-      "[OrdiniController] Chiamata alla Stored Procedure FetchOrdini con parametri:",
-      { num_ordine, fornitore_id, stato, data_da, data_a }
-    );
+    logger.debug({ num_ordine, fornitore_id, stato, data_da, data_a }, "Call FetchOrdini");
 
     // Assumendo che esista una SP 'FetchOrdini' che accetta questi filtri
     const [results] = await db.query("CALL FetchOrdini(?, ?, ?, ?, ?)", params);
 
     const rows = results[0];
 
-    console.log("[OrdiniController] Righe dal DB:", rows.length);
+    logger.debug({ rows: rows.length }, "Rows returned FetchOrdini");
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error("Errore nel recupero degli ordini:", error.message);

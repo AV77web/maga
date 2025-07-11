@@ -8,7 +8,8 @@
 
 const express = require("express");
 const router = express.Router();
-console.log("🔵 routes/fornitori.js: File caricato, router creato.");
+const logger = require('../utils/logger');
+logger.info("routes/fornitori.js: router creato");
 
 const fornitoriController = require("../controllers/fornitoricontrollers");
 

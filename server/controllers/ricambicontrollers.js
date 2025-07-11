@@ -6,11 +6,12 @@
 //==========================================
 const { createCrudHandlers } = require("./crudHandlers"); // Assumendo che il file sia in utils
 const db = require("../db/db");
+const logger = require("../utils/logger");
 
 (async () => {
   try {
     const [rows] = await db.query("SELECT 1 + 1 AS result");
-    console.log("✅ Connessione al database OK:", rows[0]);
+    logger.info({ msg: "Connessione DB ricambi OK", result: rows[0] });
   } catch (err) {
     console.error("❌ ERRORE connessione al DB:", err.message);
   }
@@ -56,10 +57,7 @@ exports.getRicambi = async (req, res) => {
     const p_description = description || null;
     const p_supplier = supplier || null;
 
-    console.log(
-      "[RicambiController] Chiamata alla Stored Procedure FetchArticoli con parametri:",
-      { p_name, p_description, p_supplier }
-    );
+    logger.debug({ p_name, p_description, p_supplier }, "Call FetchArticoli");
 
     // Chiama la stored procedure con i parametri
     const [results] = await db.query("CALL FetchArticoli(?,?,?)", [
@@ -72,7 +70,7 @@ exports.getRicambi = async (req, res) => {
     // il primo elemento contiene le righe di dati.
     const rows = results[0];
 
-    console.log("[RicambiController] Righe dal DB:", rows.length);
+    logger.debug({ rows: rows.length }, "Rows returned FetchArticoli");
     res.json({ success: true, result: rows });
   } catch (error) {
     console.error("Errore nel recupero dei ricambi:", error.message);

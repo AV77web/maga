@@ -8,7 +8,8 @@
 
 const express = require("express");
 const router = express.Router();
-console.log("🔵 routes/clienti.js: File caricato, router creato.");
+const logger = require('../utils/logger');
+logger.info("routes/clienti.js: router creato");
 
 const clientiController = require("../controllers/clienticontrollers");
 

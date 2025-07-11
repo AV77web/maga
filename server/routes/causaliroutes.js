@@ -8,12 +8,13 @@
 
 const express = require('express');
 const router = express.Router();
- console.log("🔵 routes/causaliroutes.js: File caricato, router creato.");
+const logger = require('../utils/logger');
+logger.info("routes/causaliroutes.js: router creato");
 
 const causaliController = require('../controllers/causalicontrollers');
- console.log("🔵 routes/causaliroutes.js: causaliController caricato.", typeof causaliController);
- if (causaliController) {
-  console.log("🔵 routes/causaliroutes.js typeof causaliController.getCausali: " , typeof causaliController.getCausali)
+logger.debug({ type: typeof causaliController }, "causaliController caricato");
+if (causaliController) {
+  logger.debug({ fnType: typeof causaliController.getCausali }, "Tipo getCausali");
 }
 
 //GET /api/causali - Restituisce tutti le causali

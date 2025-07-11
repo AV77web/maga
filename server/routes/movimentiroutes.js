@@ -6,14 +6,16 @@
 //==================================================
 const express = require('express');
 const router = express.Router();
-console.log("LOG SERVER: Caricamento di movimentiRoutes.js..."); // <-- NUOVO LOG
+const logger = require('../utils/logger');
+logger.info("Caricamento movimentiRoutes.js");
 const movimentiController = require('../controllers/movimenticontrollers');
+const isAdmin = require('../middleware/isAdmin');
 
 
-// restituisce i movimenti della query personalizzata
-router.post('/customquery', movimentiController.customQuery);
+// 🔒  Limita l'endpoint customquery agli utenti con ruolo 'admin'
+router.post('/customquery', isAdmin, movimentiController.customQuery);
 
-console.log("LOG SERVER: Definizione rotta GET /api/movimenti"); // <-- NUOVO LOG
+logger.debug("Definizione rotta GET /api/movimenti");
 // GET /api/movimenti - Restituisce tutti i movimenti
 router.get('/', movimentiController.getMovimenti);
 

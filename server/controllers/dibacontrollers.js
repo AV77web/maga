@@ -5,13 +5,14 @@
 //@version: "1.0.0 2025-06-12"
 //==========================================
 const db = require("../db/db"); 
+const logger = require("../utils/logger");
 
 
 (async () => {
   try {
     // Test query per verificare la connessione al db
     const [rows] = await db.query("SELECT 1 + 1 AS result");
-    console.log("✅ Connessione al database per diba OK:", rows[0]);
+    logger.info({ msg: "Connessione DB diba OK", result: rows[0] });
   } catch (err) {
     console.error("❌ ERRORE connessione al DB per diba:", err.message);
   }
@@ -114,7 +115,7 @@ exports.deleteDiBa = async (req, res, next) => {
 // Funzione per recuperare i componenti dell DiBa (Bill of Material);
 exports.getBomByFatherId = async ( req, res, next) => {
   const fatherId = req.params.fatherId;
-  console.log(`controllers/dibacontrollers.js: Richiesta distinta base per fatherId: ${fatherId}`);
+  logger.debug({ fatherId }, "Fetch BOM by fatherId");
 
   if (!fatherId) {
     return res.status(400).json({ success: false, message: "ID articolo padre mancante o non valido" })

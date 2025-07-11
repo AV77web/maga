@@ -5,12 +5,13 @@
 //@version: "1.0.0 2025-06-12"
 //==========================================
 const db = require("../db/db");
+const logger = require("../utils/logger");
 
 (async () => {
   try {
     // Test query per verificare la connessione
     const [rows] = await db.query("SELECT 1 + 1 AS result");
-    console.log("✅ Connessione al database per causali OK:", rows[0]);
+    logger.info({ msg: "Connessione DB causali OK", result: rows[0] });
   } catch (err) {
     console.error("❌ ERRORE connessione al DB per causali:", err);
   }

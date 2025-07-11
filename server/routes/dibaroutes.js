@@ -7,13 +7,13 @@
 //====================================
 const express = require('express');
 const router = express.Router();
-console.log("🔵 routes/dibaroutes.js: File caricato, router creato.");
+const logger = require('../utils/logger');
+logger.info("routes/dibaroutes.js: router creato");
 
 const dibaControllers = require('../controllers/dibacontrollers');
-console.log("🔵 routes/dibaroutes.js: dibaControllers caricato.", typeof dibaControllers);
+logger.debug({ type: typeof dibaControllers }, "dibaControllers caricato");
 if (dibaControllers) {
- console.log("🔵 routes/dibaroutes.js typeof dibaControllers.getAllDiBa: ", typeof dibaControllers.getAllDiBa);
- console.log("🔵 routes/dibaroutes.js typeof dibaControllers.getBomByFatherId: ", typeof dibaControllers.getBomByFatherId); // Log per la nuova funzione
+ logger.debug({ fn1: typeof dibaControllers.getAllDiBa, fn2: typeof dibaControllers.getBomByFatherId }, "Tipi funzioni Diba");
 }
 
 // GET /api/diba - Restituisce tutti gli elementi della distinta base (se necessario)
@@ -23,8 +23,8 @@ if (dibaControllers) {
 
 // GET /api/diba/father/:fatherId - Restituisce i componenti (figli) per un padre specifico
 router.get('/father/:fatherId', (req, res, next) => {
- console.log(`🔵 route/dibaroutes.js: Raggiunto gestore GET /father/:fatherId per URL ${req.originalUrl}`);
- dibaControllers.getBomByFatherId(req, res, next);
+  logger.debug({ url: req.originalUrl }, "GET /diba/father/:fatherId reached");
+  dibaControllers.getBomByFatherId(req, res, next);
 });
 
 // POST /api/diba - Inserisce un nuovo componente nella distinta base

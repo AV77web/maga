@@ -7,7 +7,8 @@
 const db = require("../db/db");
 const mytimestamp = require("../timestamp");
 const { createCrudHandlers } = require('./crudHandlers');
-console.log("LOG SERVER: Caricamento di movimenticontrollers.js (quello con la 's' e i filtri)..."); // <-- NUOVO LOG
+const logger = require('../utils/logger');
+logger.info("Caricamento movimenticontrollers.js con filtri");
 
 // Query personalizzata per eseguire un filtro dei dati database sulla tabella dataabase
 exports.customQuery = async (req, res, next) => {

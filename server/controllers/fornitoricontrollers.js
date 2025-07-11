@@ -5,6 +5,7 @@
 //@version: "1.0.0 2025-07-08"
 //==========================================
 const db = require("../db/db");
+const logger = require("../utils/logger");
 
 // Funzione di validazione specifica per i fornitori
 function validateFornitoreInput(data) {
@@ -36,10 +37,7 @@ exports.getFornitori = async (req, res, next) => {
     const p_citta = citta || null;
     const p_contatto = contatto || null;
 
-    console.log(
-      "[FornitoriController] Chiamata alla Stored Procedure FetchFornitori con parametri:",
-      { p_ragione_sociale, p_piva }
-    );
+    logger.debug({ p_ragione_sociale, p_piva }, "Call FetchFornitori");
 
     // Chiama la stored procedure con i parametri
     const [results] = await db.query("CALL FetchFornitori(?,?,?,?,?,?)", [
@@ -55,9 +53,9 @@ exports.getFornitori = async (req, res, next) => {
     // il primo elemento contiene le righe di dati.
     const rows = results[0];
 
-    console.log("[FornitoriController] Righe dal DB:", rows.length);
+    logger.debug({ rows: rows.length }, "Rows returned FetchFornitori");
+    logger.trace({ rows }, "Rows content");
     res.json({ success: true, data: rows });
-    console.log(rows);
   } catch (error) {
     console.error("Errore nel recupero dei fornitori:", error.message);
     next(error);

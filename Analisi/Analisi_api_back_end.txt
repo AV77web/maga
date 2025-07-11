@@ -1,0 +1,46 @@
+Ecco un’analisi di alto livello (validità / performance / manutenibilità) dell’intero back-end in maga/server e il primo intervento correttivo già applicato.
+Struttura generale
+La separazione controllers / routes / middleware è corretta ed aiuta la manutenibilità.
+Ci sono però molte directory “Old” duplicate; vanno rimosse o archiviate fuori dal repo per evitare confusione.
+Manca una chiara convenzione sui nomi (es. dibaroutes.js vs movimentiroutes.js, erroeHandelr.js nel commento). Allineare naming e commentistica riduce errori.
+Middleware
+authenticateToken e isAdmin sono scritti bene e poco costosi (O(1)).
+Manca il rate–limiting (es. express-rate-limit) e le secure-headers (helmet) – consigliato.
+errorHandler funziona ma contiene typo e non logga a file; usare un logger (winston / pino) e suddividere log livelli.
+index.js (bootstrap)
+Ottimo l’uso di pool e la verifica DB all’avvio.
+Troppi console.log di debug in produzione. Usare variabile d’ambiente (NODE_ENV !== 'production') per silenziarli.
+cors con origine fissa: spostare su variabile d’ambiente per deploy.
+Controller – osservazioni comuni
+Usano stored procedure (👍 performance) e param binding (👍 sql-injection safe).
+Validazione campo per campo solo in alcuni punti. Suggerito installare express-validator o Joi ed estrarre la logica di validazione.
+Paginate solo lato Front-End: le query che possono restituire migliaia di righe (es. FetchMovimenti) dovrebbero ricevere LIMIT/OFFSET o parametri di paging per non saturare memoria.
+Criticità di sicurezza
+Endpoint POST /api/movimenti/customquery espone arbitrariamente la possibilità di eseguire SQL ricevuto dal client: altissimo rischio RCE/SQL-Injection anche con utenti autenticati.
+ → Fix immediato applicato: l’endpoint ora è protetto dal middleware isAdmin (solo utenti con ruolo “admin”) [commit applicato]. Valutate comunque di rimuoverlo del tutto o di sostituirlo con query parametrizzate/pre-definite.
+Performance
+Ogni richiesta apre una query sul pool, OK, ma per carichi alti si consiglia:
+impostare connectionLimit adeguato in db.js;
+usare prepared: true in mysql2 se si ripetono molte stesse query.
+Le stored procedure sono una buona scelta per la logica di business (aggiornamento giacenze ecc.) e riducono round-trip.
+Migliorie tecniche consigliate (road-map rapida)
+Security hardening
+helmet, express-rate-limit, CORS dinamico, rimozione/whitelisting di customquery.
+Rotte Versionate (/api/v1) per evitare breaking change futuri.
+Observability
+Logger strutturato (winston/pino) + log file rotazione.
+Middleware per tracciamento tempi (morgan oppure custom).
+Validation layer
+Creare /validators/*.js con Joi e usarli come primo middleware delle rotte.
+Error handling
+Centralizzare tutti i try/catch usando wrapper catchAsync(fn) => (req,res,next)=>fn(req,res,next).catch(next).
+Paginate & cache
+Aggiungere parametri page, perPage alle stored procedure di listing (ricambi, movimenti, ecc.).
+Introdurre cache layer (es. Redis) su lookup statici (causali, articoli).
+CI/CD & Qualità
+Aggiungere ESLint/Prettier config server-side (c’è già lato client).
+Test unitari su controller con Jest + supertest.
+Workflow GitHub Actions per lint + test all push.
+Fix applicato (security)
+Apply to movimenticon...
+Se desideri che proceda con ulteriori refactor (es. paginazione delle stored procedure, integrazione express-validator, rimozione directory obsolete, ecc.), fammi sapere quale priorità vuoi affrontare per prima e applicherò le modifiche passo per passo.
