@@ -1,0 +1,12 @@
+Per introdurre pino + dotenv-safe + helmet + express-rate-limit seguiremo i passi seguenti (li ho appena salvati in un mini-todo interno):
+Installare le dipendenze
+Creare un modulo logger riutilizzabile
+Aggiornare server/index.js per:
+caricare le env con dotenv-safe
+usare il logger invece di console.log
+montare helmet()
+montare il rate-limiter base
+(opz.) Sostituire gradualmente gli altri console.log con logger
+Aggiornare README
+Iniziamo dal punto 1.
+Vuoi che lanci subito il comando di installazione dei pacchetti (npm i pino dotenv-safe helmet express-rate-limit && npm i -D pino-pretty) oppure preferisci farlo tu?

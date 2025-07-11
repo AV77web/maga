@@ -32,11 +32,30 @@ const causaliRoutes = require("./routes/causaliroutes"); // Importa le rotte del
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes"); // Importa le rotte degli utenti
 const dibaRoutes = require("./routes/dibaroutes");
+const partsRoutes = require("./modules/parts/parts.routes");
+const suppliersRoutes = require("./modules/suppliers/suppliers.routes");
+const customersRoutes = require("./modules/customers/customers.routes");
+const ordersRoutesV1 = require("./modules/orders/orders.routes");
+const movementsRoutesV1 = require("./modules/movements/movements.routes");
+const causesRoutesV1 = require("./modules/causes/causes.routes");
+const bomRoutesV1 = require("./modules/bom/bom.routes");
 const ordiniRoutes = require("./routes/ordini.js"); // Importa le rotte per gli ordini
 const errorHandler = require("./middleware/errorHandler");
 const pool = require("./db/db"); // Importa il pool di connessioni al DB
 
 const app = express();
+
+// CORS – deve essere registrato PRIMA di helmet per gestire la preflight correttamente
+app.use(
+  cors({
+    origin: process.env.FRONTEND_ORIGIN || "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    credentials: true,
+  })
+);
+
+// Gestisci manualmente la preflight per ogni route (per sicurezza)
+app.options("*", cors());
 
 // HTTP security headers
 app.use(helmet());
@@ -105,8 +124,19 @@ app.use("/api/users", authenticateToken, userRoutes); // Rotte per gli utenti
 logger.info("Montaggio dibaRoues");
 app.use("/api/diba", authenticateToken, dibaRoutes); // tutte le rotte per le diba iniziano con /api/diba);
 
-logger.info("Montaggio ordiniRoutes");
-app.use("/api/ordini", authenticateToken, ordiniRoutes); // tutte le rotte per le diba iniziano con /api/diba);
+// ⚠️ mantenuta rotta legacy /api/ordini per backward compatibility – da deprecare
+app.use("/api/ordini", authenticateToken, ordiniRoutes);
+
+// Nuovo endpoint v1
+app.use("/api/v1/orders", authenticateToken, ordersRoutesV1);
+
+// 🔵 Nuove rotte versione v1
+app.use("/api/v1/parts", authenticateToken, partsRoutes);
+app.use("/api/v1/suppliers", authenticateToken, suppliersRoutes);
+app.use("/api/v1/customers", authenticateToken, customersRoutes);
+app.use("/api/v1/movements", authenticateToken, movementsRoutesV1);
+app.use("/api/v1/causes", authenticateToken, causesRoutesV1);
+app.use("/api/v1/bom", authenticateToken, bomRoutesV1);
 
 // Middleware di gesrtione degli errori centralizzato
 app.use(errorHandler);
