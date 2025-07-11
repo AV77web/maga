@@ -9,7 +9,7 @@
 
 import { createApiClient } from './apiClientFactory';
 
-const causaliApi = createApiClient('causali');
+const causaliApi = createApiClient('causes');
 
 // Se causaliApi avesse metodi specifici non coperti dalla factory,
 // potrebbero essere aggiunti qui.

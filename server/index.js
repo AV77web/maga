@@ -54,8 +54,7 @@ app.use(
   })
 );
 
-// Gestisci manualmente la preflight per ogni route (per sicurezza)
-app.options("*", cors());
+// cors middleware gestisce già le richieste OPTIONS (preflight)
 
 // HTTP security headers
 app.use(helmet());

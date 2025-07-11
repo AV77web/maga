@@ -9,7 +9,7 @@
 
 import { createApiClient } from "./apiClientFactory";
 
-const fornitoriApi = createApiClient("fornitori");
+const fornitoriApi = createApiClient("suppliers");
 
 // Il metodo fetchByFilters è già fornito da createApiClient.
 // Se ricambiApi avesse altri metodi specifici, andrebbero aggiunti qui.

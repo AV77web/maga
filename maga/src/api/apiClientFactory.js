@@ -9,7 +9,7 @@
 
 import axios from 'axios';
 
-const API_ROOT = "http://localhost:3001/api";
+const API_ROOT = "http://localhost:3001/api/v1";
 
 // Funzione generica per gestire le chiamate API con gestione degli errori
 export async function baseRequest(method, url, data = null, params = null) { // Aggiunto export

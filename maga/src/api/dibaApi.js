@@ -8,7 +8,7 @@
 
 import { createApiClient } from './apiClientFactory';
 
-const dibaApi = createApiClient('diba');
+const dibaApi = createApiClient('bom');
 
 // Aggiungiamo il metodo specifico per dibaApi che non è standard nella factory
 /**

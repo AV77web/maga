@@ -9,7 +9,7 @@
 
 import { createApiClient } from './apiClientFactory';
 
-const movimentiApi = createApiClient('movimenti');
+const movimentiApi = createApiClient('movements');
 
 // Aggiungiamo il metodo specifico per movimentiApi che non è standard nella factory
 /**

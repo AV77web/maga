@@ -9,6 +9,6 @@
 
 import {createApiClient} from './apiClientFactory';
 
-const ordiniApi = createApiClient('ordini');
+const ordiniApi = createApiClient('orders');
 
 export default ordiniApi;
