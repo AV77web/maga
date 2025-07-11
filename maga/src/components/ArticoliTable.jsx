@@ -334,82 +334,79 @@ export default function ArticoliTable({
     }
   }, [fetchRicambi, formData, isEditing]);
 
-  const tableColumns = useMemo(
-    () => {
-      const allColumns = [
-        {
-          key: "diba_icon",
-          label: "", // Nessuna etichetta per la colonna
-          cellClassName: "text-center",
-          headerClassName: "col-icon",
-          render: (row) => {
-            if (row.has_diba === "S") {
-              return (
-                <span
-                  style={{
-                    color: "green",
-                    fontWeight: "bold",
-                    cursor: "pointer",
-                    fontSize: "1.8em",
-                  }}
-                  title="Questo articolo ha una distinta base"
-                  onClick={(event) => handleDibaIconClick(event, row)}
-                >
-                  +
-                </span>
-              );
-            }
-            if (row.has_diba === "N") {
-              return (
-                <span
-                  style={{
-                    color: "red",
-                    fontWeight: "bold",
-                    cursor: "default",
-                    fontSize: "1.8em",
-                  }}
-                  title="Questo articolo non ha una distinta base"
-                >
-                  -
-                </span>
-              );
-            }
-            return null;
-          },
+  const tableColumns = useMemo(() => {
+    const allColumns = [
+      {
+        key: "diba_icon",
+        label: "", // Nessuna etichetta per la colonna
+        cellClassName: "text-center",
+        headerClassName: "col-icon",
+        render: (row) => {
+          if (row.has_diba === "S") {
+            return (
+              <span
+                style={{
+                  color: "green",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                  fontSize: "1.8em",
+                }}
+                title="Questo articolo ha una distinta base"
+                onClick={(event) => handleDibaIconClick(event, row)}
+              >
+                +
+              </span>
+            );
+          }
+          if (row.has_diba === "N") {
+            return (
+              <span
+                style={{
+                  color: "red",
+                  fontWeight: "bold",
+                  cursor: "default",
+                  fontSize: "1.8em",
+                }}
+                title="Questo articolo non ha una distinta base"
+              >
+                -
+              </span>
+            );
+          }
+          return null;
         },
-        { key: "id", label: "ID", cellClassName: "text-center" },
-        {
-          key: "name",
-          label: "Nome",
-          cellClassName: "name-cell",
-          headerClassName: "col-name",
-          titleAccessor: (row) => row.name,
-        },
-        {
-          key: "description",
-          label: "Descrizione",
-          cellClassName: "description-cell",
-          headerClassName: "col-description",
-          titleAccessor: (row) => row.description,
-        },
-        { key: "quantita", label: "Quantità", cellClassName: "text-right" },
-        { key: "um", label: "UM", cellClassName: "text-left" },
-        { key: "prezzo", label: "Prezzo", cellClassName: "text-right" },
-        { key: "min", label: "Minimo", cellClassName: "text-right" },
-        { key: "max", label: "Massimo", cellClassName: "text-right" },
-        { key: "supplier", label: "Fornitore", cellClassName: "text-left" }, // Esempio, puoi usare text-right se preferisci
-      ];
+      },
+      { key: "id", label: "ID", cellClassName: "text-center" },
+      {
+        key: "name",
+        label: "Nome",
+        cellClassName: "name-cell",
+        headerClassName: "col-name",
+        titleAccessor: (row) => row.name,
+      },
+      {
+        key: "description",
+        label: "Descrizione",
+        cellClassName: "description-cell",
+        headerClassName: "col-description",
+        titleAccessor: (row) => row.description,
+      },
+      { key: "quantita", label: "Quantità", cellClassName: "text-right" },
+      { key: "um", label: "UM", cellClassName: "text-left" },
+      { key: "prezzo", label: "Prezzo", cellClassName: "text-right" },
+      { key: "min", label: "Minimo", cellClassName: "text-right" },
+      { key: "max", label: "Massimo", cellClassName: "text-right" },
+      { key: "supplier", label: "Fornitore", cellClassName: "text-left" }, // Esempio, puoi usare text-right se preferisci
+    ];
 
-      if (viewMode === "bom") {
-        return allColumns.filter((col) =>
-          ["diba_icon", "name", "description"].includes(col.key)
-        );
-      }
+    if (viewMode === "bom") {
+      return allColumns.filter((col) =>
+        ["diba_icon", "name", "description"].includes(col.key)
+      );
+    }
 
-      return allColumns;
-    },
-    [handleDibaIconClick, viewMode]
-  );
+    return allColumns;
+  }, [handleDibaIconClick, viewMode]);
 
   // Definisci i campi per il filtro dei ricambi
   const ricambiFilterFields = useMemo(
@@ -569,8 +566,6 @@ export default function ArticoliTable({
       />
 
       <DragDropContext onDragEnd={onDragEnd}>
-        
-
         <div className="container">
           {showSearch && (
             <FilterSearch
@@ -580,85 +575,85 @@ export default function ArticoliTable({
           )}
 
           {message && <div className="message-info">{message}</div>}
-          <div className={viewMode==='bom' ? 'bom-view-container': ''}>
-          <div className="table-wrapper">
-            <div className="table-panel articoli-panel">
-            <TableGrid
-              title="Gestione Articoli"
-              columns={tableColumns}
-              rows={currentTableData}
-              selectedIds={selectedIds}
-              onRowSelectionChange={(id, checked) => {
-                if (checked) {
-                  setSelectedIds((prev) => [...prev, id]);
-                } else {
-                  setSelectedIds((prev) =>
-                    prev.filter((selId) => selId !== id)
-                  );
-                }
-              }}
-              areAllCurrentPageRowsSelected={areAllCurrentPageRowsSelected}
-              onSelectAllCurrentPageRowsChange={
-                handleSelectAllCurrentPageRowsChange
-              }
-              sortKey={sortKey}
-              sortOrder={sortOrder}
-              onSort={toggleSort}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              loading={loading}
-              onClearAllSelections={() => setSelectedIds([])}
-              areAnyRowsSelected={selectedIds.length > 0}
-              // Abilita il drag-and-drop solo quando la vista della distinta base è attiva
-              droppableId={
-                viewMode === "bom" ? "articoli-disponibili" : undefined
-              }
-            />
-          
-          <div className="pagination-bar">
-            <Pagination
-              currentPage={page + 1}
-              totalCount={ricambi.length}
-              pageSize={rowsPerPage}
-              onPageChange={(newPage) => setPage(newPage - 1)}
-            />
+          <div className={viewMode === "bom" ? "bom-view-container" : ""}>
+            <div className="table-wrapper">
+              <div className="table-panel articoli-panel">
+                <TableGrid
+                  title="Gestione Articoli"
+                  columns={tableColumns}
+                  rows={currentTableData}
+                  selectedIds={selectedIds}
+                  onRowSelectionChange={(id, checked) => {
+                    if (checked) {
+                      setSelectedIds((prev) => [...prev, id]);
+                    } else {
+                      setSelectedIds((prev) =>
+                        prev.filter((selId) => selId !== id)
+                      );
+                    }
+                  }}
+                  areAllCurrentPageRowsSelected={areAllCurrentPageRowsSelected}
+                  onSelectAllCurrentPageRowsChange={
+                    handleSelectAllCurrentPageRowsChange
+                  }
+                  sortKey={sortKey}
+                  sortOrder={sortOrder}
+                  onSort={toggleSort}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  loading={loading}
+                  onClearAllSelections={() => setSelectedIds([])}
+                  areAnyRowsSelected={selectedIds.length > 0}
+                  // Abilita il drag-and-drop solo quando la vista della distinta base è attiva
+                  droppableId={
+                    viewMode === "bom" ? "articoli-disponibili" : undefined
+                  }
+                />
 
-            <label>
-              Elementi per pagina:&nbsp;
-              <select
-                value={rowsPerPage}
-                onChange={(e) => {
-                  setRowsPerPage(parseInt(e.target.value, 10));
-                  setPage(0);
-                }}
-                disabled={loading}
-              >
-                {rowsPerPageOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          </div>
-          </div>
+                <div className="pagination-bar">
+                  <Pagination
+                    currentPage={page + 1}
+                    totalCount={ricambi.length}
+                    pageSize={rowsPerPage}
+                    onPageChange={(newPage) => setPage(newPage - 1)}
+                  />
+
+                  <label>
+                    Elementi per pagina:&nbsp;
+                    <select
+                      value={rowsPerPage}
+                      onChange={(e) => {
+                        setRowsPerPage(parseInt(e.target.value, 10));
+                        setPage(0);
+                      }}
+                      disabled={loading}
+                    >
+                      {rowsPerPageOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </div>
             {/* Sezione Distinta Base */}
-          {viewMode === "bom" && currentRicambioForBOM && (
-          <div className="diba-table-wrapper">
-            <DiBaTable
-              ricambioPadre={currentRicambioForBOM}
-              onClose={() => {
-                setViewMode("ricambi");
-                setCurrentRicambioForBOM(null);
-                setSelectedIds([]); // Deseleziona anche l'ID
-              }}
-              // Passiamo l'articolo trascinato e una funzione per resettarlo
-              droppedArticle={droppedArticle}
-              onDropProcessed={() => setDroppedArticle(null)}
-            />
-          </div>
-          )}
+            {viewMode === "bom" && currentRicambioForBOM && (
+              <div className="diba-table-wrapper">
+                <DiBaTable
+                  ricambioPadre={currentRicambioForBOM}
+                  onClose={() => {
+                    setViewMode("ricambi");
+                    setCurrentRicambioForBOM(null);
+                    setSelectedIds([]); // Deseleziona anche l'ID
+                  }}
+                  // Passiamo l'articolo trascinato e una funzione per resettarlo
+                  droppedArticle={droppedArticle}
+                  onDropProcessed={() => setDroppedArticle(null)}
+                />
+              </div>
+            )}
           </div>
           {/* Renderizza il Popover della DiBa */}
           <DiBaPopover
@@ -668,7 +663,7 @@ export default function ArticoliTable({
             data={popoverData}
             loading={popoverLoading}
           />
-          
+
           <DialogCustom
             open={formVisible && viewMode === "ricambi"} // Mostra solo se non siamo in modalità BOM
             onClose={() => setFormVisible(false)}
@@ -744,9 +739,7 @@ export default function ArticoliTable({
               autoComplete="organization"
             />
           </DialogCustom>
-          
         </div>
-        
       </DragDropContext>
     </>
   );

@@ -1,6 +1,6 @@
 h2 {
   font-size: 40px;
-  text-align:center;
+  text-align: center;
 }
 
 .diba-title {
@@ -71,7 +71,6 @@ h2 {
   outline: none;
 }
 
-
 .form-group-inline {
   display: flex;
   gap: 8px;
@@ -94,7 +93,6 @@ h2 {
   font-size: 16px;
 }
 
-
 .container table {
   width: 100%;
   border-collapse: collapse;
@@ -105,7 +103,6 @@ h2 {
 .container table td {
   border: 1px solid #dee2e6;
   padding: 6px 10px;
-  
 }
 
 .text-center {
@@ -117,7 +114,6 @@ h2 {
 .text-right {
   text-align: right;
 }
-
 
 .container table th {
   background-color: #f8f9fa;
@@ -249,7 +245,7 @@ h2 {
   display: flex;
   flex-direction: row;
   gap: 24px;
-  align-items:flex-start;
+  align-items: flex-start;
 }
 
 /* Wrapper per la tabella principale degli articoli quando in modalità BOM */
@@ -282,9 +278,15 @@ h2 {
   Poiché i contenitori delle tabelle hanno `flex: 1`, avranno la stessa larghezza,
   e di conseguenza le colonne si allineeranno visivamente.
 */
-.bom-view-container .col-icon { width: 10%; }
-.bom-view-container .col-name { width: 40%; }
-.bom-view-container .col-description { width: 50%; }
+.bom-view-container .col-icon {
+  width: 10%;
+}
+.bom-view-container .col-name {
+  width: 40%;
+}
+.bom-view-container .col-description {
+  width: 50%;
+}
 
 /*
   Aggiunge un'altezza fissa alle celle per allineare le righe tra le due tabelle.
@@ -296,7 +298,6 @@ h2 {
 }
 
 /* Le altre colonne in DiBaTable si divideranno lo spazio rimanente */
-
 
 /* Il pannello della DiBa (che contiene la tabella) deve crescere per riempire lo spazio */
 .diba-table-wrapper .bom-panel {
