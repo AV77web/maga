@@ -1,0 +1,55 @@
+{
+  "$id": "https://example.com/schemas/order.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Order",
+  "description": "Schema per creazione/aggiornamento ordine",
+  "type": "object",
+  "required": ["num_ordine", "data_ordine", "fornitore_id", "stato"],
+  "properties": {
+    "num_ordine": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50,
+      "errorMessage": {
+        "minLength": "Il campo 'num_ordine' non può essere vuoto.",
+        "maxLength": "Il campo 'num_ordine' non può superare 50 caratteri."
+      }
+    },
+    "data_ordine": {
+      "type": "string",
+      "format": "date",
+      "errorMessage": {
+        "format": "Il campo 'data_ordine' deve essere una data valida (YYYY-MM-DD)."
+      }
+    },
+    "fornitore_id": {
+      "type": "integer",
+      "minimum": 1,
+      "errorMessage": {
+        "type": "Il campo 'fornitore_id' deve essere un numero intero.",
+        "minimum": "Il campo 'fornitore_id' deve essere maggiore di 0."
+      }
+    },
+    "stato": {
+      "type": "string",
+      "enum": ["Aperto", "Chiuso", "Annullato"],
+      "errorMessage": {
+        "enum": "Il campo 'stato' deve essere 'Aperto', 'Chiuso' o 'Annullato'."
+      }
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 500
+    }
+  },
+  "additionalProperties": false,
+  "errorMessage": {
+    "required": {
+      "num_ordine": "Il campo 'num_ordine' è obbligatorio.",
+      "data_ordine": "Il campo 'data_ordine' è obbligatorio.",
+      "fornitore_id": "Il campo 'fornitore_id' è obbligatorio.",
+      "stato": "Il campo 'stato' è obbligatorio."
+    },
+    "additionalProperties": "Sono presenti campi non ammessi nella richiesta di ordine."
+  }
+} 

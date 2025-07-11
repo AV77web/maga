@@ -1,0 +1,31 @@
+{
+  "$id": "https://example.com/schemas/bom.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BOMRow",
+  "description": "Schema per riga Distinta Base (padre/figlio)",
+  "type": "object",
+  "required": ["id_father", "id_son", "quantita"],
+  "properties": {
+    "id_father": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "id_son": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "quantita": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "errorMessage": {
+    "required": {
+      "id_father": "Il campo 'id_father' è obbligatorio.",
+      "id_son": "Il campo 'id_son' è obbligatorio.",
+      "quantita": "Il campo 'quantita' è obbligatorio."
+    },
+    "additionalProperties": "Sono presenti campi non ammessi nella richiesta della distinta base."
+  }
+} 

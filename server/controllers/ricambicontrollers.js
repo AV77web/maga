@@ -17,26 +17,6 @@ const logger = require("../utils/logger");
   }
 })();
 
-// Funzione di validazione specifica per i ricambi (opzionale, ma consigliata)
-function validateRicambioInput(data, operation) {
-  const { name, description, quantita, min, max, supplier } = data; // Aggiunta destrutturazione
-  if (
-    !name ||
-    description === undefined ||
-    quantita === undefined ||
-    min === undefined ||
-    max === undefined ||
-    supplier === undefined
-  ) {
-    return "Dati mancanti o incompleti per il ricambio.";
-  }
-  if (isNaN(Number(quantita)) || Number(quantita) < 0) {
-    return "La quantità deve essere un numero non negativo.";
-  }
-  // Aggiungere altre validazioni se necessario
-  return null; // Nessun errore
-}
-
 // Nota: Nonostante l'esistenza di crudHandlers.js, le operazioni sui ricambi
 // utilizzano Stored Procedure per incapsulare logiche di business specifiche
 // (es. gestione delle giacenze o validazioni complesse lato DB),
@@ -81,11 +61,6 @@ exports.getRicambi = async (req, res) => {
 // Custom insertRicambio to use stored procedure InsertArticolo
 exports.insertRicambio = async (req, res, next) => {
   try {
-    const validationError = validateRicambioInput(req.body, "create");
-    if (validationError) {
-      return res.status(400).json({ success: false, error: validationError });
-    }
-
     const { name, description, quantita, min, max, supplier, um, prezzo } =
       req.body;
 
@@ -117,11 +92,6 @@ exports.insertRicambio = async (req, res, next) => {
 exports.updateRicambio = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const validationError = validateRicambioInput(req.body, "update");
-    if (validationError) {
-      return res.status(400).json({ success: false, error: validationError });
-    }
-
     const { name, description, quantita, min, max, supplier, um, prezzo } =
       req.body;
 

@@ -1,0 +1,56 @@
+Guiding validation implementation
+The user is asking for help to implement a validation strategy using JSON schema and Ajv in Node.js. 
+I need to guide them through their project step by step. First, they'll need to install the necessary 
+dependencies with a command like npm install ajv ajv-formats ajv-errors. Then, they should set up a folder structure for schemas, 
+possibly at server/schemas/. Following that, they need to create a validation middleware that employs the Ajv instance. 
+Afterward, I'll suggest that they integrate validation into their existing Express routes by creating a middleware file.
+Proposing a validation strategy
+I’m considering how to help the user implement their validation strategy with Ajv using JSON schema in Node.js. 
+They want a clear, step-by-step plan, so I’ll suggest several tasks. First, they can install Ajv and other dependencies. 
+Next, I’ll advise creating a folder for schemas and define the first one, maybe for login. 
+They’ll need to set up an Ajv instance, create validation middleware, and integrate it into their routes.
+Lastly, I’ll recommend updating the error handler to manage Ajv errors while gradually migrating other routes.
+A structured to-do list could help keep track of all these tasks.
+Planning to-do tasks
+I’m ready to set up the first tasks and mark them as pending. I'll plan the following: 
+Install Ajv: Install Ajv and the required packages. 
+Create Ajv Config: Set up the server/utils/ajv.js file to customize the Ajv instance, which depends on the previous task. 
+Create Validation Middleware: Develop the server/middleware/validateSchema.js using the Ajv instance, which relies on the config setup.
+This structure will help the user follow through clearly. I’m excited to see how this unfolds!
+
+Install Ajv and related libraries (ajv, ajv-formats, ajv-errors) via npm.
+Create a shared Ajv instance in server/utils/ajv.js with options { allErrors: true, removeAdditional: "all", coerceTypes: true } and add formats & errors plugins.
+Implement validation middleware server/middleware/validateSchema.js that receives a compiled schema function or schema object and uses the shared Ajv instance to validate req.body (extendable to params/query).
+Create folder server/schemas and add a first schema login.schema.json for the login endpoint (required: username, password).
+Wire validation into authRoutes.js: import loginSchema, apply validateSchema(loginSchema) before authController.login.
+Update server/middleware/errorHandler.js to catch Ajv validation errors and return 400 with a clean message array.
+Iteratively create schemas for each module (users, orders, parts, movements...) and attach validateSchema middleware in their route files.
+
+
+Ecco un piano operativo dettagliato con le singole attività da svolgere (le trovi anche nel file TODO sopra creato):
+
+
+1-Installare Ajv e plugin
+npm i ajv ajv-formats ajv-errors
+2-Creare l’istanza condivisa
+server/utils/ajv.js
+a)allErrors: true – raccoglie tutti gli errori
+b)removeAdditional: "all" – scarta campi inattesi
+c)coerceTypes: true – converte "123" → 123 quando serve
+d)addFormats/ajv-errors per formati (email, uuid…) e messaggi custom
+3-Middleware di validazione
+server/middleware/validateSchema.js
+validate(schema)(req,res,next) → se invalid ritorna 400 con array errors, altrimenti next()
+4-Struttura degli schema
+server/schemas/login.schema.json (prima prova)
+Successivamente uno schema per ogni entità.
+5-Collegare alla prima rotta
+server/routes/authRoutes.js
+router.post("/login", validate(loginSchema), authController.login)
+6-Integrare con l’error handler
+In errorHandler.js intercetta ValidationError (o controlla presence di errori Ajv) e formatta risposta uniforme.
+7-Migrare il resto delle rotte
+Per ogni module: definisci schema, importalo nella rotta, aggiungi middleware.
+Procedendo in questo ordine potrai verificare passo-passo che tutto funzioni prima di estendere la strategia
+a tutto il progetto. Quando sei pronto a partire con il primo step (installazione), facci sapere: lo contrassegneremo 
+come “in progress” e ti guiderò nella scrittura dei file.

@@ -18,28 +18,6 @@ const logger = require("../utils/logger");
   }
 })();
 
-// Funzione di validazione specifica per le DiBa
-function validateDiBaInput(data, operation) {
-  const { id_father, id_son, quantita } = data;
-  if (!id_father || typeof id_father !== 'number') {
-    return "Il campo 'id_father' è obbligatorio e deve essere un numero.";
-  }
-  if (!id_son || typeof id_son !== 'number') {
-    return "Il campo 'id_son' è obbligatorio e deve essere un numero.";
-  }
-  if (!quantita || typeof quantita !== 'number') {
-    return "Il campo 'quantita' è obbligatorio e deve essere un numero.";
-  }
-
-  if (operation === 'create' && data.id !== undefined) {
-    return "L'ID non deve essere fornito durante la creazione.";
-  }
-  if (operation === 'update' && (data.id === undefined || isNaN(parseInt(data.id)))) {
-    return "L'ID deve essere un numero valido durante l'aggiornamento.";
-  }
-  // Aggiungere altre validazioni se necessario
-  return null; // Nessun errore
-}
 
 exports.getAllDiBa = async (req, res, next) => {
   try {
@@ -64,11 +42,6 @@ exports.getDiBaById = async (req, res, next) => {
 };
 
 exports.insertDiBa = async (req, res, next) => {
-  const validationError = validateDiBaInput(req.body, 'create');
-  if (validationError) {
-    return res.status(400).json({ success: false, message: validationError });
-  }
-
   const { id_father, id_son, quantita } = req.body;
   try {
     const [results] = await db.query('CALL InsertDiba(?, ?, ?)', [id_father, id_son, quantita]);
@@ -82,11 +55,6 @@ exports.insertDiBa = async (req, res, next) => {
 exports.updateDiBa = async (req, res, next) => {
   const { id } = req.params;
   const { quantita } = req.body;
-
-  // Esegui una validazione parziale per l'aggiornamento
-  if (quantita === undefined || typeof quantita !== 'number') {
-    return res.status(400).json({ success: false, message: "Il campo 'quantita' è obbligatorio e deve essere un numero." });
-  }
 
   try {
     const [results] = await db.query('CALL UpdateDiba(?, ?)', [id, quantita]);

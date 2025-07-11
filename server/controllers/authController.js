@@ -18,7 +18,8 @@ exports.login = async (req, res, next) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json({ success: false, message: 'Username e password sono richiesti.' });
+        // Questi controlli sono ora delegati alla validazione Ajv
+        return res.status(400).json({ success: false, message: 'Validazione dati non riuscita.' });
     }
     try {
         // Seleziona l'ID, l'utente (username) e la password hashata (pwd)
@@ -56,12 +57,9 @@ exports.register = async (req, res, next) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json({ success: false, message: 'Username e password sono richiesti per la registrazione.' });
+        return res.status(400).json({ success: false, message: 'Validazione dati non riuscita.' });
     }
-    // Aggiungi qui validazioni più robuste per username (es. formato email) e password (es. lunghezza minima)
-    if (password.length < 6) {
-        return res.status(400).json({ success: false, message: 'La password deve essere di almeno 6 caratteri.' });
-    }
+    // Controlli di lunghezza ora delegati allo schema
 
     try {
         // 1. Controlla se l'utente esiste già

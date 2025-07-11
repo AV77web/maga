@@ -7,22 +7,6 @@
 const db = require("../db/db");
 const logger = require("../utils/logger");
 
-// Funzione di validazione specifica per i fornitori
-function validateFornitoreInput(data) {
-  const { ragione_sociale, piva } = data;
-  if (!ragione_sociale || !piva) {
-    return "Ragione Sociale e Partita IVA sono campi obbligatori.";
-  }
-  if (typeof ragione_sociale !== "string" || ragione_sociale.trim() === "") {
-    return "La Ragione Sociale non può essere vuota.";
-  }
-  if (typeof piva !== "string" || piva.trim() === "") {
-    return "La Partita IVA non può essere vuota.";
-  }
-  // Aggiungere altre validazioni se necessario (es. formato P.IVA)
-  return null; // Nessun errore
-}
-
 // GET tutti i fornitori, con gestione dei filtri
 exports.getFornitori = async (req, res, next) => {
   try {
@@ -65,11 +49,6 @@ exports.getFornitori = async (req, res, next) => {
 // POST - Inserisce un nuovo fornitore usando la Stored Procedure InsertFornitore
 exports.insertFornitore = async (req, res, next) => {
   try {
-    const validationError = validateFornitoreInput(req.body);
-    if (validationError) {
-      return res.status(400).json({ success: false, error: validationError });
-    }
-
     const { codice, rag_soc, partita_iva, indirizzo, telefono, email, contatto } =
       req.body;
 
@@ -100,12 +79,7 @@ exports.insertFornitore = async (req, res, next) => {
 exports.updateFornitore = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const validationError = validateFornitoreInput(req.body);
-    if (validationError) {
-      return res.status(400).json({ success: false, error: validationError });
-    }
-
-    const { rag_soc, partita_iva, indirizzo, telefono, email, contatto } =
+    const { codice, rag_soc, partita_iva, indirizzo, telefono, email, contatto } =
       req.body;
 
     await db.query("CALL UpdateFornitore(?,?,?,?,?,?,?,?)", [

@@ -1,0 +1,40 @@
+{
+  "$id": "https://example.com/schemas/cause.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Causale",
+  "description": "Schema di validazione per una causale di magazzino",
+  "type": "object",
+  "required": ["codice", "description", "tipo"],
+  "properties": {
+    "codice": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20
+    },
+    "description": {
+      "type": "string",
+      "minLength": 0,
+      "maxLength": 255
+    },
+    "tipo": {
+      "type": "string",
+      "enum": ["C", "S", "N"],
+      "errorMessage": {
+        "enum": "Il campo 'tipo' deve essere 'C', 'S' o 'N'."
+      }
+    },
+    "attiva": {
+      "type": "boolean",
+      "default": true
+    }
+  },
+  "additionalProperties": false,
+  "errorMessage": {
+    "required": {
+      "codice": "Il campo 'codice' è obbligatorio.",
+      "description": "Il campo 'description' è obbligatorio.",
+      "tipo": "Il campo 'tipo' è obbligatorio."
+    },
+    "additionalProperties": "Sono presenti campi non ammessi nella richiesta di causale."
+  }
+} 

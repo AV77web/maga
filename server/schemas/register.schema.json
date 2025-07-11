@@ -1,0 +1,47 @@
+{
+  "$id": "https://example.com/schemas/register.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RegisterRequest",
+  "description": "Schema di validazione per la richiesta di registrazione da parte di un admin",
+  "type": "object",
+  "required": ["username", "password", "role"],
+  "properties": {
+    "username": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "errorMessage": {
+        "type": "Il campo 'username' deve essere una stringa.",
+        "minLength": "Il campo 'username' non può essere vuoto.",
+        "maxLength": "Il campo 'username' non può superare i 100 caratteri."
+      }
+    },
+    "password": {
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 60,
+      "errorMessage": {
+        "type": "Il campo 'password' deve essere una stringa.",
+        "minLength": "Il campo 'password' deve contenere almeno 6 caratteri.",
+        "maxLength": "Il campo 'password' non può superare i 60 caratteri."
+      }
+    },
+    "role": {
+      "type": "string",
+      "enum": ["user", "admin"],
+      "errorMessage": {
+        "type": "Il campo 'role' deve essere una stringa.",
+        "enum": "Il campo 'role' deve essere 'user' o 'admin'."
+      }
+    }
+  },
+  "additionalProperties": false,
+  "errorMessage": {
+    "required": {
+      "username": "Il campo 'username' è obbligatorio.",
+      "password": "Il campo 'password' è obbligatorio.",
+      "role": "Il campo 'role' è obbligatorio."
+    },
+    "additionalProperties": "Sono presenti campi non ammessi nella richiesta di registrazione."
+  }
+} 

@@ -1,0 +1,66 @@
+{
+  "$id": "https://example.com/schemas/movement.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Movement",
+  "description": "Schema per creazione movimento di magazzino",
+  "type": "object",
+  "required": ["idart", "codice_cau", "data", "quantita", "tipo", "user"],
+  "properties": {
+    "idart": {
+      "type": "integer",
+      "minimum": 1,
+      "errorMessage": {
+        "minimum": "Il campo 'idart' deve essere maggiore di 0."
+      }
+    },
+    "codice_cau": {
+      "type": "integer",
+      "minimum": 1,
+      "errorMessage": {
+        "minimum": "Il campo 'codice_cau' deve essere maggiore di 0."
+      }
+    },
+    "data": {
+      "type": "string",
+      "format": "date",
+      "errorMessage": {
+        "format": "Il campo 'data' deve essere una data valida (YYYY-MM-DD)."
+      }
+    },
+    "quantita": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "errorMessage": {
+        "exclusiveMinimum": "Il campo 'quantita' deve essere maggiore di 0."
+      }
+    },
+    "tipo": {
+      "type": "string",
+      "enum": ["C", "S"],
+      "errorMessage": {
+        "enum": "Il campo 'tipo' deve essere 'C' (carico) o 'S' (scarico)."
+      }
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "user": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    }
+  },
+  "additionalProperties": false,
+  "errorMessage": {
+    "required": {
+      "idart": "Il campo 'idart' è obbligatorio.",
+      "codice_cau": "Il campo 'codice_cau' è obbligatorio.",
+      "data": "Il campo 'data' è obbligatorio.",
+      "quantita": "Il campo 'quantita' è obbligatorio.",
+      "tipo": "Il campo 'tipo' è obbligatorio.",
+      "user": "Il campo 'user' è obbligatorio."
+    },
+    "additionalProperties": "Sono presenti campi non ammessi nella richiesta di movimento."
+  }
+} 

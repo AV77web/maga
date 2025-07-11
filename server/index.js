@@ -24,14 +24,11 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
-const clientiRoutes = require("./routes/clienti")  // Importa le rotte dei clienti;
-const fornitoriRoutes = require("./routes/fornitori"); // Importe le rotte dei fornitori
-const ricambiRoutes = require("./routes/ricambi");
-const movimentiRoutes = require("./routes/movimentiroutes"); // Importa le rotte dei movimenti
-const causaliRoutes = require("./routes/causaliroutes"); // Importa le rotte delle causali
+// Legacy route files rimossi – ora sostituiti dai moduli v1
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes"); // Importa le rotte degli utenti
-const dibaRoutes = require("./routes/dibaroutes");
+// const dibaRoutes = require("./routes/dibaroutes"); // deprecato
+// const ordiniRoutes = require("./routes/ordini.js"); // deprecato
 const partsRoutes = require("./modules/parts/parts.routes");
 const suppliersRoutes = require("./modules/suppliers/suppliers.routes");
 const customersRoutes = require("./modules/customers/customers.routes");
@@ -39,7 +36,6 @@ const ordersRoutesV1 = require("./modules/orders/orders.routes");
 const movementsRoutesV1 = require("./modules/movements/movements.routes");
 const causesRoutesV1 = require("./modules/causes/causes.routes");
 const bomRoutesV1 = require("./modules/bom/bom.routes");
-const ordiniRoutes = require("./routes/ordini.js"); // Importa le rotte per gli ordini
 const errorHandler = require("./middleware/errorHandler");
 const pool = require("./db/db"); // Importa il pool di connessioni al DB
 
@@ -101,30 +97,16 @@ app.use("/api/auth", authRoutes);
 
 // Applicazione del middleware authenticateToken alle rotte protette
 
-logger.info("Montaggio fornitoriRoutes");
-app.use("/api/fornitori", authenticateToken, fornitoriRoutes); // tutte le rotte per i ricambi iniziano con /api/fornitori
-
-
-logger.info("Montaggio clientiRoutes");
-app.use("/api/clienti", authenticateToken, clientiRoutes); // tutte le rotte per i ricambi iniziano con /api/clienti
-
-logger.info("Montaggio ricambiRoutes");
-app.use("/api/ricambi", authenticateToken, ricambiRoutes); // tutte le rotte per i ricambi iniziano con /api/ricambi
-
-logger.info("Montaggio movimentiRoutes");
-app.use("/api/movimenti", authenticateToken, movimentiRoutes); // tutte le rotte per i movimenti iniziano con /api/movimenti
-
-logger.info("Montaggio causaliRoutes");
-app.use("/api/causali", authenticateToken, causaliRoutes); // tutte le rotte per le causali iniziano con /api/causali
-
-logger.info("Montaggio userRoutes");
-app.use("/api/users", authenticateToken, userRoutes); // Rotte per gli utenti
-
-logger.info("Montaggio dibaRoues");
-app.use("/api/diba", authenticateToken, dibaRoutes); // tutte le rotte per le diba iniziano con /api/diba);
-
-// ⚠️ mantenuta rotta legacy /api/ordini per backward compatibility – da deprecare
-app.use("/api/ordini", authenticateToken, ordiniRoutes);
+// ⚠️ Deprecate legacy /api/* routes – commentate per rimozione definitiva.
+logger.warn("Legacy /api/* routes disabilitate. Aggiornare i client a /api/v1/*");
+// app.use("/api/fornitori", authenticateToken, fornitoriRoutes);
+// app.use("/api/clienti", authenticateToken, clientiRoutes);
+// app.use("/api/ricambi", authenticateToken, ricambiRoutes);
+// app.use("/api/movimenti", authenticateToken, movimentiRoutes);
+// app.use("/api/causali", authenticateToken, causaliRoutes);
+// app.use("/api/users", authenticateToken, userRoutes);
+// app.use("/api/diba", authenticateToken, dibaRoutes);
+// app.use("/api/ordini", authenticateToken, ordiniRoutes);
 
 // Nuovo endpoint v1
 app.use("/api/v1/orders", authenticateToken, ordersRoutesV1);
@@ -136,6 +118,7 @@ app.use("/api/v1/customers", authenticateToken, customersRoutes);
 app.use("/api/v1/movements", authenticateToken, movementsRoutesV1);
 app.use("/api/v1/causes", authenticateToken, causesRoutesV1);
 app.use("/api/v1/bom", authenticateToken, bomRoutesV1);
+app.use("/api/v1/users", authenticateToken, userRoutes);
 
 // Middleware di gesrtione degli errori centralizzato
 app.use(errorHandler);

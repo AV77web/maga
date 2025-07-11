@@ -1,4 +1,4 @@
-//c:\maga\server\middleware\eroeHandelr.js
+//c:\maga\server\middleware\errorHandler.js
 //========================================
 //File: erroeHandler.js
 //Middleware per la gestine centralizzata
@@ -7,6 +7,7 @@
 //@version: "1.0.0 2025-06-20"
 //========================================
 
+const logger = require('../utils/logger');
 
 // Funzione per riconoscere errori specifici del database (es. MySQL)
 function handleDatabaseError(err, res) {
@@ -19,7 +20,7 @@ function handleDatabaseError(err, res) {
       // Aggiungi altri codici errore DB specifici che vuoi gestire
       default:
         // Per altri errori DB non specificamente gestiti, potresti volerli trattare come errori generici del server
-        console.error('Unhandled Database Error Code:', err.code, err.message);
+        logger.error('Unhandled Database Error Code:', err.code, err.message);
         return res.status(500).json({ success: false, message: 'Errore del database non gestito.', code: err.code });
     }
   }
@@ -27,8 +28,25 @@ function handleDatabaseError(err, res) {
   return null;
 }
 
+// Riconosce errori di validazione Ajv inoltrati dal middleware validateSchema
+function handleAjvValidationError(err, res) {
+  if (err.validationErrors && Array.isArray(err.validationErrors)) {
+    const formatted = err.validationErrors.map(e => ({
+      field: e.instancePath || e.dataPath || '',
+      message: e.message,
+      keyword: e.keyword,
+    }));
+    return res.status(400).json({ success: false, errors: formatted });
+  }
+  return null;
+}
+
 const errorHandler = (err, req, res, next) => {
-  console.error("❌ ERRORE NON GESTITO:", err.stack || err);
+  logger.error("❌ ERRORE NON GESTITO:", err.stack || err);
+
+  // Gestione errori Ajv
+  const ajvResponse = handleAjvValidationError(err, res);
+  if (ajvResponse) return;
 
   // Tenta di gestire errori specifici del database
   const dbErrorResponse = handleDatabaseError(err, res);

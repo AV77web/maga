@@ -54,77 +54,24 @@ exports.getMovimenti = async (req, res, next) => {
 
 // POST: nuovo movimento
 exports.insertMovimento = async (req, res, next ) => {
-  // Esempio di campi per un movimento. Adattali!
   const timestamp = mytimestamp().trim();
-  //console.log(timestamp.length);
+  const { idart, codice_cau, data, quantita, tipo, note, user } = req.body;
 
-  const {
-    idart,
-    codice_cau,
-    data,
-    quantita,
-    tipo,
-    note,
-    user // <-- Estrai l'utente dal corpo della richiesta
-  } = req.body;
-
-  // Controllo dei campi obbligatori (esempio)
-  if (
-    idart === undefined ||
-    codice_cau === undefined ||
-    data === undefined ||
-    quantita === undefined ||
-    !tipo ||
-    user === undefined || // <-- La validazione ora funziona correttamente
-    timestamp === undefined
-  ) {
-    return res
-      .status(400)
-      .json({ success: false, error: "Dati movimento mancanti o incompleti" });
-  }
-  if (!['C', 'S'].includes(tipo)) {
-    return res.status(400).json({
-      success: false,
-      message: "Il campo 'tipo' deve essere 'C' o 'S'.",
-    });
-  }
-   if (
-    isNaN(parseInt(quantita)) ||
-    parseInt(quantita) <= 0
-  ) {
-    return res.status(400).json({ success: false, message: "Quantità movimentata non valida perchè deve essere un numero positivo.", });
-  }
-
-  // Aggiungi validazione per codice_cau
-  //if (isNaN(parseInt(codice_cau, 10))) {
-  //  return res.status(400).json({
-  //    success: false,
-  //    message: `ID Causale non valido. Previsto un numero, ricevuto: '${codice_cau}'.`
-  //  });
-  // }
-
-  
   try {
-    // Chiama la stored procedure per inserire il movimento
     const [results] = await db.query(
       'CALL Insert_Movimento(?, ?, ?, ?, ?, ?, ? ,? )',
-      [  idart, codice_cau, data, quantita, tipo, note, user, timestamp || null]
+      [idart, codice_cau, data, quantita, tipo, note, user, timestamp || null]
     );
-    //console.log(results);
-    // La stored procedure restituisce un set di risultati con l'ID inserito
+
     const insertId = results[0][0].insertId;
 
-    res
-      .status(201)
-      .json({
-        success: true,
-        id: insertId,
-        message: "Movimento registrato e articolo aggiornato.",
-      });
+    res.status(201).json({
+      success: true,
+      id: insertId,
+      message: 'Movimento registrato e articolo aggiornato.',
+    });
   } catch (error) {
-     
-    next(error); // Passa l'errore al middleware centralizzato
-  
+    next(error);
   }
 };
 

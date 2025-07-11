@@ -7,30 +7,6 @@
 const db = require("../db/db");
 const logger = require("../utils/logger");
 
-// Funzione di validazione specifica per i clienti
-function validateClienteInput(data) {
-  const { codice, nome, tipo_cliente, partita_iva, cf } = data;
-
-  if (!codice || !nome) {
-    return "Codice e Nome sono campi obbligatori.";
-  }
-  if (typeof codice !== "string" || codice.trim() === "") {
-    return "Il Codice non può essere vuoto.";
-  }
-  if (typeof nome !== "string" || nome.trim() === "") {
-    return "Il Nome non può essere vuoto.";
-  }
-
-  if (tipo_cliente === 'Azienda' && (!partita_iva || partita_iva.trim() === '')) {
-    return "La Partita IVA è obbligatoria per le aziende.";
-  }
-  if (tipo_cliente === 'Privato' && (!cf || cf.trim() === '')) {
-    return "Il Codice Fiscale è obbligatorio per i privati.";
-  }
-
-  return null; // Nessun errore
-}
-
 // GET tutti i clienti, con gestione dei filtri
 exports.getClienti = async (req, res, next) => {
   try {
@@ -93,11 +69,6 @@ exports.getClienteById = async (req, res, next) => {
 // POST - Inserisce un nuovo cliente usando la Stored Procedure InsertCliente
 exports.insertCliente = async (req, res, next) => {
   try {
-    const validationError = validateClienteInput(req.body);
-    if (validationError) {
-      return res.status(400).json({ success: false, error: validationError });
-    }
-
     const {
       codice, nome, tipo_cliente, partita_iva, cf, indirizzo, citta,
       cap, pv, nazione, telefono, email, sito_web, note, contatto,
@@ -129,11 +100,6 @@ exports.insertCliente = async (req, res, next) => {
 exports.updateCliente = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const validationError = validateClienteInput(req.body);
-    if (validationError) {
-      return res.status(400).json({ success: false, error: validationError });
-    }
-
     const {
       codice, nome, tipo_cliente, partita_iva, cf, indirizzo, citta,
       cap, pv, nazione, telefono, email, sito_web, note, contatto,

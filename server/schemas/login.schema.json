@@ -1,0 +1,38 @@
+{
+  "$id": "https://example.com/schemas/login.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LoginRequest",
+  "description": "Schema di validazione per la richiesta di login",
+  "type": "object",
+  "required": ["username", "password"],
+  "properties": {
+    "username": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "errorMessage": {
+        "type": "Il campo 'username' deve essere una stringa.",
+        "minLength": "Il campo 'username' non può essere vuoto.",
+        "maxLength": "Il campo 'username' non può superare i 100 caratteri."
+      }
+    },
+    "password": {
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 60,
+      "errorMessage": {
+        "type": "Il campo 'password' deve essere una stringa.",
+        "minLength": "Il campo 'password' deve contenere almeno 6 caratteri.",
+        "maxLength": "Il campo 'password' non può superare i 60 caratteri."
+      }
+    }
+  },
+  "additionalProperties": false,
+  "errorMessage": {
+    "required": {
+      "username": "Il campo 'username' è obbligatorio.",
+      "password": "Il campo 'password' è obbligatorio."
+    },
+    "additionalProperties": "Sono presenti campi non ammessi nella richiesta di login."
+  }
+} 
