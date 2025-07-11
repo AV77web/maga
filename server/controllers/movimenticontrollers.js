@@ -29,7 +29,7 @@ exports.customQuery = async (req, res, next) => {
 // GET tutti i movimenti (potresti voler aggiungere filtri, es. per articolo o data)
 // Modificato per gestire i filtri da req.query
 exports.getMovimenti = async (req, res, next) => {
-    try { 
+  try {
     const { idart, codice_cau, tipo, dataDa, dataA , user} = req.query;
 
     // Chiama la stored procedure con i parametri, passando null se non presenti
@@ -44,6 +44,7 @@ exports.getMovimenti = async (req, res, next) => {
         user || null
       ]
     );
+    logger.debug({ rows: rows[0].length }, 'Rows returned FetchMovimenti');
     res.json({ success: true, data: rows[0] });
     //console.log(rows[0]);
 
