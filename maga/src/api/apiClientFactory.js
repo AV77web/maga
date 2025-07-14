@@ -86,10 +86,10 @@ export function createApiClient(resourceName) {
     _request: baseRequest, // Esponi baseRequest per chiamate personalizzate se necessario
 
     /**
-     * Recupera tutte le risorse.
-     * @returns {Promise<Array<object>>}
+     * Recupera tutte le risorse con eventuali parametri di query (es. paginazione, ordinamento)
+     * Se params è omesso o null, verranno usati i valori di default definiti dal backend.
      */
-    fetchAll: () => baseRequest("get", API_BASE_URL),
+    fetchAll: (params = null) => baseRequest("get", API_BASE_URL, null, params),
 
     /**
      * Recupera una risorsa specifica per ID.

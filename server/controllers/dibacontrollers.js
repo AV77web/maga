@@ -81,18 +81,68 @@ exports.deleteDiBa = async (req, res, next) => {
 };
 
 // Funzione per recuperare i componenti dell DiBa (Bill of Material);
-exports.getBomByFatherId = async ( req, res, next) => {
+exports.getBomByFatherId = async (req, res, next) => {
   const fatherId = req.params.fatherId;
-  logger.debug({ fatherId }, "Fetch BOM by fatherId");
 
   if (!fatherId) {
-    return res.status(400).json({ success: false, message: "ID articolo padre mancante o non valido" })
-  } 
-  try {
-    const [results] = await db.query('CALL FetchDiba(NULL, ?, NULL)', [fatherId]);
-    res.json({ success: true, data: results[0] });
-  } catch (error) {
-    console.error(`❌ Errore nel recupero della distinta base per il padre ${fatherId}:`, error.message);
-    next(error); // Passa l'errore al middleware centralizzato
+    return res
+      .status(400)
+      .json({ success: false, message: "ID articolo padre mancante o non valido" });
   }
-}
+
+  const {
+    page = 1,
+    page_size = 10,
+    order_by = "id_son",
+    order_dir = "ASC",
+  } = req.query;
+
+  const p_page       = Math.max(parseInt(page, 10) || 1, 1);
+  const p_page_size  = Math.max(parseInt(page_size, 10) || 10, 1);
+  const p_order_by   = order_by;
+  const p_order_dir  = order_dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+  logger.debug({ fatherId, p_page, p_page_size, p_order_by, p_order_dir }, "Call FetchDiba");
+
+  try {
+    // La SP accetta 5 parametri
+    const [resultSets] = await db.query("CALL FetchDiba(?,?,?,?,?)", [
+      fatherId,
+      p_page,
+      p_page_size,
+      p_order_by,
+      p_order_dir,
+    ]);
+
+    let rows, meta;
+    if (
+      Array.isArray(resultSets) &&
+      resultSets.length >= 2 &&
+      resultSets[0][0]?.data !== undefined
+    ) {
+      const rawRows = resultSets[0][0].data;
+      const rawMeta = resultSets[1][0]?.meta ?? {};
+      rows = typeof rawRows === "string" ? JSON.parse(rawRows) : rawRows;
+      meta = typeof rawMeta === "string" ? JSON.parse(rawMeta) : rawMeta;
+    } else {
+      rows = resultSets[0];
+      meta = {
+        page: p_page,
+        pageSize: p_page_size,
+        totalRows: Array.isArray(rows) ? rows.length : 0,
+        status: "success",
+      };
+    }
+
+    // Safety slice
+    if (Array.isArray(rows) && rows.length > meta.pageSize) {
+      const start = (meta.page - 1) * meta.pageSize;
+      rows = rows.slice(start, start + meta.pageSize);
+    }
+
+    res.json({ success: true, result: { rows, meta } });
+  } catch (error) {
+    logger.error({ msg: `Errore FetchDiba father ${fatherId}`, error: error.message, stack: error.stack });
+    next(error);
+  }
+};

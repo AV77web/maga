@@ -1,0 +1,19 @@
+Database: definire nuovo schema tabella `controparti` (merge di `customers` e `suppliers`) con campi condivisi + colonna `tipo` (CLIENTE | FORNITORE).
+Database: creare script di migrazione per popolare `controparti` dai dati esistenti di `customers` e `suppliers` + backup tabelle legacy.
+Database: riscrivere/accorpare stored procedure Fetch/Insert/Update/Delete in un'unica serie basata su `controparti`.
+Backend: creare nuovo modulo `counterparties` (controller, routes) che usa le nuove SP e sostituire `customers` e `suppliers` modules.
+Backend: rimuovere o deprecare vecchi controller/route `customers` e `suppliers`, mantenendo 301/redirect o alias se necessario.
+Frontend: creare servizio `counterpartiesApi.js` unificando `clientiApi` e `fornitoriApi` (CRUD + search + pagination).
+Frontend: sostituire componenti UI `ClientiTable.jsx` e `FornitoriTable.jsx` con un componente unico `ContropartiTable.jsx`, aggiornando menu/nav.
+Frontend: refactor di pagine/form che usano clienti/fornitori per referenziare `controparti` con opzione filtro per tipo.
+Testing: aggiornare unit/integration test su backend (Jest/supertest) e frontend (React Testing Library) per nuovo flusso controparti.
+Documentazione: aggiornare README, API_NAMING.md, OpenAPI spec e guide interne con la nuova entità controparti.
+Perfetto, ho tracciato un piano operativo completo per uniformare tutto l’ecosistema alla nuova tabella controparti.
+Database
+Definizione schema, migrazione dati da customers e suppliers, nuove stored procedure unificate.
+Backend
+Nuovo modulo counterparties con controller/route; deprecazione dei moduli legacy mantenendo compatibilità temporanea dove serve.
+Frontend
+Nuovo service counterpartiesApi.js; sostituzione delle vecchie tabelle UI con un’unica ContropartiTable.jsx; refactor di tutte le pagine che referenziavano clienti/fornitori.
+Test & Docs
+Aggiornamento test automatici e documentazione (README, API_NAMING.md, OpenAPI).

@@ -17,7 +17,7 @@ import HeadDocument from './HeadDocument2'; // Usiamo la versione più recente
 import Pagination from './Pagination1';
 import '../css/Ordini.css'; // Riusiamo lo stile per coerenza
 
-const rowsPerPageOptions = [5, 10, 20];
+const rowsPerPageOptions = [5, 10, 20, 50];
 
 const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   // --- STATI ---
@@ -26,7 +26,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   const [ordineRighe, setOrdineRighe] = useState([]); // Righe dell'ordine selezionato
   const [selectedMasterIds, setSelectedMasterIds] = useState([]); // ID selezionati nella tabella master
   const [selectedDetailIds, setSelectedDetailIds] = useState([]); // ID selezionati nella tabella detail
-  const [sortKey, setSortKey] = useState(null);
+  const [sortKey, setSortKey] = useState("num_ordine");
   const [sortOrder, setSortOrder] = useState("asc");
   const [showSearch, setShowSearch] = useState(false); // Stato per il panello di ricerca
   const [loading, setLoading] = useState(false);
@@ -34,6 +34,8 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   const [message, setMessage] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
 
    const toggleSort = (key) => {
@@ -87,38 +89,45 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
     setLoading(true);
     setError('');
     try {
-      const data = await ordiniApi.fetchAll();
+      // Parametri di paginazione e ordinamento lato server
+      const queryParams = {
+        page: page + 1, // la SP usa 1-based index
+        page_size: rowsPerPage,
+        order_by: sortKey || 'num_ordine',
+        order_dir: sortOrder,
+      };
 
-      // --- INIZIO BLOCCO DI DEBUG ---
-      const ids = new Set();
-      const duplicates = [];
-      data.forEach(item => {
-        if (item.id_ordine === undefined || item.id_ordine === null) {
-          console.warn('Trovato ordine con ID mancante:', item);
-        }
-        if (ids.has(item.id_ordine)) {
-          duplicates.push(item.id_ordine);
-        }
-        ids.add(item.id_ordine);
-      });
-      if (duplicates.length > 0) {
-        console.error('Trovati ID duplicati nella lista ordini:', duplicates);
+      const res = await ordiniApi.fetchAll(queryParams);
+
+      if (!res || !res.rows) {
+        console.warn('Risposta non valida dal server:', res);
+        setOrdiniList([]);
+        setTotalCount(0);
+        return;
       }
-      // --- FINE BLOCCO DI DEBUG ---
 
-      // Formattiamo la data per la visualizzazione
-      const formattedData = data.map(o => ({
-        ...o,
-        id: o.id_ordine, // Standardizziamo l'ID per il frontend
-        data_ordine: new Date(o.data_ordine).toLocaleDateString('it-IT')
+      const formattedData = res.rows.map((o) => ({
+        id: Number(o.id_ordine),
+        num_ordine: String(o.num_ordine).trim(),
+        data_ordine: new Date(o.data_ordine).toLocaleDateString('it-IT'),
+        fornitore_id: Number(o.fornitore_id),
+        stato: String(o.stato || '').trim(),
+        note: o.note || '',
       }));
+
       setOrdiniList(formattedData);
+
+      const total = res.meta?.totalRows || formattedData.length;
+      setTotalCount(total);
+      setTotalPages(Math.max(1, Math.ceil(total / rowsPerPage)));
     } catch (err) {
       setError(`Errore nel caricamento degli ordini: ${err.message}`);
+      setOrdiniList([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, rowsPerPage, sortKey, sortOrder]);
 
   // Fetch iniziale della lista ordini
   useEffect(() => {
@@ -282,11 +291,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   }, []);
 
   // --- DATI PER LA VISUALIZZAZIONE ---
-  const paginatedOrdiniList = useMemo(() => {
-    const firstPageIndex = page * rowsPerPage;
-    const lastPageIndex = firstPageIndex + rowsPerPage;
-    return sortedOrdini.slice(firstPageIndex, lastPageIndex);
-  }, [page, rowsPerPage, sortedOrdini]);
+  const currentTableData = sortedOrdini; // dati già paginati dal backend
 
   return (
     <>
@@ -332,7 +337,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
             <div className="table-wrapper">
               <TableGrid
                 columns={masterColumns}
-                rows={paginatedOrdiniList}
+                rows={currentTableData}
                 selectedIds={selectedMasterIds}
                 loading={loading}
                 onRowSelectionChange={handleMasterSelectionChange}
@@ -345,10 +350,29 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
             <div className="pagination-bar">
               <Pagination
                 currentPage={page + 1}
-                totalCount={ordiniList.length}
-                pageSize={rowsPerPage}
+                totalPages={totalPages}
                 onPageChange={(newPage) => setPage(newPage - 1)}
               />
+
+              <label>
+                Elementi per pagina:&nbsp;
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    const newSize = parseInt(e.target.value, 10);
+                    setRowsPerPage(newSize);
+                    setPage(0);
+                    setTotalPages(Math.max(1, Math.ceil(totalCount / newSize)));
+                  }}
+                  disabled={loading}
+                >
+                  {rowsPerPageOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
           </>
         )}

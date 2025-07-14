@@ -42,6 +42,11 @@ function handleAjvValidationError(err, res) {
 }
 
 const errorHandler = (err, req, res, next) => {
+  // Evita log doppi; se la risposta è già stata inviata (es. da un handler precedente) esci subito
+  if (res.headersSent) {
+    return next(err);
+  }
+
   logger.error("❌ ERRORE NON GESTITO:", err.stack || err);
 
   // Gestione errori Ajv

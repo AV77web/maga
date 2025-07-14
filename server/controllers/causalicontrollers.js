@@ -22,20 +22,70 @@ const logger = require("../utils/logger");
 // exports.getCausali = causaliCrudHandlers.getAll; // Replaced by custom fetchCausali
 exports.getCausali = async (req, res, next) => {
   try {
-    const { codice, description, tipo } = req.query;
+    const {
+      codice,
+      description,
+      tipo,
+      attiva,
+      page = 1,
+      page_size = 10,
+      order_by = "codice",
+      order_dir = "ASC",
+    } = req.query;
 
-    // Chiama la stored procedure con i parametri, passando null se non presenti
-    const [rows] = await db.query(
-      'CALL FetchCausali(?, ?, ?)',
-      [
-        codice || null,
-        description || null,
-        tipo || null
-      ]
+    const p_codice = codice || null;
+    const p_description = description || null;
+    const p_tipo = tipo || null;
+    const p_attiva = attiva === undefined ? null : Number(attiva);
+
+    const p_page = Math.max(parseInt(page, 10) || 1, 1);
+    const p_page_size = Math.max(parseInt(page_size, 10) || 10, 1);
+    const p_order_by = order_by;
+    const p_order_dir = order_dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+    logger.debug(
+      {
+        p_codice,
+        p_description,
+        p_tipo,
+        p_attiva,
+        p_page,
+        p_page_size,
+        p_order_by,
+        p_order_dir,
+      },
+      "Call FetchCausali"
     );
-    res.json({ success: true, data: rows[0] }); // Le stored procedure restituiscono un array di array, il primo elemento contiene i risultati
+
+    // La nuova SP accetta 8 parametri (4 filtri + paginazione + ordinamento)
+    const [resultSets] = await db.query("CALL FetchCausali(?,?,?,?,?,?,?,?)", [
+      p_codice,
+      p_description,
+      p_tipo,
+      p_attiva,
+      p_page,
+      p_page_size,
+      p_order_by,
+      p_order_dir,
+    ]);
+
+    let rows;
+    let meta;
+    if (Array.isArray(resultSets) && resultSets.length >= 2 && resultSets[0][0]?.data !== undefined) {
+      const rawRows = resultSets[0][0].data;
+      const rawMeta = resultSets[1][0]?.meta ?? {};
+      rows = typeof rawRows === "string" ? JSON.parse(rawRows) : rawRows;
+      meta = typeof rawMeta === "string" ? JSON.parse(rawMeta) : rawMeta;
+    } else {
+      rows = resultSets[0];
+      meta = { page: p_page, pageSize: p_page_size, totalRows: rows.length, status: "success" };
+    }
+
+    logger.debug({ rows: rows.length, meta }, "Rows returned FetchCausali");
+
+    return res.json({ success: true, result: { rows, meta } });
   } catch (error) {
-    next(error); // Passa l'errore al middleware centralizzato
+    next(error);
   }
 };
 

@@ -26,32 +26,63 @@ const logger = require("../utils/logger");
 // GET tutti i ricambi, con gestione dei filtri
 exports.getRicambi = async (req, res) => {
   try {
-    // Estrai i possibili filtri da req.query
-    // Questi nomi devono corrispondere a quelli usati in ricambiFilterFields nel frontend
-    const { name, description, supplier /*, altri filtri se ne hai */ } =
-      req.query;
+    const {
+      name,
+      supplier /* altri filtri eventualmente */,
+      page = 1,
+      page_size = 10,
+      order_by = "name",
+      order_dir = "ASC",
+    } = req.query;
 
     //==================================================
-    //Prepara i parametri per la stored procedure. Se un filtro non è presente, passa NULL.
+    // Prepara i parametri per la stored procedure, effettuando conversioni sicure.
     const p_name = name || null;
-    const p_description = description || null;
     const p_supplier = supplier || null;
 
-    logger.debug({ p_name, p_description, p_supplier }, "Call FetchArticoli");
+    // Converte i parametri numerici assicurandosi di avere interi positivi.
+    const p_page = Math.max(parseInt(page, 10) || 1, 1);
+    const p_page_size = Math.max(parseInt(page_size, 10) || 10, 1);
 
-    // Chiama la stored procedure con i parametri
-    const [results] = await db.query("CALL FetchArticoli(?,?,?)", [
+    // Normalizza l'ordinamento per prevenire SQL-Injection (il nome colonna verrà validato nel DB)
+    const p_order_by = order_by;
+    const p_order_dir = order_dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+    logger.debug(
+      { p_name, p_supplier, p_page, p_page_size, p_order_by, p_order_dir },
+      "Call FetchArticoli"
+    );
+
+    // Chiama la stored procedure con i parametri attesi
+    const [resultSets] = await db.query("CALL FetchArticoli(?,?,?,?,?,?)", [
       p_name,
-      p_description,
       p_supplier,
+      p_page,
+      p_page_size,
+      p_order_by,
+      p_order_dir,
     ]);
 
-    // La libreria mysql2 restituisce un array di array per le stored procedures,
-    // il primo elemento contiene le righe di dati.
-    const rows = results[0];
+    /*
+      FetchArticoli restituisce due result-set:
+      1. Un array con una sola riga, colonna "data" che contiene una stringa JSON con i record.
+      2. Un array con una sola riga, colonna "meta" con informazioni di paginazione in JSON.
+    */
 
-    logger.debug({ rows: rows.length }, "Rows returned FetchArticoli");
-    res.json({ success: true, result: rows });
+    if (!Array.isArray(resultSets) || resultSets.length < 2) {
+      throw new Error("Formato risposta SP FetchArticoli non riconosciuto");
+    }
+
+    const rawRows = resultSets[0][0]?.data ?? [];
+    const rawMeta = resultSets[1][0]?.meta ?? {};
+
+    const rows = typeof rawRows === "string" ? JSON.parse(rawRows) : rawRows;
+    const meta = typeof rawMeta === "string" ? JSON.parse(rawMeta) : rawMeta;
+
+    logger.debug({ rows: rows.length, meta }, "Rows returned FetchArticoli");
+
+    // Restituisci i dati in un formato compatibile con il client (result + meta)
+    return res.json({ success: true, result: { rows, meta } });
   } catch (error) {
     console.error("Errore nel recupero dei ricambi:", error.message);
     res.status(500).json({ success: false, error: error.message });

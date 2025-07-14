@@ -18,37 +18,98 @@ const logger = require("../utils/logger");
   }
 })();
 
-// GET tutti gli ordini, con gestione dei filtri
+// --------------------------------------------------
+// GET /api/v1/orders  – paginazione + filtri
+// --------------------------------------------------
 exports.getOrdini = async (req, res, next) => {
   try {
-    // Estrai i possibili filtri da req.query
-    const { num_ordine, fornitore_id, stato, data_da, data_a } = req.query;
+    const {
+      num_ordine,
+      fornitore_id,
+      page = 1,
+      page_size = 10,
+      order_by = "num_ordine",
+      order_dir = "ASC",
+    } = req.query;
 
-    // Prepara i parametri per la stored procedure. Se un filtro non è presente, passa NULL.
-    const params = [
-      num_ordine || null,
-      fornitore_id || null,
-      stato || null,
-      data_da || null,
-      data_a || null
-    ];
+    // Normalizzazioni / default
+    const p_num_ordine   = num_ordine || null;
+    const p_fornitore_id = fornitore_id || null;
+    const p_page         = Math.max(parseInt(page, 10) || 1, 1);
+    const p_page_size    = Math.max(parseInt(page_size, 10) || 10, 1);
+    /* Mappa i nomi colonna usati sul frontend (id) a quelli reali nel DB */
+    const orderMap = {
+      id: "id_ordine",
+      num_ordine: "num_ordine",
+      data_ordine: "data_ordine",
+      fornitore_id: "fornitore_id",
+      stato: "stato",
+    };
 
-    logger.debug({ num_ordine, fornitore_id, stato, data_da, data_a }, "Call FetchOrdini");
+    const p_order_by     = orderMap[order_by] || order_by;
+    const p_order_dir    = order_dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
-    // Assumendo che esista una SP 'FetchOrdini' che accetta questi filtri
-    const [results] = await db.query("CALL FetchOrdini(?, ?, ?, ?, ?)", params);
+    logger.debug(
+      {
+        p_num_ordine,
+        p_fornitore_id,
+        p_page,
+        p_page_size,
+        p_order_by,
+        p_order_dir,
+      },
+      "Call FetchOrdini"
+    );
 
-    const rows = results[0];
+    // La nuova SP accetta 6 parametri (2 filtri + paginazione + ordinamento)
+    const [resultSets] = await db.query("CALL FetchOrdini(?,?,?,?,?,?)", [
+      p_num_ordine,
+      p_fornitore_id,
+      p_page,
+      p_page_size,
+      p_order_by,
+      p_order_dir,
+    ]);
 
-    logger.debug({ rows: rows.length }, "Rows returned FetchOrdini");
-    res.json({ success: true, data: rows });
+    // Decodifica output { rows, meta }
+    let rows, meta;
+    if (
+      Array.isArray(resultSets) &&
+      resultSets.length >= 2 &&
+      resultSets[0][0]?.data !== undefined
+    ) {
+      const rawRows = resultSets[0][0].data;
+      const rawMeta = resultSets[1][0]?.meta ?? {};
+      rows = typeof rawRows === "string" ? JSON.parse(rawRows) : rawRows;
+      meta = typeof rawMeta === "string" ? JSON.parse(rawMeta) : rawMeta;
+    } else {
+      // Fallback legacy (non JSON aggregato)
+      rows = resultSets[0];
+      meta = {
+        page: p_page,
+        pageSize: p_page_size,
+        totalRows: Array.isArray(rows) ? rows.length : 0,
+        status: "success",
+      };
+    }
+
+    // Safety slice nel caso la SP restituisca più righe del previsto
+    if (Array.isArray(rows) && rows.length > meta.pageSize) {
+      const start = (meta.page - 1) * meta.pageSize;
+      rows = rows.slice(start, start + meta.pageSize);
+    }
+
+    logger.debug({ rows: rows.length, meta }, "Rows returned FetchOrdini");
+    res.json({ success: true, result: { rows, meta } });
   } catch (error) {
-    console.error("Errore nel recupero degli ordini:", error.message);
+    logger.error({ msg: "Errore FetchOrdini", error: error.message, stack: error.stack });
     next(error);
   }
 };
 
-// GET righe di un ordine specifico
+// --------------------------------------------------
+// GET /api/v1/orders/:orderId/items – paginazione minima
+// --------------------------------------------------
 exports.getOrdineRighe = async (req, res, next) => {
   try {
     const { ordineId } = req.params;
@@ -56,12 +117,44 @@ exports.getOrdineRighe = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "ID Ordine mancante." });
     }
 
-    // Assumendo una SP 'FetchOrdineRighe' che accetta l'ID dell'ordine
-    const [results] = await db.query("CALL FetchOrdineRighe(?)", [ordineId]);
-    const rows = results[0];
-    res.json({ success: true, data: rows });
+    const {
+      page = 1,
+      page_size = 50,
+      order_by = "id_riga",
+      order_dir = "ASC",
+    } = req.query;
+
+    const p_page        = Math.max(parseInt(page, 10) || 1, 1);
+    const p_page_size   = Math.max(parseInt(page_size, 10) || 50, 1);
+    const p_order_by    = order_by;
+    const p_order_dir   = order_dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
+
+    const [resultSets] = await db.query("CALL FetchOrdini_righe(?,?,?,?,?)", [
+      ordineId,
+      p_page,
+      p_page_size,
+      p_order_by,
+      p_order_dir,
+    ]);
+
+    let rows, meta;
+    if (
+      Array.isArray(resultSets) &&
+      resultSets.length >= 2 &&
+      resultSets[0][0]?.data !== undefined
+    ) {
+      const rawRows = resultSets[0][0].data;
+      const rawMeta = resultSets[1][0]?.meta ?? {};
+      rows = typeof rawRows === "string" ? JSON.parse(rawRows) : rawRows;
+      meta = typeof rawMeta === "string" ? JSON.parse(rawMeta) : rawMeta;
+    } else {
+      rows = resultSets[0];
+      meta = { page: p_page, pageSize: p_page_size, totalRows: rows.length, status: "success" };
+    }
+
+    res.json({ success: true, result: { rows, meta } });
   } catch (error) {
-    console.error(`Errore nel recupero delle righe per l'ordine ID ${req.params.ordineId}:`, error.message);
+    logger.error({ msg: "Errore FetchOrdini_righe", error: error.message, stack: error.stack });
     next(error);
   }
 };

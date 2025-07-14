@@ -12,11 +12,13 @@ const dibaApi = createApiClient('bom');
 
 // Aggiungiamo il metodo specifico per dibaApi che non è standard nella factory
 /**
- * Recupera i componenti della distinta base per un articolo padre specifico.
+ * Recupera i componenti della distinta base per un articolo padre specifico, con paginazione lato server.
  * @param {string|number} fatherId - L'ID dell'articolo padre.
- * @returns {Promise<Array<object>>}
+ * @param {object} params - Opzionale: { page, page_size, order_by, order_dir }
+ * @returns {Promise<object>} Oggetto { rows, meta }
  */
-dibaApi.fetchByFatherId = (fatherId) => dibaApi._request("get", `${dibaApi._apiBaseUrl}/father/${fatherId}`);
+dibaApi.fetchByFatherId = (fatherId, params = null) =>
+  dibaApi._request("get", `${dibaApi._apiBaseUrl}/father/${fatherId}`, null, params);
 // Se dibaApi avesse metodi specifici non coperti dalla factory,
 // potrebbero essere aggiunti qui. Esempio:
 // dibaApi.customDibaMethod = (params) => dibaApi._request("get", `${dibaApi._apiBaseUrl}/custom-endpoint`, null, params);

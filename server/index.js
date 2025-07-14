@@ -30,9 +30,8 @@ const userRoutes = require("./routes/userRoutes"); // Importa le rotte degli ute
 // const dibaRoutes = require("./routes/dibaroutes"); // deprecato
 // const ordiniRoutes = require("./routes/ordini.js"); // deprecato
 const partsRoutes = require("./modules/parts/parts.routes");
-const suppliersRoutes = require("./modules/suppliers/suppliers.routes");
-const customersRoutes = require("./modules/customers/customers.routes");
 const ordersRoutesV1 = require("./modules/orders/orders.routes");
+const counterpartiesRoutes = require("./modules/counterparties/counterparties.routes");
 const movementsRoutesV1 = require("./modules/movements/movements.routes");
 const causesRoutesV1 = require("./modules/causes/causes.routes");
 const bomRoutesV1 = require("./modules/bom/bom.routes");
@@ -56,7 +55,13 @@ app.use(
 app.use(helmet());
 
 // Rate limiter di base: 100 richieste / 15 minuti per IP
-const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100, standardHeaders: true, legacyHeaders: false });
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minuti
+  max: 1000, // limite più alto per SPA
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.method === "GET" && req.originalUrl.startsWith("/api/v1/users"),
+});
 app.use(apiLimiter);
 
 //Middleware di autenticazione JWT
@@ -113,11 +118,12 @@ app.use("/api/v1/orders", authenticateToken, ordersRoutesV1);
 
 // 🔵 Nuove rotte versione v1
 app.use("/api/v1/parts", authenticateToken, partsRoutes);
-app.use("/api/v1/suppliers", authenticateToken, suppliersRoutes);
-app.use("/api/v1/customers", authenticateToken, customersRoutes);
+// Rotte legacy rimosse – usare solo /api/v1/counterparties
 app.use("/api/v1/movements", authenticateToken, movementsRoutesV1);
 app.use("/api/v1/causes", authenticateToken, causesRoutesV1);
 app.use("/api/v1/bom", authenticateToken, bomRoutesV1);
+// 🔴 Nuova rotta unificata controparti (clienti + fornitori)
+app.use("/api/v1/counterparties", authenticateToken, counterpartiesRoutes);
 app.use("/api/v1/users", authenticateToken, userRoutes);
 
 // Middleware di gesrtione degli errori centralizzato
