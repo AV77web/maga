@@ -1,0 +1,54 @@
+Refactor Ordini.jsx: extract data-fetching and business logic into a custom hook (useOrdini) to separate concerns and improve reusability.
+Migrate Ordini data handling to React Query for caching, background refetching, and consolidated loading/error states.
+Add advanced search/filter functionality (date range, supplier, status) to the orders master list using the existing FilterSearch component and corresponding API endpoint.
+Implement full CRUD (add/edit/delete) for ordine righe with a dedicated dialog component, including quantity & price validation and optimistic UI updates.
+Integrate form validation (Yup/Zod) for HeadDocument fields to enforce required inputs and correct formats before saving.
+Centralize error handling and add optimistic update rollback in Ordini flows for a more robust UX.
+Add role-based access control (RBAC) checks so only authorized users can create, edit, or delete orders or order lines.
+Introduce PropTypes or migrate component to TypeScript to improve type safety and maintainability.
+Write unit and integration tests for the Ordini component flow using Jest and React Testing Library.
+Enhance UX: add skeleton loaders, toast notifications, and consider virtualization for large order lists.
+Ecco un’analisi tecnica del componente Ordini.jsx e una proposta di roadmap di miglioramenti (la TODO-list è stata salvata nel progetto).
+Analisi critica
+Separation of Concerns
+La logica di fetch, normalizzazione dati, gestione degli errori e dello stato di caricamento è tutta dentro il componente.
+Manca un hook dedicato (useOrdini, useOrdineDetail) che astragga API e stato, rendendo il componente più snello e riutilizzabile.
+Data-Fetching & Cache
+Si usano chiamate API “bare” con useEffect + useState; nessun sistema di cache, refetch automatico o gestione globale dello stato di caricamento.
+React Query (o SWR) semplificherebbe loading, error boundary, retry e sincronizzazione fra tab.
+UX & Feature completeness
+Non c’è ricerca/filtri sulla lista ordini (per data, fornitore, stato).
+Le righe d’ordine sono solo lette; manca CRUD con dialog/validazione.
+Assente paginazione server-side: con molte righe la lista potrebbe appesantirsi.
+Feedback utente minimale (no toast, skeleton, spinner dedicati).
+Validation & Safety
+I controlli sui campi obbligatori sono manuali e parziali; manca uno schema di validazione (Yup/Zod o AJV).
+Nessun controllo di permesso/ruolo: qualsiasi utente autenticato può salvare.
+Error handling & Optimistic update
+Gli errori vengono mostrati in chiaro ma senza logica di rollback o accorpamento; non c’è logging centralizzato.
+Type safety / Documentazione
+Il file è JS puro; assenti PropTypes o TypeScript: più rischi di bug da tipizzazione.
+Test Coverage
+Non risultano test unit/integration per le varie view (master/detail, salvataggio, selezioni).
+Performance
+La tabella è renderizzata per intero; con centinaia di ordini servirebbe virtualizzazione.
+Si potrebbe destrutturare masterColumns/detailColumns fuori da useMemo (non hanno dipendenze) oppure memoizzare meglio.
+Accessibilità & i18n
+Date formattate con toLocaleDateString, ma nessuna libreria di i18n o fallback.
+Label/input non sempre legati con htmlFor, potenziali warning a11y.
+Code style & Reusability
+Header riceve molte callback opzionali; si potrebbe passare un oggetto “actions” o pattern Command.
+Ripetizione di logica paginazione/ordinamento già presente in altri componenti: opportuno estrarre utility/common hook.
+Proposta di interventi prioritari
+(vedi TODO-list salvata)
+Estrarre hook useOrdini con React Query (cache, invalidateTags, suspense).
+Implementare ricerca/filtri (FilterSearch) e paginazione server-side.
+CRUD completo sulle righe: dialogo dedicato, validazione schema, optimistic update.
+Validazione form HeadDocument via Yup/Zod + messaggi errore chiari.
+RBAC sul frontend (abbinato al middleware backend già presente) per bloccare azioni non consentite.
+Type-safety: introdurre TypeScript o, in transizione, PropTypes.
+UX: skeleton loaders, toast globali, bottone “refresh”, virtualizzazione tabella.
+Centralizzare gestione errori e logging.
+Test unit/integration con Jest + RTL.
+Migliorie di codice (estrarre costanti, rimuovere console.log di debug, usare dayjs per date, fix a11y).
+Con questi passi il modulo “Ordini” sarà robusto, scalabile e allineato alle best practice di uno stack React moderno.

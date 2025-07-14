@@ -564,7 +564,7 @@ export default function MovimentiTable({
         onLogout={onLogout}
       />
       <div className="container">
-        <h1>Gestione Movimenti</h1>
+        {/*  <h1>Gestione Movimenti</h1> */}
 
         {showSearch && (
           <FilterSearch
@@ -593,6 +593,7 @@ export default function MovimentiTable({
 
         <div className="table-wrapper">
           <TableGrid
+            title="Gestione Movimenti"
             columns={tableColumns}
             rows={currentTableData}
             selectedIds={selectedIds}
