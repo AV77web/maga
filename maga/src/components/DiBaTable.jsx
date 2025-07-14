@@ -32,12 +32,14 @@ export default function DiBaTable({ ricambioPadre, onClose, droppedArticle, onDr
   });
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false); // Corretto nome variabile (era Loading)
-  const [message, setMessage] = useState(""); // Corretto inizializzazione (era false)
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
   const [sortKey, setSortKey] = useState("id_son"); // Default sort key
   const [sortOrder, setSortOrder] = useState("asc");
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   
   const toggleSort = (key) => {
     if (key === sortKey) {
@@ -52,37 +54,52 @@ export default function DiBaTable({ ricambioPadre, onClose, droppedArticle, onDr
   const fetchDiBaForFather = useCallback(async () => {
     if (!ricambioPadre || !ricambioPadre.id) {
       setDiBa([]);
+      setTotalCount(0);
       return;
     }
     try {
       setLoading(true);
       setMessage("");
-      // IPOTETICO: dibaApi.fetchByFatherId(fatherId)
-      const responseData = await dibaApi.fetchByFatherId(ricambioPadre.id);
 
-      if (!Array.isArray(responseData)) {
-        console.warn("Risposta non valida del server o dati mancanti per la distinta base:", responseData);
+      const queryParams = {
+        page: page + 1,
+        page_size: rowsPerPage,
+        order_by: sortKey,
+        order_dir: sortOrder,
+      };
+
+      const res = await dibaApi.fetchByFatherId(ricambioPadre.id, queryParams);
+
+      if (!res || !res.rows) {
+        console.warn("Risposta non valida della distinta base:", res);
         setMessage("⚠️ Dati della distinta base non validi o mancanti.");
         setDiBa([]);
+        setTotalCount(0);
         return;
       }
-      const cleanDiBa = responseData.map((item) => ({
+
+      const cleanDiBa = res.rows.map((item) => ({
         id: Number(item.id),
         id_father: Number(item.id_father),
-        id_son: Number(item.id_son), // TODO: Idealmente qui dovremmo avere il nome/descrizione del figlio
-        quantita: Number(item.quantita), // Corretto nome campo (era quantiita)
-        son_name: item.son_name || 'N/D', // Aggiunto nome figlio
-        son_description: item.son_description || 'N/D', // Aggiunta descrizione figlio
+        id_son: Number(item.id_son),
+        quantita: Number(item.quantita),
+        son_name: item.son_name || "N/D",
+        son_description: item.son_description || "N/D",
       }));
+
       setDiBa(cleanDiBa);
+      const total = res.meta?.totalRows || cleanDiBa.length;
+      setTotalCount(total);
+      setTotalPages(Math.max(1, Math.ceil(total / rowsPerPage)));
     } catch (err) {
       console.error("Errore nel caricamento della distinta base:", err);
       setMessage(`❌ Errore caricamento distinta base: ${err.message || "Errore sconosciuto"}`);
       setDiBa([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
-  }, [ricambioPadre]); // Dipende da ricambioPadre
+  }, [ricambioPadre, page, rowsPerPage, sortKey, sortOrder]);
 
   useEffect(() => {
     fetchDiBaForFather();
@@ -109,32 +126,7 @@ export default function DiBaTable({ ricambioPadre, onClose, droppedArticle, onDr
     }
   }, [droppedArticle, onDropProcessed, ricambioPadre]);
    
-const sortedDiBa = useMemo(() => {
-    const sorted = [...diba].sort((a, b) => {
-      const valA = a[sortKey];
-      const valB = b[sortKey];
-
-      if (typeof valA === "string" && typeof valB === "string") {
-        return sortOrder === "asc"
-          ? valA.localeCompare(valB)
-          : valB.localeCompare(valA);
-      }
-
-      if (typeof valA === "number" && typeof valB === "number") {
-        return sortOrder === "asc" ? valA - valB : valB - valA;
-      }
-
-      return 0; // fallback: se i tipi non corrispondono o sono uguali
-    });
-
-    return sorted;
-  }, [diba, sortKey, sortOrder]);
-
-  const currentTableData = useMemo(() => {
-    const firstPageIndex = page * rowsPerPage;
-    const lastPageIndex = firstPageIndex + rowsPerPage;
-    return sortedDiBa.slice(firstPageIndex, lastPageIndex);
-  }, [page, rowsPerPage, sortedDiBa]);
+  const currentTableData = diba; // dati già paginati dal backend
 
   const handleNew = useCallback(() => {
     setFormData({
@@ -379,17 +371,19 @@ return (
           <div className="pagination-bar">
             <Pagination
               currentPage={page + 1}
-              totalCount={diba.length}
-              pageSize={rowsPerPage}
+              totalPages={totalPages}
               onPageChange={(newPage) => setPage(newPage - 1)}
             />
+
             <label>
               Elementi per pagina:&nbsp;
               <select
                 value={rowsPerPage}
                 onChange={(e) => {
-                  setRowsPerPage(parseInt(e.target.value, 10));
+                  const newSize = parseInt(e.target.value, 10);
+                  setRowsPerPage(newSize);
                   setPage(0);
+                  setTotalPages(Math.max(1, Math.ceil(totalCount / newSize)));
                 }}
                 disabled={loading}
               >

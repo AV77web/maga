@@ -1,0 +1,54 @@
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS FetchOrdini_righe$$
+CREATE PROCEDURE FetchOrdini_righe(
+    IN p_id_ordine   INT,            -- ID ordine da filtrare (obbligatorio)
+    IN p_page        INT,            -- numero pagina (parte da 1)
+    IN p_page_size   INT,            -- righe per pagina
+    IN p_order_by    VARCHAR(50),    -- colonna di ordinamento
+    IN p_order_dir   VARCHAR(4)      -- ASC / DESC
+)
+BEGIN
+    DECLARE v_offset INT DEFAULT 0;
+    DECLARE v_total  INT DEFAULT 0;
+
+  
+    SET v_offset = (p_page - 1) * p_page_size;
+
+   
+    SELECT COUNT(*) INTO v_total
+    FROM ordini_righe
+    WHERE id_ordine = p_id_ordine;
+
+    SET @qry = CONCAT(
+        'SELECT JSON_ARRAYAGG(row_json) AS data ',
+        'FROM (',
+            'SELECT JSON_OBJECT(',
+                '\"id_riga\",        id_riga,',
+                '\"id_ordine\",      id_ordine,',
+                '\"nome_articolo\",  nome_articolo,',
+                '\"quantita\",       quantita,',
+                '\"prezzo_unitario\",prezzo_unitario,',
+                '\"totale_righe\",   totale_righe',
+            ') AS row_json ',
+            'FROM ordini_righe ',
+            'WHERE id_ordine = ', p_id_ordine, ' ',
+            'ORDER BY ', p_order_by, ' ', p_order_dir, ' ',
+            'LIMIT ', p_page_size, ' OFFSET ', v_offset,
+        ') AS sub'
+    );
+
+    PREPARE stmt FROM @qry;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+
+    SELECT JSON_OBJECT(
+        'status',    'success',
+        'totalRows', v_total,
+        'page',      p_page,
+        'pageSize',  p_page_size
+    ) AS meta;
+END$$
+
+DELIMITER ;

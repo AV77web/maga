@@ -10,86 +10,50 @@
 
 import { useMemo } from "react";
 
-const range = (start, end) => {
-  let length = end - start + 1;
-  return Array.from({ length }, (_, idx) => idx + start);
-};
-
+const range = (start, end) => Array.from({ length: end - start + 1 }, (_, i) => i + start);
 const DOTS = "...";
 
-export const UsePagination = ({
-  totalCount, // numero totale di elementi (es: righe di una tabella)
-  pageSize, // quanti elementi per pagina
-  siblingCount = 1, // quante pagine a sinistra/destra mostrare vicino a quella corrente (default=1)
-  currentPage, // la pagina attualmente selezionata (pagina corrente)
-}) => {
+/**
+ * Hook che genera l'intervallo di pagine da visualizzare.
+ * Accetta **totalPages** già calcolate dal backend; non richiede più totalCount/pageSize.
+ */
+export const UsePagination = ({ totalPages = 1, currentPage = 1, siblingCount = 1 }) => {
   const paginationRange = useMemo(() => {
-    const totalPageCount = Math.ceil(totalCount / pageSize);
+    if (totalPages <= 1) return [1];
 
-    // Il conteggio delle pagine è determinato come siblingCount + firstPage + lastPage + currentPage + 2*DOTS
-    const totalPageNumbers = siblingCount + 5;
+    const totalPageNumbers = siblingCount + 5; // first + last + current + 2*dots
 
-    /*
-        Caso 1:
-        Se il numero di pagine è minore del numero da mostrare nel componente, restituiamo l'intervallo [1..totalPageCount]
-      */
-    if (totalPageNumbers >= totalPageCount) {
-      return range(1, totalPageCount);
+    if (totalPageNumbers >= totalPages) {
+      return range(1, totalPages);
     }
 
-    /*
-          Calcola gli indici di destra e sinistra e si assicura che siano all'interno dell'intervallo 1 e totalPageCount
-      */
     const leftSiblingIndex = Math.max(currentPage - siblingCount, 1);
-    const rightSiblingIndex = Math.min(
-      currentPage + siblingCount,
-      totalPageCount
-    );
+    const rightSiblingIndex = Math.min(currentPage + siblingCount, totalPages);
 
-    /*
-        Non mostriamo i puntini quando c'è un solo numero di pagina da inserire
-        tra le estremità degli indici e i limiti di pagina, vale a dire 1 e totalPageCount.
-        Quindi stiamo usando  leftSiblingIndex > 2 e rightSiblingIndex < totalPageCount - 2
-      */
     const shouldShowLeftDots = leftSiblingIndex > 2;
-    const shouldShowRightDots = rightSiblingIndex < totalPageCount - 2;
+    const shouldShowRightDots = rightSiblingIndex < totalPages - 2;
 
     const firstPageIndex = 1;
-    const lastPageIndex = totalPageCount;
+    const lastPageIndex = totalPages;
 
-    /*
-          Caso 2: Non ci sono puntini a sinistra da mostrare ma 
-          quelli a destra devono essere mostrati
-      */
+    // Vari casi dots
     if (!shouldShowLeftDots && shouldShowRightDots) {
-      let leftItemCount = 3 + 2 * siblingCount;
-      let leftRange = range(1, leftItemCount);
-
-      return [...leftRange, DOTS, totalPageCount];
+      const leftRange = range(1, 3 + 2 * siblingCount);
+      return [...leftRange, DOTS, lastPageIndex];
     }
 
-    /*
-          Caso 3: Non ci sono puntini a destra da mostrare ma 
-          quelli a sinistra devono essere mostrati
-      */
     if (shouldShowLeftDots && !shouldShowRightDots) {
-      let rightItemCount = 3 + 2 * siblingCount;
-      let rightRange = range(
-        totalPageCount - rightItemCount + 1,
-        totalPageCount
-      );
+      const rightRange = range(totalPages - (3 + 2 * siblingCount) + 1, totalPages);
       return [firstPageIndex, DOTS, ...rightRange];
     }
 
-    /*
-          Caso 4: Sia i puntini a destra che quelli a sinistra 
-          sono da mostrare
-      */
     if (shouldShowLeftDots && shouldShowRightDots) {
-      let middleRange = range(leftSiblingIndex, rightSiblingIndex);
+      const middleRange = range(leftSiblingIndex, rightSiblingIndex);
       return [firstPageIndex, DOTS, ...middleRange, DOTS, lastPageIndex];
     }
-  }, [totalCount, pageSize, siblingCount, currentPage]);
+
+    return range(1, totalPages);
+  }, [totalPages, currentPage, siblingCount]);
 
   return paginationRange;
 };

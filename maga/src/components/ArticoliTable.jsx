@@ -28,6 +28,8 @@ export default function ArticoliTable({
 }) {
   // Accetta currentUser
   const [ricambi, setRicambi] = useState([]);
+  const [totalCount, setTotalCount] = useState(0); // totale record
+  const [totalPages, setTotalPages] = useState(1);
   const [formVisible, setFormVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -45,7 +47,7 @@ export default function ArticoliTable({
   const [message, setMessage] = useState(""); // Modificato: inizializzato a stringa vuota
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedIds, setSelectedIds] = useState([]);
-  const [sortKey, setSortKey] = useState(null);
+  const [sortKey, setSortKey] = useState("name");
   const [sortOrder, setSortOrder] = useState("asc");
   const [showSearch, setShowSearch] = useState(false); // Stato per il panello di ricerca
   const [viewMode, setViewMode] = useState("ricambi"); // 'ricambi' o 'bom'
@@ -72,25 +74,26 @@ export default function ArticoliTable({
 
   const fetchRicambi = useCallback(async () => {
     try {
-      setLoading(true); // Assicurati che loading sia true all'inizio
-      const res = await ricambiApi.fetchAll(); // Modificato: API_BASE non è necessario qui
+      setLoading(true);
 
-      // --- LOG DI DEBUG ---
-      //console.log("DEBUG: Oggetto 'res' completo da ricambiApi.fetchAll:", res);
-      //console.log("DEBUG: Valore di 'res.data':", res.data);
-      //console.log("DEBUG: typeof res.data:", typeof res.data);
-      // --- FINE LOG DI DEBUG ---
+      // Parametri per paginazione e ordinamento lato server
+      const queryParams = {
+        page: page + 1, // la SP usa 1-based index
+        page_size: rowsPerPage,
+        order_by: sortKey || "name",
+        order_dir: sortOrder,
+      };
 
-      // Correzione: Accedi direttamente a res.success e res.data
-      //if (!res || res.success !== true || !Array.isArray(res)) {
-      if (!Array.isArray(res)) {
-        // Modificato: Controlla direttamente se res è un array
-        console.warn("Risposta non valida del server o dati mancanti:", res);
+      const res = await ricambiApi.fetchAll(queryParams);
+
+      if (!res || !res.rows) {
+        console.warn("Risposta non valida del server:", res);
         setRicambi([]);
+        setTotalCount(0);
         return;
       }
-      const cleanRicambi = res.map((item) => ({
-        // Correzione: usa res.data per il map
+
+      const cleanRicambi = res.rows.map((item) => ({
         id: Number(item.id),
         name: String(item.name).trim(),
         description: String(item.description || "").trim(),
@@ -100,50 +103,28 @@ export default function ArticoliTable({
         min: Number(item.min),
         max: Number(item.max),
         supplier: String(item.supplier || "").trim(),
-        has_diba: String(item.has_diba || "")
-          .trim()
-          .toUpperCase(), // Assicura che il valore sia pulito e maiuscolo
+        has_diba: String(item.has_diba || "").trim().toUpperCase(),
       }));
 
       setRicambi(cleanRicambi);
+      const total = res.meta?.totalRows || cleanRicambi.length;
+      setTotalCount(total);
+      setTotalPages(Math.max(1, Math.ceil(total / rowsPerPage)));
     } catch (err) {
-      console.error("Errore nel recupero dei dati (blocco catch):", err);
+      console.error("Errore nel recupero dei dati:", err);
       setRicambi([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, rowsPerPage, sortKey, sortOrder]);
 
   useEffect(() => {
     fetchRicambi();
   }, [fetchRicambi]);
 
-  const sortedRicambi = useMemo(() => {
-    const sorted = [...ricambi].sort((a, b) => {
-      const valA = a[sortKey];
-      const valB = b[sortKey];
-
-      if (typeof valA === "string" && typeof valB === "string") {
-        return sortOrder === "asc"
-          ? valA.localeCompare(valB)
-          : valB.localeCompare(valA);
-      }
-
-      if (typeof valA === "number" && typeof valB === "number") {
-        return sortOrder === "asc" ? valA - valB : valB - valA;
-      }
-
-      return 0; // fallback: se i tipi non corrispondono o sono uguali
-    });
-
-    return sorted;
-  }, [ricambi, sortKey, sortOrder]);
-
-  const currentTableData = useMemo(() => {
-    const firstPageIndex = page * rowsPerPage;
-    const lastPageIndex = firstPageIndex + rowsPerPage;
-    return sortedRicambi.slice(firstPageIndex, lastPageIndex);
-  }, [page, rowsPerPage, sortedRicambi]);
+  // Con i dati già ordinati/paginati dal backend, non è necessario un ulteriore ordinamento client-side
+  const currentTableData = ricambi;
 
   const handleDelete = useCallback(
     async (id) => {
@@ -232,12 +213,18 @@ export default function ArticoliTable({
     setPopoverLoading(true);
 
     try {
-      const components = await dibaApi.fetchByFatherId(row.id);
-      // Aggiorna lo stato con i componenti recuperati, mantenendo l'articolo
+      const res = await dibaApi.fetchByFatherId(row.id, {
+        page: 1,
+        page_size: 100, // recupera fino a 100 componenti, di solito bastano
+        order_by: "id_son",
+        order_dir: "ASC",
+      });
+
+      const components = res && res.rows ? res.rows : Array.isArray(res) ? res : [];
+
       setPopoverData((prevData) => ({ ...prevData, components }));
     } catch (error) {
       console.error("Errore nel recupero dei componenti della DiBa:", error);
-      // In caso di errore, i componenti rimangono un array vuoto
       setPopoverData((prevData) => ({ ...prevData, components: [] }));
     } finally {
       setPopoverLoading(false);
@@ -440,14 +427,27 @@ export default function ArticoliTable({
     setLoading(true);
     setMessage("");
     try {
-      const resultsFromSearch = await ricambiApi.fetchByFilters(filterValues);
-      if (Array.isArray(resultsFromSearch)) {
-        setRicambi(resultsFromSearch); // Aggiorna lo stato con i risultati
-        if (resultsFromSearch.length === 0) {
+      const queryParams = {
+        ...filterValues,
+        page: 1,
+        page_size: rowsPerPage,
+        order_by: sortKey || "name",
+        order_dir: sortOrder,
+      };
+
+      const resultsFromSearch = await ricambiApi.fetchByFilters(queryParams);
+
+      if (resultsFromSearch && Array.isArray(resultsFromSearch.rows)) {
+        setRicambi(resultsFromSearch.rows);
+        setTotalCount(resultsFromSearch.meta?.totalRows || resultsFromSearch.rows.length);
+        setPage(0); // resetta alla prima pagina
+        if (resultsFromSearch.rows.length === 0) {
           setMessage("ℹ️ Nessun ricambio trovato con i filtri specificati.");
         }
       } else {
-        throw new Error(resultsFromSearch.error || "Dati filtrati non validi.");
+        throw new Error(
+          resultsFromSearch?.error || "Dati filtrati non validi."
+        );
       }
     } catch (err) {
       console.error("Errore nella ricerca ricambi:", err);
@@ -613,8 +613,7 @@ export default function ArticoliTable({
                 <div className="pagination-bar">
                   <Pagination
                     currentPage={page + 1}
-                    totalCount={ricambi.length}
-                    pageSize={rowsPerPage}
+                    totalPages={totalPages}
                     onPageChange={(newPage) => setPage(newPage - 1)}
                   />
 
@@ -623,8 +622,10 @@ export default function ArticoliTable({
                     <select
                       value={rowsPerPage}
                       onChange={(e) => {
-                        setRowsPerPage(parseInt(e.target.value, 10));
+                        const newSize = parseInt(e.target.value, 10);
+                        setRowsPerPage(newSize);
                         setPage(0);
+                        setTotalPages(Math.max(1, Math.ceil(totalCount / newSize)));
                       }}
                       disabled={loading}
                     >

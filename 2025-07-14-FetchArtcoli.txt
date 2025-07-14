@@ -1,0 +1,69 @@
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS FetchArticoli$$
+CREATE PROCEDURE FetchArticoli(
+    IN p_name        VARCHAR(100),   
+    IN p_supplier    VARCHAR(100),   -- filtro facoltativo sul fornitore
+    IN p_page        INT,            -- numero pagina (parte da 1)
+    IN p_page_size   INT,            -- righe per pagina
+    IN p_order_by    VARCHAR(50),    -- colonna di ordinamento
+    IN p_order_dir   VARCHAR(4)      -- ASC / DESC
+)
+BEGIN
+    DECLARE v_offset   INT DEFAULT 0;
+    DECLARE v_total    INT DEFAULT 0;
+
+    -- Calcola l’offset
+    SET v_offset = (p_page - 1) * p_page_size;
+
+    ------------------------------------------------------------------
+    -- 1) Conteggio totale righe che rispettano i filtri
+    ------------------------------------------------------------------
+    SELECT COUNT(*) INTO v_total
+    FROM articoli a
+    WHERE (p_name     IS NULL OR p_name     = '' OR a.name     LIKE CONCAT('%', p_name,     '%'))
+      AND (p_supplier IS NULL OR p_supplier = '' OR a.supplier LIKE CONCAT('%', p_supplier, '%'));
+
+    ------------------------------------------------------------------
+    -- 2) Query dinamica con paginazione (LIMIT/OFFSET prima del JSON)
+    ------------------------------------------------------------------
+    SET @qry = CONCAT(
+        'SELECT JSON_ARRAYAGG(row_json) AS data ',
+        'FROM (',
+            'SELECT JSON_OBJECT(',
+                '"id",         id,',
+                '"name",       name,',
+                '"description",description,',
+                '"quantita",   quantita,',
+                '"min",        `min`,',
+                '"max",        `max`,',
+                '"supplier",   supplier,',
+                '"has_diba",   has_diba',
+            ') AS row_json ',
+            'FROM articoli ',
+            'WHERE 1 = 1 ',
+
+            IF(p_name IS NULL     OR p_name     = '', '', CONCAT('AND name     LIKE "%', p_name,     '%" ')),
+            IF(p_supplier IS NULL OR p_supplier = '', '', CONCAT('AND supplier LIKE "%', p_supplier, '%" ')),
+
+            'ORDER BY ', p_order_by, ' ', p_order_dir, ' ',
+            'LIMIT ', p_page_size, ' OFFSET ', v_offset,
+        ') AS sub'
+    );
+
+    PREPARE stmt FROM @qry;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+    ------------------------------------------------------------------
+    -- 3) Metadata per il front-end
+    ------------------------------------------------------------------
+    SELECT JSON_OBJECT(
+        'status',     'success',
+        'totalRows',  v_total,
+        'page',       p_page,
+        'pageSize',   p_page_size
+    ) AS meta;
+END$$
+
+DELIMITER ;

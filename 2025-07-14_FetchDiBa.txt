@@ -1,0 +1,52 @@
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS FetchDiba$$
+CREATE PROCEDURE FetchDiba(
+    IN p_id_father  INT,
+    IN p_page       INT,
+    IN p_page_size  INT,
+    IN p_order_by   VARCHAR(50),
+    IN p_order_dir  VARCHAR(4)
+)
+BEGIN
+    DECLARE v_offset INT DEFAULT 0;
+    DECLARE v_total  INT DEFAULT 0;
+    SET v_offset = (p_page - 1) * p_page_size;
+
+    /* 1) totale righe */
+    SELECT COUNT(*) INTO v_total
+    FROM diba
+    WHERE (p_id_father IS NULL OR id_father = p_id_father);
+
+    /* 2) righe paginate con JOIN articoli a (figlio) */
+    SET @q = CONCAT(
+        'SELECT JSON_ARRAYAGG(row_json) AS data ',
+        'FROM (',
+            'SELECT JSON_OBJECT(',
+                '\"id\",            d.id,',
+                '\"id_father\",     d.id_father,',
+                '\"id_son\",        d.id_son,',
+                '\"quantita\",      d.quantita,',
+                '\"son_name\",      a.name,',
+                '\"son_description\",a.description',
+            ') AS row_json ',
+            'FROM diba d ',
+            'LEFT JOIN articoli a ON a.id = d.id_son ',
+            'WHERE 1 = 1 ',
+            IF(p_id_father IS NULL, '', CONCAT('AND d.id_father = ', p_id_father, ' ')),
+            'ORDER BY ', p_order_by, ' ', p_order_dir, ' ',
+            'LIMIT ', p_page_size, ' OFFSET ', v_offset,
+        ') AS sub'
+    );
+
+    PREPARE stmt FROM @q; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+    /* 3) meta */
+    SELECT JSON_OBJECT(
+        'status',    'success',
+        'totalRows', v_total,
+        'page',      p_page,
+        'pageSize',  p_page_size
+    ) AS meta;
+END$$
+DELIMITER ;

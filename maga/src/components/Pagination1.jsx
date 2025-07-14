@@ -7,22 +7,20 @@ const DOTS = "...";
 
 const Pagination1 = ({
   onPageChange,
-  totalCount,
+  totalPages,
   siblingCount = 1,
   currentPage,
-  pageSize,
   className,
 }) => {
   const paginationRange = UsePagination({
     currentPage,
-    totalCount,
+    totalPages,
     siblingCount,
-    pageSize,
   });
 
-  if (currentPage === 0 || paginationRange.length < 2) return null;
+  if (paginationRange.length < 2) return null;
 
-  const lastPage = paginationRange[paginationRange.length - 1];
+  const lastPage = paginationRange.length > 0 ? paginationRange[paginationRange.length - 1] : 1;
 
   return (
     <nav className="pagination-wrapper" aria-label="Navigazione pagine">

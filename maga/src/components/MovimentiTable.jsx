@@ -78,6 +78,8 @@ export default function MovimentiTable({
   const [movimenti, setMovimenti] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
   const [showSearch, setShowSearch] = useState(false);
   const [sortKey, setSortKey] = useState("data");
@@ -195,47 +197,42 @@ export default function MovimentiTable({
     setLoadingTable(true);
     setMessage("");
     try {
-      const res = await movimentiApi.fetchAll(); // This might return [dataArray, metadataObject] or just dataArray
-      //console.log('MO - Risposta API fetchMovimenti;', res.data);
+      const params = {
+        page: page + 1,
+        page_size: rowsPerPage,
+        order_by: sortKey,
+        order_dir: sortOrder,
+      };
 
-      let dataToProcess = res;
-      if (
-        Array.isArray(res) &&
-        Array.isArray(res[0]) &&
-        res.length === 2 &&
-        typeof res[1] === "object"
-      ) {
-        dataToProcess = res[0];
-      }
+      const res = await movimentiApi.fetchAll(params);
 
-      if (Array.isArray(dataToProcess)) {
-        setMovimenti(
-          dataToProcess.map((m) => ({
-            ...m,
-            // Assicurati che la data sia in formato YYYY-MM-DD per l'input e la visualizzazione semplice
-            data: m.data ? new Date(m.data).toISOString().slice(0, 10) : "",
-          }))
-        );
-        //console.log('MO - Movimenti dopo mapping fetchMovimenti', dataToProcess);
+      if (res && Array.isArray(res.rows)) {
+        const formatted = res.rows.map((m) => ({
+          ...m,
+          data: m.data ? new Date(m.data).toISOString().slice(0, 10) : "",
+        }));
+        setMovimenti(formatted);
+        setTotalCount(res.meta?.totalRows || formatted.length);
+        setTotalPages(Math.max(1, Math.ceil((res.meta?.totalRows || formatted.length) / rowsPerPage)));
       } else {
-        console.warn("Risposta non valida per i movimenti:", res);
         throw new Error("Dati movimenti non validi.");
       }
     } catch (err) {
       console.error("Errore nel recupero movimenti:", err);
       setMessage(`❌ Errore caricamento movimenti: ${err.message || err}`);
       setMovimenti([]);
+      setTotalCount(0);
     } finally {
       setLoadingTable(false);
     }
-  }, []);
+  }, [page, rowsPerPage, sortKey, sortOrder]);
 
   const fetchArticoli = useCallback(async () => {
     setLoadingArticoli(true);
     try {
-      const res = await ricambiApi.fetchAll(); // Assuming this returns Array<Ricambio> directly
-      if (Array.isArray(res)) {
-        setArticoliList(res);
+      const res = await ricambiApi.fetchAll({ page: 1, page_size: 1000, order_by: "name", order_dir: "ASC" });
+      if (res && Array.isArray(res.rows)) {
+        setArticoliList(res.rows);
       } else {
         console.warn("Risposta non valida per gli articoli:", res);
         throw new Error("Dati articoli non validi.");
@@ -255,8 +252,12 @@ export default function MovimentiTable({
   const fetchCausali = useCallback(async () => {
     setLoadingCausali(true);
     try {
-      const res = await causaliApi.fetchAll(); // Assuming this returns Array<Causale> directly
-      if (Array.isArray(res)) {
+      const res = await causaliApi.fetchAll();
+      if (res && Array.isArray(res.rows)) {
+        // Nuovo formato {rows, meta}
+        setCausaliList(res.rows);
+      } else if (Array.isArray(res)) {
+        // Vecchio formato array puro
         setCausaliList(res);
       } else {
         console.warn("Risposta non valida per le causali:", res);
@@ -301,37 +302,7 @@ export default function MovimentiTable({
     fetchUsers();
   }, [fetchMovimenti, fetchArticoli, fetchCausali, fetchUsers]); // Aggiunte dipendenze corrette
 
-  const sortedMovimenti = useMemo(() => {
-    return [...movimenti].sort((a, b) => {
-      const valA = a[sortKey];
-      const valB = b[sortKey];
-
-      if (valA === null || valA === undefined) return 1;
-      if (valB === null || valB === undefined) return -1;
-
-      if (sortKey === "data") {
-        // Le date sono stringhe YYYY-MM-DD, confrontabili come stringhe
-        return sortOrder === "asc"
-          ? valA.localeCompare(valB)
-          : valB.localeCompare(valA);
-      }
-      if (typeof valA === "number" && typeof valB === "number") {
-        return sortOrder === "asc" ? valA - valB : valB - valA;
-      }
-      if (typeof valA === "string" && typeof valB === "string") {
-        return sortOrder === "asc"
-          ? valA.localeCompare(valB)
-          : valB.localeCompare(valA);
-      }
-      return 0;
-    });
-  }, [movimenti, sortKey, sortOrder]);
-
-  const currentTableData = useMemo(() => {
-    const firstPageIndex = page * rowsPerPage;
-    const lastPageIndex = firstPageIndex + rowsPerPage;
-    return sortedMovimenti.slice(firstPageIndex, lastPageIndex);
-  }, [page, rowsPerPage, sortedMovimenti]);
+  const currentTableData = movimenti;
 
   const toggleSort = (key) => {
     if (key === sortKey) {
@@ -615,9 +586,8 @@ export default function MovimentiTable({
 
         <div className="pagination-bar">
           <Pagination
-            currentPage={page + 1}
-            totalCount={sortedMovimenti.length}
-            pageSize={rowsPerPage}
+            currentPage={page + 1}          // 1-based
+            totalPages={totalPages}         // pagine totali – obbligatorio
             onPageChange={(newPage) => setPage(newPage - 1)}
           />
           <label>
@@ -625,8 +595,10 @@ export default function MovimentiTable({
             <select
               value={rowsPerPage}
               onChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10));
-                setPage(0);
+                const newSize = parseInt(e.target.value, 10);
+                setRowsPerPage(newSize);
+                setPage(0);                // riparti dalla prima pagina
+                setTotalPages(Math.max(1, Math.ceil(totalCount / newSize)));
               }}
               disabled={loadingTable}
             >

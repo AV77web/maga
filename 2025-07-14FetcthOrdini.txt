@@ -1,0 +1,58 @@
+delimiter $$
+
+DROP PROCEDURE IF EXISTS FetchOrdini$$
+CREATE PROCEDURE FetchOrdini(
+    IN p_num_ordine   VARCHAR(20),         -- filtro facoltativo sul numero ordine
+    IN p_fornitore_id INT,                 -- filtro facoltativo per fornitore
+    IN p_page         INT,                 -- numero pagina (parte da 1)
+    IN p_page_size    INT,                 -- righe per pagina
+    IN p_order_by     VARCHAR(50),         -- colonna di ordinamento
+    IN p_order_dir    VARCHAR(4)           -- ASC / DESC
+)
+BEGIN
+    DECLARE v_offset  INT DEFAULT 0;
+    DECLARE v_total   INT DEFAULT 0;
+
+
+    SET v_offset = (p_page - 1) * p_page_size;
+
+    SELECT COUNT(*) INTO v_total
+    FROM ordini o
+    WHERE (p_num_ordine   IS NULL OR p_num_ordine   = '' OR o.num_ordine   LIKE CONCAT('%', p_num_ordine,   '%'))
+      AND (p_fornitore_id IS NULL OR p_fornitore_id = 0 OR o.fornitore_id = p_fornitore_id);
+
+
+    SET @qry = CONCAT(
+        'SELECT JSON_ARRAYAGG(row_json) AS data ',
+        'FROM (',
+            'SELECT JSON_OBJECT(',
+                '\"id_ordine\",   id_ordine,',
+                '\"num_ordine\",  num_ordine,',
+                '\"data_ordine\", DATE_FORMAT(data_ordine, \"%Y-%m-%d\"),',
+                '\"fornitore_id\",fornitore_id,',
+                '\"stato\",       stato,',
+                '\"note\",        IFNULL(note, \"\")',
+            ') AS row_json ',
+            'FROM ordini ',
+            'WHERE 1 = 1 ',
+                IF(p_num_ordine   IS NULL OR p_num_ordine   = '', '', CONCAT('AND num_ordine   LIKE \"%', p_num_ordine,   '%\" ')),
+                IF(p_fornitore_id IS NULL OR p_fornitore_id = 0, '', CONCAT('AND fornitore_id = ', p_fornitore_id, ' ')),
+            'ORDER BY ', p_order_by, ' ', p_order_dir, ' ',
+            'LIMIT ', p_page_size, ' OFFSET ', v_offset,
+        ') AS sub'
+    );
+
+    PREPARE stmt FROM @qry;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+
+
+    SELECT JSON_OBJECT(
+        'status',    'success',
+        'totalRows', v_total,
+        'page',      p_page,
+        'pageSize',  p_page_size
+    ) AS meta;
+END$$
+
+DELIMITER ;
