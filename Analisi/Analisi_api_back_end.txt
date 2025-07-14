@@ -19,9 +19,9 @@ Criticità di sicurezza
 Endpoint POST /api/movimenti/customquery espone arbitrariamente la possibilità di eseguire SQL ricevuto dal client: altissimo rischio RCE/SQL-Injection anche con utenti autenticati. 
  → Fix immediato applicato: l’endpoint ora è protetto dal middleware isAdmin (solo utenti con ruolo “admin”) [commit applicato]. Valutate comunque di rimuoverlo del tutto o di sostituirlo con query parametrizzate/pre-definite. X
 Performance
-Ogni richiesta apre una query sul pool, OK, ma per carichi alti si consiglia:
-impostare connectionLimit adeguato in db.js;
-usare prepared: true in mysql2 se si ripetono molte stesse query.
+Ogni richiesta apre una query sul pool, OK, ma per carichi alti si consiglia: X
+impostare connectionLimit adeguato in db.js; X 
+usare prepared: true in mysql2 se si ripetono molte stesse query. X 
 Le stored procedure sono una buona scelta per la logica di business (aggiornamento giacenze ecc.) e riducono round-trip. X 
 Migliorie tecniche consigliate (road-map rapida)
 Security hardening
@@ -35,7 +35,7 @@ Creare /validators/*.js con Joi e usarli come primo middleware delle rotte.
 Error handling
 Centralizzare tutti i try/catch usando wrapper catchAsync(fn) => (req,res,next)=>fn(req,res,next).catch(next).
 Paginate & cache
-Aggiungere parametri page, perPage alle stored procedure di listing (ricambi, movimenti, ecc.).
+Aggiungere parametri page, perPage alle stored procedure di listing (ricambi, movimenti, ecc.). X 
 Introdurre cache layer (es. Redis) su lookup statici (causali, articoli).
 CI/CD & Qualità
 Aggiungere ESLint/Prettier config server-side (c’è già lato client).

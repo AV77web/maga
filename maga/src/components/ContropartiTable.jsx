@@ -23,7 +23,7 @@ export default function ContropartiTable() {
   const [error, setError] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [sortKey, setSortKey] = useState('nome');
+  const [sortKey, setSortKey] = useState('rag_soc');
   const [sortOrder, setSortOrder] = useState('asc');
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -36,7 +36,7 @@ export default function ContropartiTable() {
 
   const columns = useMemo(() => [
     { key: 'id', label: 'ID', cellClassName: 'text-center' },
-    { key: 'nome', label: 'Nome / Rag. Soc.', cellClassName: 'text-left' },
+    { key: 'rag_soc', label: 'Nome / Rag. Soc.', cellClassName: 'text-left' },
     { key: 'tipo', label: 'Tipo', cellClassName: 'text-center' },
     { key: 'citta', label: 'Città', cellClassName: 'text-left' },
     { key: 'telefono', label: 'Telefono', cellClassName: 'text-left' },
@@ -44,7 +44,7 @@ export default function ContropartiTable() {
   ], []);
 
   const filterFields = useMemo(() => [
-    { name: 'nome', label: 'Nome', type: 'text', placeholder: 'Cerca per nome...' },
+    { name: 'rag_soc', label: 'Nome', type: 'text', placeholder: 'Cerca per nome...' },
     { name: 'tipo', label: 'Tipo', type: 'select', options: ['CLIENTE', 'FORNITORE'], placeholder: '--Tipo--' },
     { name: 'citta', label: 'Città', type: 'text', placeholder: 'Cerca per città...' },
   ], []);
@@ -52,7 +52,7 @@ export default function ContropartiTable() {
   const headDocumentConfig = useMemo(() => ({
     titolo: selectedItem?.id ? 'Modifica Controparte' : 'Nuova Controparte',
     fields: [
-      { name: 'nome', label: 'Nome/Rag. Soc.', type: 'text', required: true, maxLength: 255 },
+      { name: 'rag_soc', label: 'Nome/Rag. Soc.', type: 'text', required: true, maxLength: 255 },
       { name: 'tipo', label: 'Tipo', type: 'select', options: ['CLIENTE','FORNITORE'], required: true },
       { name: 'codice_fiscale', label: 'Codice Fiscale', type: 'text', maxLength: 20, pattern: 'codiceFiscale' },
       { name: 'partita_iva', label: 'Partita IVA', type: 'text', maxLength: 20 },

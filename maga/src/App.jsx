@@ -19,8 +19,7 @@ import { logoutUser } from "./api/authApi";
 import Anagrafiche from "./components/Anagrafiche";
 import ArticoliTable from "./components/ArticoliTable";
 import CausaliTable from "./components/CausaliTable";
-import ClientiTable from "./components/ClientiTable";
-import FornitoriTable from "./components/FornitoriTable";
+import ContropartiTable from "./components/ContropartiTable";
 import Ordini from "./components/Ordini";
 import Login from "./components/Login";
 import MovimentiTable from "./components/MovimentiTable";
@@ -176,19 +175,9 @@ function App() {
           }
         >
           <Route
-            path="clienti"
+            path="controparti"
             element={
-              <ClientiTable
-                currentUser={currentUser}
-                onLogout={handleLogout}
-                currentLocation={location.pathname}
-              />
-            }
-          />
-          <Route
-            path="fornitori"
-            element={
-              <FornitoriTable
+              <ContropartiTable
                 currentUser={currentUser}
                 onLogout={handleLogout}
                 currentLocation={location.pathname}

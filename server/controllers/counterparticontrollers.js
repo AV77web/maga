@@ -29,7 +29,7 @@ const toPositiveInt = (value, defaultVal = 1) => {
 exports.getCounterparties = async (req, res, next) => {
   try {
     const {
-      nome,
+      rag_soc,
       tipo, // CLIENTE | FORNITORE | null
       cf, // codice fiscale
       partita_iva,
@@ -41,7 +41,7 @@ exports.getCounterparties = async (req, res, next) => {
       order_dir = "ASC",
     } = req.query;
 
-    const p_nome = nome || null;
+    const p_nome = rag_soc || null;
     const p_tipo = tipo || null;
     const p_cf = cf || null;
     const p_piva = partita_iva || null;
@@ -105,9 +105,9 @@ exports.insertCounterparty = async (req, res, next) => {
   try {
     // Estrarre i campi payload
     const {
-      nome,
+      rag_soc,
       tipo,
-      codice_fiscale,
+      cf,
       partita_iva,
       indirizzo,
       citta,
@@ -123,9 +123,9 @@ exports.insertCounterparty = async (req, res, next) => {
     const [results] = await db.query(
       "CALL InsertControparte(?,?,?,?,?,?,?,?,?,?,?,?,?)",
       [
-        nome,
+        rag_soc,
         tipo,
-        codice_fiscale,
+        cf,
         partita_iva,
         indirizzo,
         citta,

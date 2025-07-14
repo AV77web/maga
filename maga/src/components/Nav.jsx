@@ -56,11 +56,8 @@ const Nav = ({ onLogout, currentUser }) => {
       </div>
       {/* Sotto-menu Anagrafiche */}
       <div className={`submenu ${openMenu === "anagrafiche" ? "open" : ""}`}>
-        <Link to="/anagrafiche/clienti" className="mylink sublink">
-          Clienti
-        </Link>
-        <Link to="/anagrafiche/fornitori" className="mylink sublink">
-          Fornitori
+        <Link to="/anagrafiche/controparti" className="mylink sublink">
+          Controparti
         </Link>
       </div>
 
