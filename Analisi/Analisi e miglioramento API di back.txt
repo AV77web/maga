@@ -1,0 +1,25 @@
+Analisi e miglioramento API di back end del gestionale maga.
+
+
+1- Centralizzare tutti i try/catch usando wrapper catchAsync(fn) =>
+  (req,res,next)=>fn(req,res,next).catch(next).
+
+2-Cors con origine fissa, spostare su variabile d’ambiente per deploy.
+
+3-Test unitari su controller con Jest + supertest.
+
+4-Introdurre cache layer (Redis) su lookup statici (causali, articoli).
+
+5- Ogni richiesta apre una query sul pool, ma per carichi alti si consiglia di
+   impostare connectionLimit adeguato in db.js. Usare prepared:true in mysql2.
+   Se si preparano molte stesse query. 
+
+6- Middleware per tracciamento tempi (morgan oppure custom).
+
+7- Introdurre cach layer (es: Redis) su lookup statici (causali. Articoli).
+CI/CO & Qualità.
+
+8- Aggiungere Eslint/Prettier config server-side (già presente lato client).
+
+
+9-Impostare variabili d’ambiente per connesssione a mysql
