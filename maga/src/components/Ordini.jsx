@@ -16,6 +16,7 @@ import TableGrid from './TableGrid';
 import HeadDocument from './HeadDocument2'; // Usiamo la versione più recente
 import Pagination from './Pagination1';
 import '../css/Ordini.css'; // Riusiamo lo stile per coerenza
+import '../css/ArticoliTable.css'; // Uniforme con altri componenti
 
 const rowsPerPageOptions = [5, 10, 20, 50];
 
@@ -321,13 +322,15 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
             
             <h2>Righe Ordine</h2>
             <div className="table-wrapper">
-              <TableGrid
+              <div className="table-panel">
+                <TableGrid
                 columns={detailColumns}
                 rows={ordineRighe}                
                 selectedIds={selectedDetailIds}
                 onRowSelectionChange={handleDetailSelectionChange}
                 // Aggiungi props per selezione, modifica, eliminazione righe se necessario
               />
+              </div>
             </div>
           </>
         ) : (
@@ -335,7 +338,8 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
           <>
             
             <div className="table-wrapper">
-              <TableGrid
+              <div className="table-panel">
+                <TableGrid
                 columns={masterColumns}
                 rows={currentTableData}
                 selectedIds={selectedMasterIds}
@@ -346,6 +350,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
                 sortOrder={sortOrder}
                 onSort={toggleSort}
               />
+              </div>
             </div>
             <div className="pagination-bar">
               <Pagination

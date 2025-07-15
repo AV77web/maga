@@ -563,7 +563,8 @@ export default function MovimentiTable({
         )}
 
         <div className="table-wrapper">
-          <TableGrid
+          <div className="table-panel">
+            <TableGrid
             title="Gestione Movimenti"
             columns={tableColumns}
             rows={currentTableData}
@@ -582,6 +583,7 @@ export default function MovimentiTable({
             onClearAllSelections={() => setSelectedIds([])} // Funzione per deselezionare tutto
             areAnyRowsSelected={selectedIds.length > 0} // Per abilitare/disabilitare azioni di massa
           />
+          </div>
         </div>
 
         <div className="pagination-bar">

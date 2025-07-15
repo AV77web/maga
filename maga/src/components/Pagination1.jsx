@@ -18,6 +18,8 @@ const Pagination1 = ({
     siblingCount,
   });
 
+  // debug log removed
+
   if (paginationRange.length < 2) return null;
 
   const lastPage = paginationRange.length > 0 ? paginationRange[paginationRange.length - 1] : 1;

@@ -13,6 +13,7 @@ import TableGrid from './TableGrid';
 import Pagination from './Pagination1';
 import FilterSearch from './FilterSearch';
 import '../css/Ordini.css';
+import '../css/ArticoliTable.css'; // per stile uniforme
 import debounce from 'lodash/debounce';
 
 const rowsPerPageOptions = [5, 10, 20, 50];
@@ -33,6 +34,8 @@ export default function ContropartiTable() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [message, setMessage] = useState('');
+  // Modalità corrente: "create", "edit" o "view" (per future estensioni)
+  const [mode, setMode] = useState(null);
 
   const columns = useMemo(() => [
     { key: 'id', label: 'ID', cellClassName: 'text-center' },
@@ -81,10 +84,23 @@ export default function ContropartiTable() {
       const res = await counterpartiesApi.fetchByFilters(query);
       const rows = res.rows || res.result?.rows || [];
       const meta = res.meta || res.result?.meta || {};
+      // Salviamo sempre l'intero dataset restituito dal backend
       setList(rows);
-      const total = meta.totalRows || rows.length;
-      setTotalCount(total);
-      setTotalPages(Math.max(1, Math.ceil(total / rowsPerPage)));
+      // Calcola il totale delle righe e delle pagine da meta, con diversi fallback
+      const totalRows =
+        meta.totalRows ||
+        meta.total_rows ||
+        meta.total ||
+        meta.totalCount ||
+        rows.length;
+
+      const calculatedPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
+
+
+      setTotalCount(totalRows);
+      setTotalPages(calculatedPages);
+
+      // Nessun override: faremo slicing in fase di render
     } catch (err) {
       setError(err.message || 'Errore caricamento controparti');
     } finally {
@@ -106,10 +122,11 @@ export default function ContropartiTable() {
     setPage(0);
   };
 
-  const toggleSearchPanel = () => setShowSearch(prev=>!prev);
+  const toggleSearchPanel = () => setShowSearch((prev)=>!prev);
 
   const handleAdd = () => {
     setSelectedItem({ tipo: 'CLIENTE', nazione: 'Italia' });
+    setMode('create');
     setMessage('');
   };
 
@@ -120,6 +137,7 @@ export default function ContropartiTable() {
     }
     const item = list.find(r=>r.id===selectedIds[0]);
     setSelectedItem(item);
+    setMode('edit');
   };
 
   const handleDelete = () => {
@@ -152,6 +170,7 @@ export default function ContropartiTable() {
         setMessage('✅ Inserimento completato');
       }
       setSelectedItem(null);
+      setMode(null);
       fetchData();
     } catch(err){
       setError(err.message);
@@ -160,6 +179,13 @@ export default function ContropartiTable() {
 
   const handleHeadChange = (data) => {
     setSelectedItem(prev=>({...prev, ...data}));
+  };
+
+  const handleBack = () => {
+    setSelectedItem(null);
+    setMode(null);
+    // Mantiene eventuale selezione o la resetta
+    setSelectedIds([]);
   };
 
   const handleRowClick = (id) => {
@@ -176,95 +202,119 @@ export default function ContropartiTable() {
   },[]);
   const handleSearchDebounced = useMemo(()=>debounce(handleSearch,500),[]);
 
+  // log removed
+
+  // Se il backend non tronca i risultati, effettuiamo il slicing qui
+  const currentRows = useMemo(() => {
+    if (list.length <= rowsPerPage) return list;
+    return list.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+  }, [list, page, rowsPerPage]);
+
   return (
-    <div className="table-panel">
-      {error && <div className="message-error">{error}</div>}
-      {message && <div className="message-success">{message}</div>}
-
-      <FilterSearch
-        fields={filterFields}
-        onApply={(data) => {
-          setFilterData(data);
-          setPage(0);
-        }}
-      />
-
+    <>
       <Header
-        title="Gestione Controparti"
-        onAdd={handleAdd}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        selectedCount={selectedIds.length}
-        showSearch={showSearch}
-        toggleSearch={toggleSearchPanel}
-      />
+            
+            onAdd={handleAdd}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            selectedCount={selectedIds.length}
+            onSearch={toggleSearchPanel}
+          />
+      <div className="container">
+        {error && <div className="message-error">{error}</div>}
+        {message && <div className="message-success">{message}</div>}
 
-      <TableGrid
-        title="Gestione Controparti"
-        columns={columns}
-        rows={list}
-        loading={loading}
-        sortKey={sortKey}
-        sortOrder={sortOrder}
-        onSort={toggleSort}
-        onRowClick={handleRowClick}
-        selectedIds={selectedIds}
-      />
+        { !selectedItem && (
+          <>
+            {showSearch && (
+              <FilterSearch
+                fields={filterFields}
+                onApply={(data) => {
+                  setFilterData(data);
+                  setPage(0);
+                }}
+              />
+            )}
 
-      <div className="pagination-bar">
-        <Pagination
-          currentPage={page + 1}
-          totalPages={totalPages}
-          onPageChange={(newPage) => setPage(newPage - 1)}
-        />
-        <label>
-          Rows:&nbsp;
-          <select
-            value={rowsPerPage}
-            onChange={(e) => {
-              const size = parseInt(e.target.value, 10);
-              setRowsPerPage(size);
-              setPage(0);
-            }}
-          >
-            {rowsPerPageOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-          </select>
-        </label>
+            <div className="table-wrapper">
+              <div className="table-panel">
+                <TableGrid
+                  title="Gestione Controparti"
+                  columns={columns}
+                  rows={currentRows}
+                  loading={loading}
+                  sortKey={sortKey}
+                  sortOrder={sortOrder}
+                  onSort={toggleSort}
+                  onRowClick={handleRowClick}
+                  selectedIds={selectedIds}
+                />
+              </div>
+            </div>
+
+            <div className="pagination-bar">
+              <Pagination
+                currentPage={page + 1}
+                totalPages={totalPages}
+                onPageChange={(newPage) => setPage(newPage - 1)}
+              />
+              <label>
+                Elementi per pagina:&nbsp;
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    const newSize = parseInt(e.target.value, 10);
+                    setRowsPerPage(newSize);
+                    setPage(0);
+                  }}
+                >
+                  {rowsPerPageOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+              </label>
+            </div>
+          </>
+        )}
+
+        { selectedItem && (
+          <>
+            <Header
+              title={mode === 'create' ? 'Nuova Controparte' : (mode === 'edit' ? 'Modifica Controparte' : 'Dettaglio Controparte')}
+              onBack={handleBack}
+              onSave={handleSave}
+            />
+
+            <HeadDocument
+              config={headDocumentConfig}
+              initialData={selectedItem}
+              onChange={handleHeadChange}
+              readOnly={mode === 'view'}
+            />
+          </>
+        )}
+
+        {showSearch && (
+          <DialogCustom
+            isOpen={showSearch}
+            onClose={toggleSearchPanel}
+            title="Filtri di Ricerca"
+            onSave={handleSearchDebounced}
+            onCancel={toggleSearchPanel}
+            fields={filterFields}
+            initialValues={filterData}
+          />
+        )}
+
+        {/* Dialog di eliminazione */}
+        {showDeleteDialog && (
+          <DialogCustom
+            isOpen={showDeleteDialog}
+            onClose={() => setShowDeleteDialog(false)}
+            onConfirm={performDelete}
+            title="Conferma Eliminazione"
+            message={`Sei sicuro di voler eliminare ${selectedIds.length} record? Questa azione è irreversibile.`}
+          />
+        )}
       </div>
-
-      {showSearch && (
-        <DialogCustom
-          isOpen={showSearch}
-          onClose={toggleSearchPanel}
-          title="Filtri di Ricerca"
-          onSave={handleSearchDebounced}
-          onCancel={toggleSearchPanel}
-          fields={filterFields}
-          initialValues={filterData}
-        />
-      )}
-
-      {selectedItem && (
-        <HeadDocument
-          isOpen={!!selectedItem}
-          onClose={() => setSelectedItem(null)}
-          onSave={handleSave}
-          onCancel={() => setSelectedItem(null)}
-          config={headDocumentConfig}
-          data={selectedItem}
-          onChange={handleHeadChange}
-        />
-      )}
-
-      {showDeleteDialog && (
-        <DialogCustom
-          isOpen={showDeleteDialog}
-          onClose={() => setShowDeleteDialog(false)}
-          onConfirm={performDelete}
-          title="Conferma Eliminazione"
-          message={`Sei sicuro di voler eliminare ${selectedIds.length} record? Questa azione è irreversibile.`}
-        />
-      )}
-    </div>
+    </>
   );
 } 

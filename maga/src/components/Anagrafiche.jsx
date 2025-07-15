@@ -8,11 +8,8 @@ const Anagrafiche = ({ currentUser, onLogout, currentLocation }) => {
     <div>
       <nav>
         <div className="mylink-anagrafiche">
-            <Link to="clienti" className="mylink">
-            Clienti
-            </Link>
             <Link to="fornitori" className="mylink">
-            Fornitori
+             Controparti
             </Link>
         </div>
       </nav>

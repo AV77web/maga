@@ -65,3 +65,28 @@
   font-size: 0.85rem;
   margin-top: 0.25rem;
 }
+
+.table-panel {
+  box-sizing: border-box;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(90, 90, 90, 0.5);
+  padding: 16px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: auto;
+}
+
+/* Centra le tabelle nei pannelli che usano .table-wrapper */
+.table-wrapper {
+  display: flex;
+  justify-content: center; /* centra la tabella orizzontalmente */
+  overflow-x: auto;        /* permette lo scroll orizzontale se necessario */
+}
+
+.table-wrapper .ricambi-table {
+  width: auto;             /* evita che la tabella occupi sempre il 100% e fuoriesca */
+  margin: 0 auto;          /* fallback di centratura se il flex non applica */
+}

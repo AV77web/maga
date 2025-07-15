@@ -1,5 +1,3 @@
 .mylink-anagrafiche {
-    display:flex;
-    flex-direction: row;
-    gap: 50px; 
+    box-sizing: border-box;
 }
