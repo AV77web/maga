@@ -15,6 +15,8 @@ import {
   useLocation,
 } from "react-router-dom";
 import { logoutUser } from "./api/authApi";
+import OrdersListPage from "./pages/OrdersListPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
 
 import Anagrafiche from "./components/Anagrafiche";
 import ArticoliTable from "./components/ArticoliTable";
@@ -139,14 +141,29 @@ function App() {
           }
         />
         <Route
-          path="/ordini"
+          path="/ordini/*"
           element={
             <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
-              <Ordini
-                currentUser={currentUser}
-                onLogout={handleLogout}
-                currentLocation={location.pathname}
-              />
+              <Routes>
+                <Route index element={
+                  <OrdersListPage
+                    currentUser={currentUser}
+                    onLogout={handleLogout}
+                  />
+                }/>
+                <Route path="new" element={
+                  <OrderDetailPage
+                    currentUser={currentUser}
+                    onLogout={handleLogout}
+                  />
+                }/>
+                <Route path=":orderId" element={
+                  <OrderDetailPage
+                    currentUser={currentUser}
+                    onLogout={handleLogout}
+                  />
+                }/>
+              </Routes>
             </ProtectedRoute>
           }
         />

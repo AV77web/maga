@@ -1,0 +1,44 @@
+{
+  "$id": "https://example.com/schemas/customer.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Customer",
+  "description": "Schema per creazione/aggiornamento cliente",
+  "type": "object",
+  "required": ["codice", "nome", "tipo_cliente"],
+  "properties": {
+    "codice": { "type": "string", "minLength": 1, "maxLength": 20 },
+    "nome": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "tipo_cliente": { "type": "string", "enum": ["Azienda", "Privato"] },
+    "partita_iva": { "type": "string", "minLength": 11, "maxLength": 20 },
+    "cf": { "type": "string", "minLength": 16, "maxLength": 16 },
+    "indirizzo": { "type": "string", "maxLength": 255 },
+    "citta": { "type": "string", "maxLength": 100 },
+    "cap": { "type": "string", "maxLength": 10 },
+    "pv": { "type": "string", "maxLength": 2 },
+    "nazione": { "type": "string", "maxLength": 50 },
+    "telefono": { "type": "string", "maxLength": 30 },
+    "email": { "type": "string", "format": "email" },
+    "sito_web": { "type": "string", "maxLength": 100 },
+    "note": { "type": "string", "maxLength": 500 },
+    "contatto": { "type": "string", "maxLength": 100 }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "tipo_cliente": { "const": "Azienda" } } },
+      "then": { "required": ["partita_iva"] }
+    },
+    {
+      "if": { "properties": { "tipo_cliente": { "const": "Privato" } } },
+      "then": { "required": ["cf"] }
+    }
+  ],
+  "additionalProperties": false,
+  "errorMessage": {
+    "required": {
+      "codice": "Il campo 'codice' è obbligatorio.",
+      "nome": "Il campo 'nome' è obbligatorio.",
+      "tipo_cliente": "Il campo 'tipo_cliente' è obbligatorio."
+    },
+    "additionalProperties": "Sono presenti campi non ammessi nella richiesta di cliente."
+  }
+} 

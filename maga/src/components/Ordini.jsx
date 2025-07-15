@@ -11,6 +11,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ordiniApi from '../api/ordiniApi';
 import ordiniRigheApi from '../api/ordiniRigheApi'; // API per le righe
 import fornitoriApi from '../api/fornitoriApi'; // API per i fornitori
+import FilterSearch from './FilterSearch';
 import Header from './Header';
 import TableGrid from './TableGrid';
 import HeadDocument from './HeadDocument2'; // Usiamo la versione più recente
@@ -20,7 +21,14 @@ import '../css/ArticoliTable.css'; // Uniforme con altri componenti
 
 const rowsPerPageOptions = [5, 10, 20, 50];
 
-const Ordini = ({ currentUser, currentLocation, onLogout }) => {
+const Ordini = ({
+  currentUser,
+  currentLocation,
+  onLogout,
+  onRowNavigate = () => {},
+  onCreateNavigate = () => {},
+  ...props
+}) => {
   // --- STATI ---
   const [ordiniList, setOrdiniList] = useState([]); // Lista di tutti gli ordini (master)
   const [selectedOrdine, setSelectedOrdine] = useState(null); // Dati della testata dell'ordine selezionato
@@ -37,9 +45,10 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [isEditing, setIsEditing] = useState(false); // <--- Stato per attivare HeadDocument in modifica
 
 
-   const toggleSort = (key) => {
+  const toggleSort = (key) => {
     if (key === sortKey) {
       setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
@@ -52,7 +61,6 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   const toggleSearchPanel = () => {
     setShowSearch((prev) => !prev);
   };
-
 
   // --- CONFIGURAZIONI ---
   // Colonne per la tabella master degli ordini
@@ -140,12 +148,12 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
       const valA = a[sortKey];
       const valB = b[sortKey];
 
-    // Aggiungiamo un caso specifico per 'num_ordine' per forzare l'ordinamento numerico
-    if (sortKey === 'num_ordine') {
-      const numA = parseInt(valA, 10);
-      const numB = parseInt(valB, 10);
-      return sortOrder === 'asc' ? numA - numB : numB - numA;
-    }
+      // Aggiungiamo un caso specifico per 'num_ordine' per forzare l'ordinamento numerico
+      if (sortKey === 'num_ordine') {
+        const numA = parseInt(valA, 10);
+        const numB = parseInt(valB, 10);
+        return sortOrder === 'asc' ? numA - numB : numB - numA;
+      }
 
       if (typeof valA === "string" && typeof valB === "string") {
         return sortOrder === "asc"
@@ -163,7 +171,6 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
     return sorted;
   }, [ordiniList, sortKey, sortOrder]);
 
-
   // --- GESTORI EVENTI ---
   const handleNewOrdine = useCallback(() => {
     // Prepara un oggetto vuoto per la creazione di un nuovo ordine
@@ -178,54 +185,131 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
     setSelectedOrdine(newOrdineTemplate);
     setOrdineRighe([]); // Le righe sono ovviamente vuote
     setSelectedDetailIds([]); // Pulisce la selezione delle righe
+    setIsEditing(true); // Attiva HeadDocument in modalità modifica/creazione
   }, []);
+
+  // Modifica: handler asincrono per edit da Header
+  const handleEditFromHeader = useCallback(async () => {
+    if (selectedMasterIds.length === 0) {
+      alert("Seleziona un ordine da modificare");
+      return;
+    }
+    if (selectedMasterIds.length > 1) {
+      alert("Puoi modificare solo un ordine alla volta dall'header. Seleziona una singola riga.");
+      return;
+    }
+    const ordineId = selectedMasterIds[0];
+    setLoading(true);
+    setError('');
+    try {
+      /*
+       * 1. Recuperiamo i dati dell'ordine dal dataset già in memoria (ordiniList).
+       *    In questo modo evitiamo di invocare un endpoint non ancora disponibile
+       *    come /orders/:id che genererebbe un 404.
+       */
+      const ordineSelezionato = ordiniList.find((o) => o.id === ordineId);
+      if (!ordineSelezionato) {
+        throw new Error(`Ordine con ID ${ordineId} non trovato nella tabella.`);
+      }
+
+      // Normalizza la data per l'input type="date" (YYYY-MM-DD)
+      let dataISO = ordineSelezionato.data_ordine;
+      if (typeof dataISO === 'string' && dataISO.includes('/')) {
+        const [gg, mm, aa] = dataISO.split('/');
+        dataISO = `${aa}-${mm.padStart(2, '0')}-${gg.padStart(2, '0')}`;
+      }
+
+      const testata = {
+        id: ordineSelezionato.id,
+        num_ordine: ordineSelezionato.num_ordine,
+        data_ordine: dataISO,
+        fornitore_id: ordineSelezionato.fornitore_id,
+        stato: ordineSelezionato.stato,
+        note: ordineSelezionato.note,
+      };
+
+      // 2. Recuperiamo le righe dell'ordine da backend (endpoint esistente)
+
+      const righeResponse = await ordiniRigheApi.fetchByOrdineId(ordineId);
+      const righe = Array.isArray(righeResponse)
+        ? righeResponse
+        : righeResponse?.rows || [];
+
+      setSelectedOrdine(testata);
+      setOrdineRighe(righe);
+      setSelectedDetailIds([]);
+      setIsEditing(true); // Attiva HeadDocument in modifica
+      setSelectedMasterIds([]); // Pulisce la selezione dopo l'edit
+    } catch (err) {
+      setError(`Errore nel caricamento dei dettagli dell'ordine: ${err.message}`);
+      setSelectedOrdine(null);
+      setOrdineRighe([]);
+      setIsEditing(false);
+      setSelectedMasterIds([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedMasterIds, ordiniList]);
 
   const handleOrdineSelect = useCallback(async (ordineId) => {
     if (!ordineId) {
       setSelectedOrdine(null);
       setOrdineRighe([]);
+      setIsEditing(false);
       return;
     }
 
     setLoading(true);
     setError('');
     try {
-      // Recupera sia la testata che le righe in parallelo
-      const [testata, righe] = await Promise.all([
-        ordiniApi.fetchById(ordineId),
-        ordiniRigheApi.fetchByOrdineId(ordineId) // Nuovo metodo API
-      ]);
-
-      // --- INIZIO BLOCCO DI DEBUG ---
-      const righeIds = new Set();
-      const righeDuplicates = [];
-      righe.forEach(item => {
-        if (item.id === undefined || item.id === null) {
-          console.warn(`Trovata riga ordine con ID mancante per l'ordine ${ordineId}:`, item);
-        }
-        if (righeIds.has(item.id)) {
-          righeDuplicates.push(item.id);
-        }
-        righeIds.add(item.id);
-      });
-      if (righeDuplicates.length > 0) {
-        console.error(`Trovati ID duplicati nelle righe dell'ordine ${ordineId}:`, righeDuplicates);
+      // Recupera la testata dall'elenco ordini già in memoria
+      const ordineSelezionato = ordiniList.find((o) => o.id === ordineId);
+      if (!ordineSelezionato) {
+        throw new Error(`Ordine con ID ${ordineId} non trovato nella tabella.`);
       }
-      // --- FINE BLOCCO DI DEBUG ---
-      
-      // Formatta la data per il componente HeadDocument (che vuole YYYY-MM-DD)
-      testata.data_ordine = new Date(testata.data_ordine).toISOString().split('T')[0];
+
+      // Normalizza la data per HeadDocument (YYYY-MM-DD)
+      let dataISO = ordineSelezionato.data_ordine;
+      if (typeof dataISO === 'string' && dataISO.includes('/')) {
+        const [gg, mm, aa] = dataISO.split('/');
+        dataISO = `${aa}-${mm.padStart(2, '0')}-${gg.padStart(2, '0')}`;
+      }
+
+      const testata = {
+        id: ordineSelezionato.id,
+        num_ordine: ordineSelezionato.num_ordine,
+        data_ordine: dataISO,
+        fornitore_id: ordineSelezionato.fornitore_id,
+        stato: ordineSelezionato.stato,
+        note: ordineSelezionato.note,
+      };
+
+      // Recupera le righe dal backend
+      const righeResponse = await ordiniRigheApi.fetchByOrdineId(ordineId);
+      const righe = Array.isArray(righeResponse)
+        ? righeResponse
+        : righeResponse?.rows || [];
 
       setSelectedOrdine(testata);
       setOrdineRighe(righe);
       setSelectedDetailIds([]); // Pulisce la selezione delle righe quando si cambia ordine
+      setIsEditing(false); // Quando selezioni, non sei in modifica
     } catch (err) {
       setError(`Errore nel caricamento dei dettagli dell'ordine: ${err.message}`);
       setSelectedOrdine(null);
       setOrdineRighe([]);
+      setIsEditing(false);
     } finally {
       setLoading(false);
     }
+  }, [ordiniList]);
+
+  // In modifica si attiva HeadDocument
+  const handleEdit = useCallback((item) => {
+    setSelectedOrdine(item);
+    setSelectedDetailIds([]);
+    setSelectedMasterIds([]);
+    setIsEditing(true); // Attiva HeadDocument in modifica
   }, []);
 
   const handleBackToMaster = () => {
@@ -233,6 +317,7 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
     setOrdineRighe([]);
     setSelectedMasterIds([]); // Pulisce la selezione master
     setSelectedDetailIds([]); // Pulisce la selezione detail
+    setIsEditing(false); // Esci dalla modalità modifica
   };
 
   const handleSaveOrdine = useCallback(async () => {
@@ -294,12 +379,78 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
   // --- DATI PER LA VISUALIZZAZIONE ---
   const currentTableData = sortedOrdini; // dati già paginati dal backend
 
+  // Definisci i campi per il filtro dei ricambi
+  const ordiniFilterFields = useMemo(
+    () => [
+      {
+        name: "num_ordine",
+        label: "Numero ordine",
+        type: "text",
+        placeholder: "Cerca per numero ordine...",
+      },
+      {
+        name: "fornitore_id",
+        label: "Descrizione",
+        type: "text",
+        placeholder: "Cerca per fornitore...",
+      },
+      {
+        name: "stato",
+        label: "Stato ordine",
+        type: "text",
+        placeholder: "Cerca per stato ordine...",
+      },
+      // Aggiungi altri campi se necessario, es. per quantità min/max se l'API lo supporta
+    ],
+    []
+  );
+  // --- GESTORI RICERCA ---
+  // Funzione per gestire la ricerca dei ricambi
+  const handleSearchOrdini = async (filterValues) => {
+    // Funzione unificata per ricerca e aggiornamento stato
+    setLoading(true);
+    setMessage("");
+    try {
+      const queryParams = {
+        ...filterValues,
+        page: 1,
+        page_size: rowsPerPage,
+        order_by: sortKey || "name",
+        order_dir: sortOrder,
+      };
+
+      const resultsFromSearch = await ordiniApi.fetchByFilters(queryParams);
+
+      if (resultsFromSearch && Array.isArray(resultsFromSearch.rows)) {
+        setOrdiniList(resultsFromSearch.rows);
+        setTotalCount(resultsFromSearch.meta?.totalRows || resultsFromSearch.rows.length);
+        setPage(0); // resetta alla prima pagina
+        if (resultsFromSearch.rows.length === 0) {
+          setMessage("ℹ️ Nessun ordine trovato con i filtri specificati.");
+        }
+      } else {
+        throw new Error(
+          resultsFromSearch?.error || "Dati filtrati non validi."
+        );
+      }
+    } catch (err) {
+      console.error("Errore nella ricerca ordini:", err);
+      setMessage(`❌ Errore ricerca ordini: ${err.message || err}`);
+      setOrdiniList([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <Header
+        onEdit={handleEditFromHeader}
         onBack={selectedOrdine ? handleBackToMaster : null} // Mostra "Indietro" solo in vista dettaglio
-        onAdd={!selectedOrdine ? handleNewOrdine : null} // Mostra "Aggiungi" solo nella vista master
+        onAdd={onCreateNavigate}
+        
         onSave={selectedOrdine ? handleSaveOrdine : null} // Mostra "Salva" solo nella vista dettaglio
+        onSearch={toggleSearchPanel}
         currentUser={currentUser}
         currentLocation={currentLocation}
         onLogout={onLogout}
@@ -316,40 +467,48 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
               config={headDocumentConfig}
               initialData={selectedOrdine}
               onChange={handleHeadChange}
-              readOnly={false} // o basato sui permessi/stato ordine
-              
+              readOnly={false} // sempre editabile quando si entra in modifica
             />
             
             <h2>Righe Ordine</h2>
             <div className="table-wrapper">
               <div className="table-panel">
                 <TableGrid
-                columns={detailColumns}
-                rows={ordineRighe}                
-                selectedIds={selectedDetailIds}
-                onRowSelectionChange={handleDetailSelectionChange}
-                // Aggiungi props per selezione, modifica, eliminazione righe se necessario
-              />
+                  columns={detailColumns}
+                  rows={ordineRighe}
+                  selectedIds={selectedDetailIds}
+                  onRowSelectionChange={handleDetailSelectionChange}
+                  onRowClick={(rowId) => onRowNavigate(rowId)}
+                  // Aggiungi props per selezione, modifica, eliminazione righe se necessario
+                />
               </div>
             </div>
           </>
         ) : (
           // --- VISTA MASTER ---
           <>
-            
+            {showSearch && (
+              <FilterSearch
+                fields={ordiniFilterFields}
+                onSearch={handleSearchOrdini}
+                onApply={(data) => {
+                  setFilterData(data);
+                }}
+              />
+            )}
             <div className="table-wrapper">
               <div className="table-panel">
                 <TableGrid
-                columns={masterColumns}
-                rows={currentTableData}
-                selectedIds={selectedMasterIds}
-                loading={loading}
-                onRowSelectionChange={handleMasterSelectionChange}
-                onRowClick={(rowId) => handleOrdineSelect(rowId)} // Azione al click sulla riga
-                sortKey={sortKey}
-                sortOrder={sortOrder}
-                onSort={toggleSort}
-              />
+                  columns={masterColumns}
+                  rows={currentTableData}
+                  selectedIds={selectedMasterIds}
+                  loading={loading}
+                  onRowSelectionChange={handleMasterSelectionChange}
+                  onRowClick={(rowId) => handleOrdineSelect(rowId)} // Azione al click sulla riga
+                  sortKey={sortKey}
+                  sortOrder={sortOrder}
+                  onSort={toggleSort}
+                />
               </div>
             </div>
             <div className="pagination-bar">
@@ -387,3 +546,10 @@ const Ordini = ({ currentUser, currentLocation, onLogout }) => {
 };
 
 export default Ordini;
+// ... existing code ...
+
+// dentro TableGrid:
+
+// pulsante Add nell'Header:
+
+// ... existing code ...

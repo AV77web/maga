@@ -1,0 +1,60 @@
+{
+  "$id": "https://example.com/schemas/part.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Part",
+  "description": "Schema per creazione/aggiornamento ricambio (part)",
+  "type": "object",
+  "required": ["name", "description", "quantita", "min", "max", "supplier", "um", "prezzo"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "quantita": {
+      "type": "number",
+      "minimum": 0
+    },
+    "min": {
+      "type": "number",
+      "minimum": 0
+    },
+    "max": {
+      "type": "number",
+      "minimum": 0
+    },
+    "supplier": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "um": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10
+    },
+    "prezzo": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "errorMessage": {
+    "required": {
+      "name": "Il campo 'name' è obbligatorio.",
+      "description": "Il campo 'description' è obbligatorio.",
+      "quantita": "Il campo 'quantita' è obbligatorio.",
+      "min": "Il campo 'min' è obbligatorio.",
+      "max": "Il campo 'max' è obbligatorio.",
+      "supplier": "Il campo 'supplier' è obbligatorio.",
+      "um": "Il campo 'um' è obbligatorio.",
+      "prezzo": "Il campo 'prezzo' è obbligatorio."
+    },
+    "additionalProperties": "Sono presenti campi non ammessi nella richiesta di ricambio."
+  }
+} 
