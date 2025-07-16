@@ -71,10 +71,13 @@ export default function DocumentHeaderForm({
     return () => fn.cancel();
   }, [watched, onChange]);
 
+  const HIDDEN_FIELDS = ['data_creazione', 'data_modifica', 'operation'];
   const fields = useMemo(
     () => buildFieldConfig(schema, uiHints),
     [schema, uiHints]
   );
+  const visibleFields = fields.filter(f => !HIDDEN_FIELDS.includes(f.name));
+  console.log('FIELDS:', visibleFields.map(f => f.name));
 
   const requiredFields = schema.required || [];
 
@@ -147,7 +150,7 @@ export default function DocumentHeaderForm({
   return (
     <form className="doc-header" noValidate>
       <h3>{uiHints?.title || schema.title || 'Dettaglio Documento'}</h3>
-      <div className="fields-grid">{fields.map(renderField)}</div>
+      <div className="fields-grid">{visibleFields.map(renderField)}</div>
     </form>
   );
 } 
