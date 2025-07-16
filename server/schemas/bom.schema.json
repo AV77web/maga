@@ -2,23 +2,57 @@
   "$id": "https://example.com/schemas/bom.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "BOMRow",
-  "description": "Schema per riga Distinta Base (padre/figlio)",
+  "description": "Schema unico per creazione (POST) e aggiornamento (PATCH) di una riga Distinta Base",
   "type": "object",
-  "required": ["id_father", "id_son", "quantita"],
   "properties": {
+    "operation": {
+      "type": "string",
+      "enum": ["create", "update"],
+      "description": "Indica se la validazione è per creazione o aggiornamento"
+    },
     "id_father": {
       "type": "integer",
-      "minimum": 1
+      "minimum": 1,
+      "errorMessage": {
+        "type": "Il campo 'id_father' deve essere un numero intero.",
+        "minimum": "Il campo 'id_father' deve essere maggiore di 0."
+      }
     },
     "id_son": {
       "type": "integer",
-      "minimum": 1
+      "minimum": 1,
+      "errorMessage": {
+        "type": "Il campo 'id_son' deve essere un numero intero.",
+        "minimum": "Il campo 'id_son' deve essere maggiore di 0."
+      }
     },
     "quantita": {
       "type": "number",
-      "exclusiveMinimum": 0
+      "exclusiveMinimum": 0,
+      "errorMessage": {
+        "exclusiveMinimum": "Il campo 'quantita' deve essere maggiore di 0."
+      }
     }
   },
+  "required": ["id_father", "id_son", "quantita"],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "operation": { "const": "create" } }
+      },
+      "then": {
+        "required": ["id_father", "id_son", "quantita"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "operation": { "const": "update" } }
+      },
+      "then": {
+        "required": []
+      }
+    }
+  ],
   "additionalProperties": false,
   "errorMessage": {
     "required": {
@@ -28,4 +62,4 @@
     },
     "additionalProperties": "Sono presenti campi non ammessi nella richiesta della distinta base."
   }
-} 
+}

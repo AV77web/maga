@@ -2,10 +2,14 @@
   "$id": "https://example.com/schemas/order.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Order",
-  "description": "Schema per creazione/aggiornamento ordine",
+  "description": "Schema unico per creazione (POST) e aggiornamento (PATCH) di un ordine",
   "type": "object",
-  "required": ["num_ordine", "data_ordine", "fornitore_id", "stato"],
   "properties": {
+    "operation": {
+      "type": "string",
+      "enum": ["create", "update"],
+      "description": "Indica se la validazione è per creazione o aggiornamento"
+    },
     "num_ordine": {
       "type": "string",
       "minLength": 1,
@@ -42,6 +46,25 @@
       "maxLength": 500
     }
   },
+  "required": ["num_ordine", "data_ordine", "fornitore_id", "stato"],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "operation": { "const": "create" } }
+      },
+      "then": {
+        "required": ["num_ordine", "data_ordine", "fornitore_id", "stato"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "operation": { "const": "update" } }
+      },
+      "then": {
+        "required": []
+      }
+    }
+  ],
   "additionalProperties": false,
   "errorMessage": {
     "required": {
@@ -52,4 +75,4 @@
     },
     "additionalProperties": "Sono presenti campi non ammessi nella richiesta di ordine."
   }
-} 
+}

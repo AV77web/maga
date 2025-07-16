@@ -76,6 +76,8 @@ export default function DocumentHeaderForm({
     [schema, uiHints]
   );
 
+  const requiredFields = schema.required || [];
+
   /* ---------- Render helpers ---------- */
   const renderSelect = (f, field) => {
     const [options, setOptions] = React.useState(f.enum || []);
@@ -119,15 +121,24 @@ export default function DocumentHeaderForm({
 
   const renderField = (f) => (
     <div key={f.name} className="field">
-      <label>{f.label}</label>
+      <label>
+        {f.label}
+        {requiredFields.includes(f.name) && <span style={{ color: 'red', marginLeft: 4 }}>*</span>}
+      </label>
       <Controller
         name={f.name}
         control={control}
-        render={({ field }) =>
-          f.type === 'select'
-            ? renderSelect(f, field)
-            : renderInput(f, field)
-        }
+        render={({ field }) => {
+          const isRequired = requiredFields.includes(f.name);
+          const common = {
+            ...field,
+            disabled: readOnly,
+            readOnly,
+            className: isRequired ? 'required-field' : undefined,
+          };
+          if (f.type === 'select') return renderSelect(f, { ...field, className: isRequired ? 'required-field' : undefined });
+          return renderInput(f, common);
+        }}
       />
       {errors[f.name] && <p className="error">{errors[f.name]?.message}</p>}
     </div>

@@ -329,6 +329,14 @@ h2 {
   margin-top: 50px;
 }
 
+
+
+.required-field {
+  border: 2px solid #e53935 !important;
+  box-shadow: 0 0 2px #e53935;
+}
+
+
 /* Responsive table - optional uncommented section
   @media (max-width: 768px) {
     .container table,

@@ -1,0 +1,84 @@
+Gestione righe ordine
+
+1. Visualizzazione delle righe
+Le righe sono già mostrate tramite <TableGrid ... rows={ordineRighe} ... /> nella sezione dettaglio ordine.
+Le colonne sono definite in detailColumns.
+2. Inserimento di una nuova riga
+Aggiungi un pulsante “Aggiungi riga” sopra la tabella delle righe.
+Al click, apri una modale o un form inline per inserire i dati della nuova riga.
+Alla conferma, chiama l’API ordiniRigheApi.insert({ ... }) e aggiorna lo stato ordineRighe (o refetch).
+3. Modifica di una riga
+Aggiungi un’icona “modifica” (matita) su ogni riga della tabella.
+Al click, apri una modale o abilita l’editing inline dei campi.
+Alla conferma, chiama l’API ordiniRigheApi.update(id, { ... }) e aggiorna lo stato.
+4. Cancellazione di una riga
+Aggiungi una checkbox per selezionare le righe o un’icona “cestino” su ogni riga.
+Al click, conferma l’azione e chiama ordiniRigheApi.delete(id), poi aggiorna lo stato.
+5. Esempio di implementazione minima
+Aggiungi i pulsanti sopra la tabella delle righe:
+Apply to ordinicontro...
+
+<div className="order-lines-toolbar">
+  <button onClick={handleAddRiga}>Aggiungi riga</button>
+  <button onClick={handleDeleteRighe} disabled={selectedDetailIds.length === 0}>Elimina selezionate</button>
+</div>
+
+Gestori:
+Apply to ordinicontro...
+
+const handleAddRiga = () => {
+  // Apri una modale o mostra un form inline per inserire i dati della nuova riga
+  // Esempio: setShowRigaDialog(true);
+};
+
+const handleEditRiga = (riga) => {
+  // Apri una modale precompilata con i dati della riga
+  // Esempio: setEditingRiga(riga); setShowRigaDialog(true);
+};
+
+const handleDeleteRighe = async () => {
+  if (!window.confirm("Confermi l'eliminazione delle righe selezionate?")) return;
+  setLoading(true);
+  try {
+    await Promise.all(selectedDetailIds.map(id => ordiniRigheApi.delete(id)));
+    setOrdineRighe(prev => prev.filter(r => !selectedDetailIds.includes(r.id)));
+    setSelectedDetailIds([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+Tabella con azioni:
+Apply to ordinicontro...
+
+<TableGrid
+  columns={[
+    ...detailColumns,
+    {
+      key: 'actions',
+      label: 'Azioni',
+      cellClassName: 'text-center',
+      render: (row) => (
+        <>
+          <button onClick={() => handleEditRiga(row)}>✏️</button>
+          <button onClick={() => handleDeleteRighe([row.id])}>🗑️</button>
+        </>
+      ),
+    },
+  ]}
+  rows={ordineRighe}
+  selectedIds={selectedDetailIds}
+  onRowSelectionChange={handleDetailSelectionChange}
+/>
+
+Dialog per inserimento/modifica riga
+Crea un componente OrderLineDialog che riceve i dati della riga (vuoti per inserimento, precompilati per modifica) e chiama l’API giusta (insert o update) alla conferma.
+6. Consigli architetturali
+Validazione: Usa lo stesso schema JSON anche per le righe (orderLine.schema.json).
+Batch: Se vuoi performance migliori, puoi implementare un salvataggio batch (PATCH) di tutte le righe modificate.
+UX: Mostra spinner/overlay durante le operazioni e toast di successo/errore.
+7. Prossimi step
+Vuoi che ti generi un esempio di OrderLineDialog (form modale per inserimento/modifica)?
+Vuoi la logica completa per la toolbar e la tabella con azioni?
+Vuoi la struttura di uno schema JSON per le righe (orderLine.schema.json)?
+Dimmi da quale punto vuoi partire e ti scrivo il codice!

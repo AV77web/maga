@@ -2,47 +2,100 @@
   "$id": "https://example.com/schemas/part.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Part",
-  "description": "Schema per creazione/aggiornamento ricambio (part)",
+  "description": "Schema unico per creazione (POST) e aggiornamento (PATCH) di un ricambio (part)",
   "type": "object",
-  "required": ["name", "description", "quantita", "min", "max", "supplier", "um", "prezzo"],
   "properties": {
+    "operation": {
+      "type": "string",
+      "enum": ["create", "update"],
+      "description": "Indica se la validazione è per creazione o aggiornamento"
+    },
     "name": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 100
+      "maxLength": 100,
+      "errorMessage": {
+        "minLength": "Il campo 'name' non può essere vuoto.",
+        "maxLength": "Il campo 'name' non può superare 100 caratteri."
+      }
     },
     "description": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 255
+      "maxLength": 255,
+      "errorMessage": {
+        "minLength": "Il campo 'description' non può essere vuoto.",
+        "maxLength": "Il campo 'description' non può superare 255 caratteri."
+      }
     },
     "quantita": {
       "type": "number",
-      "minimum": 0
+      "minimum": 0,
+      "errorMessage": {
+        "minimum": "Il campo 'quantita' non può essere negativo."
+      }
     },
     "min": {
       "type": "number",
-      "minimum": 0
+      "minimum": 0,
+      "errorMessage": {
+        "minimum": "Il campo 'min' non può essere negativo."
+      }
     },
     "max": {
       "type": "number",
-      "minimum": 0
+      "minimum": 0,
+      "errorMessage": {
+        "minimum": "Il campo 'max' non può essere negativo."
+      }
     },
     "supplier": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 100
+      "maxLength": 100,
+      "errorMessage": {
+        "minLength": "Il campo 'supplier' non può essere vuoto.",
+        "maxLength": "Il campo 'supplier' non può superare 100 caratteri."
+      }
     },
     "um": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 10
+      "maxLength": 10,
+      "errorMessage": {
+        "minLength": "Il campo 'um' non può essere vuoto.",
+        "maxLength": "Il campo 'um' non può superare 10 caratteri."
+      }
     },
     "prezzo": {
       "type": "number",
-      "minimum": 0
+      "minimum": 0,
+      "errorMessage": {
+        "minimum": "Il campo 'prezzo' non può essere negativo."
+      }
     }
   },
+  "required": ["operation"],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "operation": { "const": "create" } }
+      },
+      "then": {
+        "required": [
+          "name", "description", "quantita", "min", "max", "supplier", "um", "prezzo"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": { "operation": { "const": "update" } }
+      },
+      "then": {
+        "required": []
+      }
+    }
+  ],
   "additionalProperties": false,
   "errorMessage": {
     "required": {
@@ -57,4 +110,4 @@
     },
     "additionalProperties": "Sono presenti campi non ammessi nella richiesta di ricambio."
   }
-} 
+}

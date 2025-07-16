@@ -201,7 +201,7 @@ exports.updateOrdine = async (req, res, next) => {
     const { num_ordine, data_ordine, fornitore_id, stato, note } = dataToValidate;
 
     // Assumendo una SP 'UpdateOrdine'
-    const [result] = await db.query("CALL UpdateOrdine(?, ?, ?, ?, ?, ?)", [ id_ordine, num_ordine, data_ordine, fornitore_id, stato, note || null]);
+    const [result] = await db.query("CALL UpdateOrdini(?, ?, ?, ?, ?, ?)", [ id_ordine, num_ordine, data_ordine, fornitore_id, stato, note || null]);
     
     if (result.affectedRows === 0) {
         return res.status(404).json({ success: false, message: "Ordine non trovato per l'aggiornamento." });
@@ -220,7 +220,7 @@ exports.deleteOrdine = async (req, res, next) => {
     const { id_ordine } = req.params;
 
     // Assumendo una SP 'DeleteOrdine'
-    const [result] = await db.query("CALL DeleteOrdine(?)", [id_ordine]);
+    const [result] = await db.query("CALL DeleteOrdini(?)", [id_ordine]);
 
     if (result.affectedRows === 0) {
         return res.status(404).json({ success: false, message: "Ordine non trovato per l'eliminazione." });

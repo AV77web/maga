@@ -1,69 +1,92 @@
 {
-    "$id": "https://example.com/schemas/order_line.schema.json",
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "title": "OrderLine",
-    "description": "Schema per creazione/aggiornamento riga ordine",
-    "type": "object",
-    "required": ["id_ordine", "nome_articolo", "prezzo_unitario"],
-    "properties": {
-      "id_ordine": {
-        "type": "integer",
-        "minimum": 1,
-        "errorMessage": {
-          "type": "Il campo 'id_ordine' deve essere un numero intero.",
-          "minimum": "Il campo 'id_ordine' deve essere maggiore di 0."
-        }
-      },
-      "descrizione": {
-        "type": "string",
-        "maxLength": 255,
-        "errorMessage": {
-          "maxLength": "Il campo 'descrizione' non può superare 255 caratteri."
-        }
-      },
-      "nome_articolo": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 100,
-        "errorMessage": {
-          "minLength": "Il campo 'nome_articolo' non può essere vuoto.",
-          "maxLength": "Il campo 'nome_articolo' non può superare 100 caratteri."
-        }
-      },
-      "prezzo_unitario": {
-        "type": "number",
-        "minimum": 0,
-        "multipleOf": 0.01,
-        "errorMessage": {
-          "type": "Il campo 'prezzo_unitario' deve essere un numero decimale.",
-          "minimum": "Il campo 'prezzo_unitario' non può essere negativo.",
-          "multipleOf": "Il campo 'prezzo_unitario' deve avere massimo 2 decimali."
-        }
-      },
-      "quantita": {
-        "type": "number",
-        "minimum": 0,
-        "multipleOf": 0.01,
-        "errorMessage": {
-          "type": "Il campo 'quantita' deve essere un numero decimale.",
-          "minimum": "Il campo 'quantita' non può essere negativa.",
-          "multipleOf": "Il campo 'quantita' deve avere massimo 2 decimali."
-        }
-      },
-      "totale_righe": {
-        "type": "number",
-        "readOnly": true,
-        "description": "Campo calcolato automaticamente (quantita * prezzo_unitario)."
+  "$id": "https://example.com/schemas/order_line.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OrderLineRequest",
+  "description": "Schema unico per creazione (POST) e aggiornamento (PATCH) di una riga ordine",
+  "type": "object",
+  "properties": {
+    "operation": {
+      "type": "string",
+      "enum": ["create", "update"],
+      "description": "Indica se la validazione è per creazione o aggiornamento"
+    },
+    "id_ordine": {
+      "type": "integer",
+      "minimum": 1,
+      "errorMessage": {
+        "type": "Il campo 'id_ordine' deve essere un numero intero.",
+        "minimum": "Il campo 'id_ordine' deve essere maggiore di 0."
       }
     },
-    "additionalProperties": false,
-    "errorMessage": {
-      "required": {
-        "id_ordine": "Il campo 'id_ordine' è obbligatorio.",
-        "nome_articolo": "Il campo 'nome_articolo' è obbligatorio.",
-        "prezzo_unitario": "Il campo 'prezzo_unitario' è obbligatorio."
-      },
-      "additionalProperties": "Sono presenti campi non ammessi nella richiesta di riga ordine."
+    "descrizione": {
+      "type": "string",
+      "maxLength": 255,
+      "errorMessage": {
+        "maxLength": "Il campo 'descrizione' non può superare 255 caratteri."
+      }
+    },
+    "nome_articolo": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "errorMessage": {
+        "minLength": "Il campo 'nome_articolo' non può essere vuoto.",
+        "maxLength": "Il campo 'nome_articolo' non può superare 100 caratteri."
+      }
+    },
+    "prezzo_unitario": {
+      "type": "number",
+      "minimum": 0,
+      "multipleOf": 0.01,
+      "errorMessage": {
+        "type": "Il campo 'prezzo_unitario' deve essere un numero decimale.",
+        "minimum": "Il campo 'prezzo_unitario' non può essere negativo.",
+        "multipleOf": "Il campo 'prezzo_unitario' deve avere massimo 2 decimali."
+      }
+    },
+    "quantita": {
+      "type": "number",
+      "minimum": 0,
+      "multipleOf": 0.01,
+      "errorMessage": {
+        "type": "Il campo 'quantita' deve essere un numero decimale.",
+        "minimum": "Il campo 'quantita' non può essere negativa.",
+        "multipleOf": "Il campo 'quantita' deve avere massimo 2 decimali."
+      }
+    },
+    "totale_righe": {
+      "type": "number",
+      "readOnly": true,
+      "description": "Campo calcolato automaticamente (quantita * prezzo_unitario)."
     }
+  },
+  "required": ["operation"],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "operation": { "const": "create" } }
+      },
+      "then": {
+        "required": ["id_ordine", "nome_articolo", "prezzo_unitario"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "operation": { "const": "update" } }
+      },
+      "then": {
+        "required": []
+      }
+    }
+  ],
+  "additionalProperties": false,
+  "errorMessage": {
+    "required": {
+      "operation": "Il campo 'operation' è obbligatorio (create/update).",
+      "id_ordine": "Il campo 'id_ordine' è obbligatorio.",
+      "nome_articolo": "Il campo 'nome_articolo' è obbligatorio.",
+      "prezzo_unitario": "Il campo 'prezzo_unitario' è obbligatorio."
+    },
+    "additionalProperties": "Sono presenti campi non ammessi nella richiesta di riga ordine."
   }
-  
+}

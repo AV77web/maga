@@ -90,3 +90,8 @@
   width: auto;             /* evita che la tabella occupi sempre il 100% e fuoriesca */
   margin: 0 auto;          /* fallback di centratura se il flex non applica */
 }
+
+.required-field {
+  border: 2px solid #e53935 !important;
+  box-shadow: 0 0 2px #e53935;
+}

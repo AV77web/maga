@@ -6,8 +6,8 @@ export const orderUiHints = {
     order: 3,
     type: 'select',
     fetchOptions: async () => {
-      const { default: fornitoriApi } = await import('../api/fornitoriApi.js');
-      const res = await fornitoriApi.fetchAll();
+      const { default: counterpartiesApi } = await import('../api/counterpartiesApi.js');
+      const res = await counterpartiesApi.fetchAll({ tipo: 'FORNITORE' });
       return res?.rows || res;
     },
     optionLabel: 'rag_soc',

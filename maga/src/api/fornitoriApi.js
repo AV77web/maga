@@ -9,9 +9,12 @@
 
 import { createApiClient } from "./apiClientFactory";
 
-const fornitoriApi = createApiClient("suppliers");
-
-// Il metodo fetchByFilters è già fornito da createApiClient.
-// Se ricambiApi avesse altri metodi specifici, andrebbero aggiunti qui.
+const fornitoriApi = {
+  async fetchAll(params = {}) {
+    // Forza il filtro tipo=FORNITORE
+    return await createApiClient("counterparties").fetchAll({ ...params, tipo: "FORNITORE" });
+  },
+  // Puoi aggiungere qui altri metodi specifici per fornitori se servono
+};
 
 export default fornitoriApi;

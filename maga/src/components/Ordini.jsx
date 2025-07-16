@@ -10,11 +10,13 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import ordiniApi from '../api/ordiniApi';
 import ordiniRigheApi from '../api/ordiniRigheApi'; // API per le righe
-import fornitoriApi from '../api/fornitoriApi'; // API per i fornitori
+import counterpartiesApi from '../api/counterpartiesApi'; // API per i fornitori
 import FilterSearch from './FilterSearch';
 import Header from './Header';
 import TableGrid from './TableGrid';
-import HeadDocument from './HeadDocument2'; // Usiamo la versione più recente
+import DocumentHeaderForm from './DocumentHeaderForm';
+import orderSchema from '#schemas/order.schema.json';
+import { orderUiHints } from '../uiHints/orderUiHints';
 import Pagination from './Pagination1';
 import '../css/Ordini.css'; // Riusiamo lo stile per coerenza
 import '../css/ArticoliTable.css'; // Uniforme con altri componenti
@@ -80,18 +82,6 @@ const Ordini = ({
     { key: 'quantita', label: 'Quantità', cellClassName: 'text-right' },
     { key: 'prezzo_unitario', label: 'Prezzo', cellClassName: 'text-right' },
   ], []);
-
-  // Configurazione per il componente HeadDocument
-  const headDocumentConfig = useMemo(() => ({
-    titolo: "Dettaglio Testata Ordine",
-    fields: [
-      { name: 'num_ordine', label: 'Numero Ordine', type: 'text', required: true },
-      { name: 'data_ordine', label: 'Data Ordine', type: 'date', required: true },
-      { name: 'fornitore_id', label: 'Fornitore', type: 'select', api: fornitoriApi.fetchAll, optionLabel: 'rag_soc', required: true },
-      { name: 'stato', label: 'Stato', type: 'select', options: ['Aperto', 'Chiuso', 'Annullato'], required: true },
-      { name: 'note', label: 'Note', type: 'textarea' },
-    ]
-  }), []);
 
   // --- FUNZIONI DI FETCH ---
   const fetchOrdiniList = useCallback(async () => {
@@ -463,11 +453,12 @@ const Ordini = ({
         {selectedOrdine ? (
           // --- VISTA DETAIL ---
           <>
-            <HeadDocument
-              config={headDocumentConfig}
+            <DocumentHeaderForm
+              schema={orderSchema}
+              uiHints={orderUiHints}
               initialData={selectedOrdine}
               onChange={handleHeadChange}
-              readOnly={false} // sempre editabile quando si entra in modifica
+              readOnly={false}
             />
             
             <h2>Righe Ordine</h2>
@@ -546,10 +537,3 @@ const Ordini = ({
 };
 
 export default Ordini;
-// ... existing code ...
-
-// dentro TableGrid:
-
-// pulsante Add nell'Header:
-
-// ... existing code ...

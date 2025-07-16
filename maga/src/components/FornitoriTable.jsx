@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import debounce from 'lodash/debounce';
 import DialogCustom from './DialogCustom';
-import fornitoriApi from '../api/fornitoriApi'; // API per i fornitori
+import counterpartiesApi from '../api/counterpartiesApi'; // API per i fornitori
 import Header from './Header';
 import TableGrid from './TableGrid';
 import HeadDocument from './HeadDocument2';
@@ -85,7 +85,7 @@ const FornitoriTable = ({ currentUser, currentLocation, onLogout }) => {
     setLoading(true);
     setError('');
     try {
-      const data = await fornitoriApi.fetchAll();
+      const data = await counterpartiesApi.fetchAll({ tipo: 'FORNITORE' });
       setFornitoriList(data);
     } catch (err) {
       setError(`Errore nel caricamento fornitori: ${err.message}`);
@@ -142,7 +142,7 @@ const FornitoriTable = ({ currentUser, currentLocation, onLogout }) => {
     setError('');
     setMessage('');
     try {
-      const fornitore = await fornitoriApi.fetchById(fornitoreId);
+      const fornitore = await counterpartiesApi.fetchById(fornitoreId);
       setSelectedFornitore(fornitore);
     } catch (err) {
       setError(`Errore nel caricamento fornitore: ${err.message}`);
@@ -170,10 +170,10 @@ const FornitoriTable = ({ currentUser, currentLocation, onLogout }) => {
     setMessage('');
     try {
       if (selectedFornitore.id) {
-        await fornitoriApi.update(selectedFornitore.id, selectedFornitore);
+        await counterpartiesApi.update(selectedFornitore.id, selectedFornitore);
         setMessage('✅ Fornitore aggiornato con successo!');
       } else {
-        await fornitoriApi.insert(selectedFornitore);
+        await counterpartiesApi.insert(selectedFornitore);
         setMessage('✅ Fornitore creato con successo!');
       }
       await fetchFornitori();
@@ -199,7 +199,7 @@ const FornitoriTable = ({ currentUser, currentLocation, onLogout }) => {
     setError('');
     setMessage('');
     try {
-      await Promise.all(selectedIds.map(id => fornitoriApi.delete(id)));
+      await Promise.all(selectedIds.map(id => counterpartiesApi.delete(id)));
       setMessage(`✅ ${selectedIds.length} fornitori eliminati con successo!`);
       await fetchFornitori();
       setSelectedIds([]);
@@ -214,7 +214,7 @@ const FornitoriTable = ({ currentUser, currentLocation, onLogout }) => {
     setLoading(true);
     setMessage('');
     try {
-      const results = await fornitoriApi.fetchByFilters(filterValues);
+      const results = await counterpartiesApi.fetchByFilters(filterValues);
       setFornitoriList(results);
       if (results.length === 0) {
         setMessage("ℹ️ Nessun fornitore trovato.");

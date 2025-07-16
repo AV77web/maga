@@ -36,7 +36,9 @@ const movementsRoutesV1 = require("./modules/movements/movements.routes");
 const causesRoutesV1 = require("./modules/causes/causes.routes");
 const bomRoutesV1 = require("./modules/bom/bom.routes");
 const errorHandler = require("./middleware/errorHandler");
+const orderLinesModule = require('./modules/orderlines/orderlines.routes');
 const pool = require("./db/db"); // Importa il pool di connessioni al DB
+
 
 const app = express();
 
@@ -115,6 +117,7 @@ logger.warn("Legacy /api/* routes disabilitate. Aggiornare i client a /api/v1/*"
 
 // Nuovo endpoint v1
 app.use("/api/v1/orders", authenticateToken, ordersRoutesV1);
+app.use('/api/v1/orderlines', authenticateToken, orderLinesModule);
 
 // 🔵 Nuove rotte versione v1
 app.use("/api/v1/parts", authenticateToken, partsRoutes);
@@ -125,6 +128,8 @@ app.use("/api/v1/bom", authenticateToken, bomRoutesV1);
 // 🔴 Nuova rotta unificata controparti (clienti + fornitori)
 app.use("/api/v1/counterparties", authenticateToken, counterpartiesRoutes);
 app.use("/api/v1/users", authenticateToken, userRoutes);
+
+
 
 // Middleware di gesrtione degli errori centralizzato
 app.use(errorHandler);

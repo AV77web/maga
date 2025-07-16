@@ -2,19 +2,30 @@
   "$id": "https://example.com/schemas/cause.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Causale",
-  "description": "Schema di validazione per una causale di magazzino",
+  "description": "Schema unico per creazione (POST) e aggiornamento (PATCH) di una causale di magazzino",
   "type": "object",
-  "required": ["codice", "description", "tipo"],
   "properties": {
+    "operation": {
+      "type": "string",
+      "enum": ["create", "update"],
+      "description": "Indica se la validazione è per creazione o aggiornamento"
+    },
     "codice": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 20
+      "maxLength": 20,
+      "errorMessage": {
+        "minLength": "Il campo 'codice' non può essere vuoto.",
+        "maxLength": "Il campo 'codice' non può superare 20 caratteri."
+      }
     },
     "description": {
       "type": "string",
       "minLength": 0,
-      "maxLength": 255
+      "maxLength": 255,
+      "errorMessage": {
+        "maxLength": "Il campo 'description' non può superare 255 caratteri."
+      }
     },
     "tipo": {
       "type": "string",
@@ -28,6 +39,25 @@
       "default": true
     }
   },
+  "required": ["codice", "description", "tipo"],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "operation": { "const": "create" } }
+      },
+      "then": {
+        "required": ["codice", "description", "tipo"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "operation": { "const": "update" } }
+      },
+      "then": {
+        "required": []
+      }
+    }
+  ],
   "additionalProperties": false,
   "errorMessage": {
     "required": {
@@ -37,4 +67,4 @@
     },
     "additionalProperties": "Sono presenti campi non ammessi nella richiesta di causale."
   }
-} 
+}

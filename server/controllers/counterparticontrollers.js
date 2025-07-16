@@ -31,40 +31,43 @@ exports.getCounterparties = async (req, res, next) => {
     const {
       rag_soc,
       tipo, // CLIENTE | FORNITORE | null
-      cf, // codice fiscale
+      cf,
       partita_iva,
       citta,
       contatto,
       page = 1,
       page_size = 10,
-      order_by = "nome",
+      order_by = "rag_soc",
       order_dir = "ASC",
     } = req.query;
 
-    const p_nome = rag_soc || null;
+    const p_rag_soc = rag_soc || null;
     const p_tipo = tipo || null;
-    const p_cf = cf || null;
-    const p_piva = partita_iva || null;
+    const p_codice_fiscale = cf || null;
+    const p_partita_iva = partita_iva || null;
     const p_citta = citta || null;
     const p_contatto = contatto || null;
     const p_page = toPositiveInt(page);
     const p_page_size = toPositiveInt(page_size, 10);
-    const p_order_by = order_by;
+
+    const validOrderFields = [
+      'id', 'rag_soc', 'tipo_cliente', 'cf', 'partita_iva', 'citta', 'telefono', 'email', 'contatto'
+    ];
+    const p_order_by = validOrderFields.includes(order_by) ? order_by : 'rag_soc';
     const p_order_dir = order_dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
     logger.debug(
-      { p_nome, p_tipo, p_page, p_page_size, p_order_by, p_order_dir },
+      { p_rag_soc, p_tipo, p_codice_fiscale, p_partita_iva, p_citta, p_contatto, p_page, p_page_size, p_order_by, p_order_dir },
       "Call FetchControparti"
     );
 
-    // Stored Procedure: FetchControparti
     const [resultSets] = await db.query(
       "CALL FetchControparti(?,?,?,?,?,?,?,?,?,?)",
       [
-        p_nome,
+        p_rag_soc,
         p_tipo,
-        p_cf,
-        p_piva,
+        p_codice_fiscale,
+        p_partita_iva,
         p_citta,
         p_contatto,
         p_page,
@@ -74,10 +77,6 @@ exports.getCounterparties = async (req, res, next) => {
       ]
     );
 
-    /*
-      Supponiamo che la SP restituisca sia i dati sia le meta-info di paginazione
-      in due result-set: rows e meta (come già avviene per FetchArticoli).
-    */
     if (!Array.isArray(resultSets) || resultSets.length < 2) {
       throw new Error("Formato risposta SP FetchControparti non riconosciuto");
     }

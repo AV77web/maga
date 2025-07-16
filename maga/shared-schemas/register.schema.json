@@ -2,10 +2,14 @@
   "$id": "https://example.com/schemas/register.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "RegisterRequest",
-  "description": "Schema di validazione per la richiesta di registrazione da parte di un admin",
+  "description": "Schema unico per creazione (POST) e aggiornamento (PATCH) di un utente admin",
   "type": "object",
-  "required": ["username", "password", "role"],
   "properties": {
+    "operation": {
+      "type": "string",
+      "enum": ["create", "update"],
+      "description": "Indica se la validazione è per creazione o aggiornamento"
+    },
     "username": {
       "type": "string",
       "minLength": 1,
@@ -35,6 +39,25 @@
       }
     }
   },
+  "required": ["operation"],
+  "allOf": [
+    {
+      "if": {
+        "properties": { "operation": { "const": "create" } }
+      },
+      "then": {
+        "required": ["username", "password", "role"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "operation": { "const": "update" } }
+      },
+      "then": {
+        "required": []
+      }
+    }
+  ],
   "additionalProperties": false,
   "errorMessage": {
     "required": {
@@ -44,4 +67,4 @@
     },
     "additionalProperties": "Sono presenti campi non ammessi nella richiesta di registrazione."
   }
-} 
+}

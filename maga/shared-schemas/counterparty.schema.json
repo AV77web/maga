@@ -2,42 +2,148 @@
   "$id": "https://example.com/schemas/counterparty.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Counterparty",
-  "description": "Schema per creazione/aggiornamento di una controparte (cliente o fornitore)",
+  "description": "Schema unico per creazione (POST) e aggiornamento (PATCH) di una controparte",
   "type": "object",
-  "required": ["nome", "tipo"],
   "properties": {
-    "nome": { "type": "string", "minLength": 1, "maxLength": 255 },
-    "tipo": { "type": "string", "enum": ["CLIENTE", "FORNITORE"] },
-    "codice_fiscale": { "type": "string", "minLength": 16, "maxLength": 16 },
-    "partita_iva": { "type": "string", "minLength": 11, "maxLength": 20 },
-    "indirizzo": { "type": "string", "maxLength": 255 },
-    "citta": { "type": "string", "maxLength": 100 },
-    "cap": { "type": "string", "maxLength": 5, "pattern": "^\\d{5}$" },
-    "provincia": { "type": "string", "maxLength": 2 },
-    "nazione": { "type": "string", "maxLength": 50 },
-    "telefono": { "type": "string", "maxLength": 30 },
-    "email": { "type": "string", "format": "email" },
-    "contatto": { "type": "string", "maxLength": 100 },
-    "note": { "type": "string", "maxLength": 500 }
+    "operation": {
+      "type": "string",
+      "enum": ["create", "update"],
+      "description": "Indica se la validazione è per creazione o aggiornamento"
+    },
+    "codice": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10,
+      "errorMessage": {
+        "minLength": "Il campo 'codice' non può essere vuoto.",
+        "maxLength": "Il campo 'codice' non può superare 10 caratteri."
+      }
+    },
+    "rag_soc": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "errorMessage": {
+        "minLength": "Il campo 'rag_soc' non può essere vuoto.",
+        "maxLength": "Il campo 'rag_soc' non può superare 255 caratteri."
+      }
+    },
+    "tipo": {
+      "type": "string",
+      "enum": ["Privato", "Azienda"],
+      "errorMessage": {
+        "enum": "Il campo 'tipo' deve essere 'Privato' o 'Azienda'."
+      }
+    },
+    "partita_iva": {
+      "type": "string",
+      "minLength": 11,
+      "maxLength": 20,
+      "errorMessage": {
+        "minLength": "Il campo 'partita_iva' deve contenere almeno 11 caratteri.",
+        "maxLength": "Il campo 'partita_iva' non può superare 20 caratteri."
+      }
+    },
+    "cf": {
+      "type": "string",
+      "minLength": 11,
+      "maxLength": 20,
+      "errorMessage": {
+        "minLength": "Il campo 'cf' deve contenere almeno 11 caratteri.",
+        "maxLength": "Il campo 'cf' non può superare 20 caratteri."
+      }
+    },
+    "indirizzo": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "citta": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "cap": {
+      "type": "string",
+      "pattern": "^\\d{5}$",
+      "errorMessage": {
+        "pattern": "Il campo 'cap' deve essere un CAP valido (5 cifre)."
+      }
+    },
+    "pv": {
+      "type": "string",
+      "maxLength": 2
+    },
+    "nazione": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "telefono": {
+      "type": "string",
+      "maxLength": 20
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "maxLength": 100
+    },
+    "sito_web": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 100
+    },
+    "contatto": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "note": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "ruolo": {
+      "type": "string",
+      "enum": ["cliente", "fornitore", "entrambi"],
+      "errorMessage": {
+        "enum": "Il campo 'ruolo' deve essere 'cliente', 'fornitore' o 'entrambi'."
+      }
+    },
+    "data_creazione": {
+      "type": "string",
+      "format": "date-time",
+      "readOnly": true
+    },
+    "data_modifica": {
+      "type": "string",
+      "format": "date-time",
+      "readOnly": true
+    }
   },
+  "required": ["codice", "rag_soc", "partita_iva", "cf", "ruolo"],
   "allOf": [
     {
-      "if": { "properties": { "tipo": { "const": "FORNITORE" } } },
-      "then": { "required": ["partita_iva"] }
+      "if": {
+        "properties": { "operation": { "const": "create" } }
+      },
+      "then": {
+        "required": ["codice", "rag_soc", "partita_iva", "cf", "ruolo"]
+      }
     },
     {
-      "if": { "properties": { "tipo": { "const": "CLIENTE" } } },
-      "then": { "required": ["codice_fiscale"] }
+      "if": {
+        "properties": { "operation": { "const": "update" } }
+      },
+      "then": {
+        "required": []
+      }
     }
   ],
   "additionalProperties": false,
   "errorMessage": {
     "required": {
-      "nome": "Il campo 'nome' è obbligatorio.",
-      "tipo": "Il campo 'tipo' è obbligatorio.",
-      "codice_fiscale": "Il campo 'codice_fiscale' è obbligatorio quando tipo = CLIENTE.",
-      "partita_iva": "Il campo 'partita_iva' è obbligatorio quando tipo = FORNITORE."
+      "codice": "Il campo 'codice' è obbligatorio.",
+      "rag_soc": "Il campo 'rag_soc' è obbligatorio.",
+      "partita_iva": "Il campo 'partita_iva' è obbligatorio.",
+      "cf": "Il campo 'cf' è obbligatorio.",
+      "ruolo": "Il campo 'ruolo' è obbligatorio."
     },
     "additionalProperties": "Sono presenti campi non ammessi nella richiesta di controparte."
   }
-} 
+}

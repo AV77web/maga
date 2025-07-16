@@ -8,12 +8,13 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import DialogCustom from './DialogCustom';
 import counterpartiesApi from '../api/counterpartiesApi';
 import Header from './Header';
-import HeadDocument from './HeadDocument2';
+import DocumentHeaderForm from './DocumentHeaderForm';
+import counterpartySchema from '#schemas/counterparty.schema.json';
 import TableGrid from './TableGrid';
 import Pagination from './Pagination1';
 import FilterSearch from './FilterSearch';
 import '../css/Ordini.css';
-import '../css/ArticoliTable.css'; // per stile uniforme
+//import '../css/ArticoliTable.css'; // per stile uniforme
 import debounce from 'lodash/debounce';
 
 const rowsPerPageOptions = [5, 10, 20, 50];
@@ -55,6 +56,7 @@ export default function ContropartiTable() {
   const headDocumentConfig = useMemo(() => ({
     titolo: selectedItem?.id ? 'Modifica Controparte' : 'Nuova Controparte',
     fields: [
+      { name: 'codice', label: 'Codice', type: 'text', required: true, maxLength: 10 },
       { name: 'rag_soc', label: 'Nome/Rag. Soc.', type: 'text', required: true, maxLength: 255 },
       { name: 'tipo', label: 'Tipo', type: 'select', options: ['CLIENTE','FORNITORE'], required: true },
       { name: 'codice_fiscale', label: 'Codice Fiscale', type: 'text', maxLength: 20, pattern: 'codiceFiscale' },
@@ -124,6 +126,30 @@ export default function ContropartiTable() {
 
   const toggleSearchPanel = () => setShowSearch((prev)=>!prev);
 
+  function validateCounterparty(data, isEdit = false) {
+    // Campi sempre obbligatori
+    const requiredFields = ['codice', 'rag_soc', 'tipo', 'ruolo'];
+    for (const field of requiredFields) {
+      if (!data[field] || data[field].toString().trim() === '') {
+        return `Il campo ${field} è obbligatorio.`;
+      }
+    }
+    // Campi obbligatori in base al ruolo
+    if ((data.ruolo === "fornitore" || data.ruolo === "entrambi") && (!data.partita_iva || data.partita_iva.trim() === '')) {
+      return "Il campo Partita IVA è obbligatorio per i fornitori.";
+    }
+    if ((data.ruolo === "cliente" || data.ruolo === "entrambi") && (!data.cf || data.cf.trim() === '')) {
+      return "Il campo Codice Fiscale è obbligatorio per i clienti.";
+    }
+    // In modifica, puoi aggiungere altri controlli se vuoi
+    if (isEdit && !data.id) {
+      return "ID mancante per la modifica.";
+    }
+    return null; // Nessun errore
+  }
+
+
+
   const handleAdd = () => {
     setSelectedItem({ tipo: 'CLIENTE', nazione: 'Italia' });
     setMode('create');
@@ -159,14 +185,21 @@ export default function ContropartiTable() {
   };
 
   const handleSave = async () => {
-    if(!selectedItem) return;
+    if (!selectedItem) return;
+    const isEdit = !!selectedItem.id;
+    const validationError = validateCounterparty(selectedItem, isEdit);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
     setLoading(true);
     try {
       if(selectedItem.id){
-        await counterpartiesApi.update(selectedItem.id, selectedItem);
+        await counterpartiesApi.update(selectedItem.id, {...selectedItem, operation: 'update'});
         setMessage('✅ Aggiornamento completato');
       } else {
-        await counterpartiesApi.insert(selectedItem);
+        await counterpartiesApi.insert({...selectedItem, operation: 'create'});
         setMessage('✅ Inserimento completato');
       }
       setSelectedItem(null);
@@ -283,8 +316,8 @@ export default function ContropartiTable() {
               onSave={handleSave}
             />
 
-            <HeadDocument
-              config={headDocumentConfig}
+            <DocumentHeaderForm
+              schema={counterpartySchema}
               initialData={selectedItem}
               onChange={handleHeadChange}
               readOnly={mode === 'view'}
