@@ -1,0 +1,162 @@
+Ho analizzato la stored procedure FetchOrdini_righe e capisco perfettamente la tua domanda. La procedura attuale è progettata per recuperare solo le righe di un ordine specifico, ma non include i dati della testata dell'ordine.
+Attualmente, nel componente Ordini.jsx, la "connessione" avviene a livello di applicazione frontend:
+Selezioni un ordine dalla lista master.
+Il componente Ordini.jsx recupera i dati della testata dalla sua lista in memoria (ordiniList).
+Successivamente, fa una chiamata API separata per recuperare le righe usando ordiniRigheApi.fetchByOrdineId(ordineId).
+Questo approccio funziona, ma non è l'ideale. Da sviluppatore senior, ti propongo una soluzione più robusta, efficiente e sicura che risolve il problema alla radice, direttamente nel backend.
+Il mio suggerimento è di creare un nuovo endpoint API che restituisca sia la testata dell'ordine sia le sue righe in una singola chiamata.
+Ecco il piano di azione full-stack:
+1. Backend: Creare un Nuovo Endpoint in ordinicontrollers.js
+Creeremo una nuova funzione nel controller degli ordini che recupera un ordine completo (testata + righe).
+Aggiungi questa funzione a server/controllers/ordinicontrollers.js:
+
+// ... altre funzioni del controller ...
+
+// GET un singolo ordine completo di testata e righe
+exports.getOrderById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Recupera la testata dell'ordine
+    const [headerResult] = await db.query('CALL FetchOrdini(?, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)', [id]);
+    const header = headerResult[0]?.[0];
+
+    if (!header) {
+      return res.status(404).json({ success: false, message: 'Ordine non trovato' });
+    }
+
+    // 2. Recupera le righe dell'ordine
+    const [linesResult] = await db.query('CALL FetchOrdini_righe(?, 1, 1000, "id_riga", "ASC")', [id]);
+    const lines = linesResult[0];
+
+    // 3. Combina i risultati in un unico oggetto
+    res.json({
+      success: true,
+      data: {
+        header: header,
+        lines: lines
+      }
+    });
+
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+Nota: Ho usato la stored procedure FetchOrdini che presumo esista per recuperare la testata. Se il nome è diverso, andrà adattato. Ho anche messo un limite alto (1000) per le righe, assumendo che un singolo ordine non ne abbia di più; idealmente, anche questo dovrebbe essere gestito con paginazione se necessario.
+2. Backend: Registrare la Nuova Rotta
+Ora dobbiamo esporre questa nuova funzione tramite una rotta. Avrai un file per le rotte degli ordini, probabilmente in server/routes/ o server/modules/orders/. Aggiungi questa riga:
+
+router.get('/:id', ordersController.getOrderById); // Assicurati che il path sia corretto
+3. Frontend: Aggiornare l'API Client ordiniApi.js
+Aggiungiamo un nuovo metodo al nostro wrapper API per chiamare il nuovo endpoint.
+Modifica maga/src/api/ordiniApi.js:
+
+// ...
+import { createApiClient } from './apiClientFactory';
+
+const ordiniApi = createApiClient('ordini');
+
+// ... metodi esistenti come fetchAll, insert, etc.
+
+/**
+ * Recupera un ordine completo (testata e righe).
+ * @param {string|number} id - L'ID dell'ordine.
+ * @returns {Promise<object>}
+ */
+ordiniApi.fetchById = (id) => ordiniApi._request("get", `/${id}`);
+
+export default ordiniApi;
+
+4. Frontend: Semplificare la Logica in Ordini.jsx
+Ora possiamo semplificare drasticamente la funzione handleOrdineSelect (e anche handleEditFromHeader) per usare la nuova chiamata API singola.
+Sostituisci la funzione handleOrdineSelect in maga/src/components/Ordini.jsx con questa:
+Apply to ordinicontro...
+Bonus: Miglioramento della Sicurezza della Stored Procedure
+La tua stored procedure FetchOrdini_righe usa la concatenazione di stringhe per ORDER BY, il che è una vulnerabilità a SQL Injection. Un utente malintenzionato potrebbe manipolare p_order_by.
+Ti consiglio di sostituirla con una versione più sicura che usa una clausola CASE per validare le colonne di ordinamento:
+Apply to ordinicontro...
+Nota: La mia versione della SP restituisce le righe come un normale result set, non come JSON_ARRAYAGG. Questo è spesso più facile da gestire nel codice Node.js. Il controller che ti ho fornito (getOrderById) si aspetta questo formato.
+Seguendo questi passaggi, non solo risolverai la tua domanda, ma avrai anche un'architettura più pulita, efficiente e sicura.
+
+const handleOrdineSelect = useCallback(async (ordineId) => {
+    if (!ordineId) {
+      setSelectedOrdine(null);
+      setOrdineRighe([]);
+      setIsEditing(false);
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      // Singola chiamata API per avere tutto!
+      const response = await ordiniApi.fetchById(ordineId);
+      const { header, lines } = response.data;
+
+      // Normalizza la data per il form (se necessario)
+      let dataISO = header.data_ordine;
+      if (dataISO && !(new Date(dataISO).toString() === 'Invalid Date')) {
+          dataISO = new Date(dataISO).toISOString().split('T')[0];
+      }
+      
+      setSelectedOrdine({ ...header, data_ordine: dataISO });
+      setOrdineRighe(lines || []);
+      
+      setSelectedDetailIds([]);
+      setIsEditing(false); 
+    } catch (err) {
+      setError(`Errore nel caricamento dei dettagli dell'ordine: ${err.message}`);
+      setSelectedOrdine(null);
+      setOrdineRighe([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []); // Rimuovi ordiniList dalle dipendenze, non serve più qui
+
+
+Bonus: Miglioramento della Sicurezza della Stored Procedure
+La tua stored procedure FetchOrdini_righe usa la concatenazione di stringhe per ORDER BY, il che è una vulnerabilità a SQL Injection. Un utente malintenzionato potrebbe manipolare p_order_by.
+Ti consiglio di sostituirla con una versione più sicura che usa una clausola CASE per validare le colonne di ordinamento:
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `FetchOrdini_righe`(IN p_id_ordine INT, IN p_page INT, IN p_page_size INT, IN p_order_by VARCHAR(50), IN p_order_dir VARCHAR(4))
+BEGIN
+  DECLARE v_offset INT DEFAULT 0;
+  DECLARE v_total INT DEFAULT 0;
+  DECLARE v_order_dir VARCHAR(4) DEFAULT IF(UPPER(p_order_dir) = 'DESC', 'DESC', 'ASC'); -- Whitelist per la direzione
+
+  SET v_offset = (p_page - 1) * p_page_size;
+
+  -- Conta il totale
+  SELECT COUNT(*) INTO v_total FROM ordini_righe WHERE (p_id_ordine IS NULL OR id_ordine = p_id_ordine);
+
+  -- Query sicura
+  SELECT
+    id_riga,
+    id_ordine,
+    nome_articolo,
+    quantita,
+    prezzo_unitario,
+    totale_righe
+  FROM ordini_righe
+  WHERE (p_id_ordine IS NULL OR id_ordine = p_id_ordine)
+  ORDER BY
+    CASE
+        WHEN p_order_by = 'nome_articolo' THEN nome_articolo
+        WHEN p_order_by = 'quantita' THEN quantita
+        WHEN p_order_by = 'prezzo_unitario' THEN prezzo_unitario
+        -- Aggiungi altre colonne valide qui
+        ELSE id_riga -- Fallback a un ordinamento di default
+    END
+  , id_riga -- Ordinamento secondario per stabilità
+  LIMIT v_page_size OFFSET v_offset;
+  
+  -- Ritorna i metadati
+  SELECT JSON_OBJECT('status','success','totalRows',v_total,'page',p_page,'pageSize',p_page_size) AS meta;
+
+END;
+
+
+Nota: La mia versione della SP restituisce le righe come un normale result set, non come JSON_ARRAYAGG. Questo è spesso più facile da gestire nel codice Node.js. Il controller che ti ho fornito (getOrderById) si aspetta questo formato.
+Seguendo questi passaggi, non solo risolverai la tua domanda, ma avrai anche un'architettura più pulita, efficiente e sicura.

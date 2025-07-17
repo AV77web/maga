@@ -14,6 +14,7 @@ const TableBody = ({
   selectedIds = [], // Aggiunto valore di default per evitare errori
   onRowSelectionChange,
   onRowClick, // Nuova prop per gestire il click sulla riga
+  onRowDoubleClick, // Nuova prop per gestire il doppio click sulla riga
   loading,
   colSpan, // colSpan calcolato da TableGrid
   droppableId, // ID per la zona di rilascio
@@ -80,10 +81,10 @@ const TableBody = ({
         <tr
           key={row.id ?? `row-${index}`}
           className={selectedIds.includes(row.id) ? "selected-row" : ""}
-          onClick={(e) => { if (onRowClick && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && !e.target.closest('button')) { onRowClick(row.id); } }}
-          style={{ cursor: onRowClick ? 'pointer' : 'default' }}
+          onDoubleClick={(e) => { if (onRowDoubleClick && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && !e.target.closest('button')) { onRowDoubleClick(row.id); } }}
+          style={{ cursor: onRowDoubleClick ? 'pointer' : 'default' }}
         >
-          <td key="selection-cell">
+          <td key="selection-cell" style={{ width: '40px', textAlign: 'center' }}>
             <input type="checkbox" checked={selectedIds.includes(row.id)} onChange={(e) => onRowSelectionChange(row.id, e.target.checked)} aria-label={`Seleziona riga ${row.id}`} />
           </td>
           {columns.map((column) => (

@@ -16,7 +16,7 @@ const TableGrid = ({
   rows,
   selectedIds,
   onRowSelectionChange,
-  onRowClick,
+  onRowDoubleClick, // Modificato da onRowClick
   areAllCurrentPageRowsSelected,
   onSelectAllCurrentPageRowsChange,
   sortKey,
@@ -137,7 +137,7 @@ const TableGrid = ({
           rows={filteredRows}
           selectedIds={selectedIds}
           onRowSelectionChange={onRowSelectionChange}
-          onRowClick={onRowClick} // Passa la prop onRowClick a TableBody
+          onRowDoubleClick={onRowDoubleClick} // Passa la prop onRowDoubleClick a TableBody
           loading={loading}
           colSpan={colSpanForBody}
           droppableId={droppableId} // <-- Passa la prop a TableBody

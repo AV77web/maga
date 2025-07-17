@@ -18,6 +18,7 @@ import DocumentHeaderForm from './DocumentHeaderForm';
 import orderSchema from '#schemas/order.schema.json';
 import { orderUiHints } from '../uiHints/orderUiHints';
 import Pagination from './Pagination1';
+import OrdineRigaDialog from './OrdineRigaDialog'; // Importa il nuovo dialog
 import '../css/Ordini.css'; // Riusiamo lo stile per coerenza
 import '../css/ArticoliTable.css'; // Uniforme con altri componenti
 
@@ -48,6 +49,10 @@ const Ordini = ({
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isEditing, setIsEditing] = useState(false); // <--- Stato per attivare HeadDocument in modifica
+
+  // Stati per il dialog delle righe
+  const [isRigaDialogOpen, setIsRigaDialogOpen] = useState(false);
+  const [editingRiga, setEditingRiga] = useState(null); // Riga in modifica/creazione
 
 
   const toggleSort = (key) => {
@@ -160,6 +165,78 @@ const Ordini = ({
 
     return sorted;
   }, [ordiniList, sortKey, sortOrder]);
+
+  // --- HANDLER RIGHE ORDINE ---
+  const handleNuovaRiga = () => {
+    if (!selectedOrdine) {
+      alert("Seleziona un ordine per aggiungere una riga.");
+      return;
+    }
+    setEditingRiga({ id_ordine: selectedOrdine.id }); // Passa l'ID dell'ordine corrente
+    setIsRigaDialogOpen(true);
+  };
+
+  const handleModificaRiga = () => {
+    if (selectedDetailIds.length !== 1) {
+      alert("Seleziona una riga da modificare.");
+      return;
+    }
+    const rigaId = selectedDetailIds[0];
+    const rigaToEdit = ordineRighe.find(r => r.id === rigaId);
+    setEditingRiga(rigaToEdit);
+    setIsRigaDialogOpen(true);
+  };
+
+  const handleEliminaRiga = async () => {
+    if (selectedDetailIds.length === 0) {
+        alert("Seleziona una o più righe da eliminare.");
+        return;
+    }
+
+    if (window.confirm(`Sei sicuro di voler eliminare ${selectedDetailIds.length} riga/e?`)) {
+        setLoading(true);
+        setError('');
+        try {
+            // Usiamo Promise.all per gestire più cancellazioni in parallelo
+            await Promise.all(selectedDetailIds.map(id => ordiniRigheApi.remove(id)));
+            setMessage('✅ Righe eliminate con successo!');
+            
+            // Ricarica le righe dell'ordine corrente e pulisci la selezione
+            handleOrdineSelect(selectedOrdine.id);
+            setSelectedDetailIds([]);
+            
+        } catch (err) {
+            setError(`❌ Errore durante l'eliminazione delle righe: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
+    }
+  };
+
+  const handleSalvaRiga = async (rigaData) => {
+    setLoading(true);
+    setError('');
+    try {
+        if (rigaData.id) {
+            // Aggiornamento
+            await ordiniRigheApi.update(rigaData.id, rigaData);
+            setMessage('✅ Riga aggiornata con successo!');
+        } else {
+            // Inserimento
+            await ordiniRigheApi.insert({ ...rigaData, id_ordine: selectedOrdine.id });
+            setMessage('✅ Riga creata con successo!');
+        }
+        // Chiudi il dialog e ricarica le righe
+        setIsRigaDialogOpen(false);
+        setEditingRiga(null);
+        handleOrdineSelect(selectedOrdine.id);
+    } catch (err) {
+        setError(`❌ Errore nel salvataggio della riga: ${err.message}`);
+    } finally {
+        setLoading(false);
+    }
+  };
+
 
   // --- GESTORI EVENTI ---
   const handleNewOrdine = useCallback(() => {
@@ -433,106 +510,96 @@ const Ordini = ({
   };
 
   return (
-    <>
+    <div className="ordini-container">
       <Header
-        onEdit={handleEditFromHeader}
-        onBack={selectedOrdine ? handleBackToMaster : null} // Mostra "Indietro" solo in vista dettaglio
-        onAdd={onCreateNavigate}
-        
-        onSave={selectedOrdine ? handleSaveOrdine : null} // Mostra "Salva" solo nella vista dettaglio
-        onSearch={toggleSearchPanel}
         currentUser={currentUser}
-        currentLocation={currentLocation}
-        onLogout={onLogout}
+        onAdd={handleNewOrdine}
+        onEdit={handleEditFromHeader}
+        onDelete={() => {}}
+        onSearch={toggleSearchPanel}
+        showSearchPanel={showSearch}
+        onBack={selectedOrdine ? handleBackToMaster : null}
       />
-      <div className="container">
-        <h1 className="title-gestione-ordini">Gestione Ordini</h1>
-        {error && <div className="message-error">{error}</div>}
-        {message && <div className="message-success">{message}</div>}
 
-        {selectedOrdine ? (
-          // --- VISTA DETAIL ---
-          <>
+      {error && <div className="error-message">{error}</div>}
+      {message && <div className="success-message">{message}</div>}
+
+      {showSearch && (
+        <FilterSearch
+          schema={orderSchema}
+          uiHints={orderUiHints}
+          onSearch={() => {}}
+          onReset={() => {}}
+        />
+      )}
+
+      {loading && <div className="loader">Caricamento...</div>}
+
+      <div className="ordini-content">
+        {!selectedOrdine ? (
+          // --- VISTA MASTER (LISTA ORDINI) ---
+          <div className="master-view">
+            <TableGrid
+              columns={masterColumns}
+              rows={sortedOrdini}
+              sortKey={sortKey}
+              sortOrder={sortOrder}
+              onSort={toggleSort}
+              selectedIds={selectedMasterIds}
+              onRowSelect={handleMasterSelectionChange}
+              onRowDoubleClick={(id) => handleOrdineSelect(id)}
+            />
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </div>
+        ) : isEditing ? (
+          // --- VISTA MODIFICA/CREAZIONE TESTATA ---
+          <DocumentHeaderForm
+            schema={orderSchema}
+            uiHints={orderUiHints}
+            initialData={selectedOrdine}
+            onChange={handleHeadChange}
+            onSave={handleSaveOrdine}
+            onCancel={handleBackToMaster}
+          />
+        ) : (
+          // --- VISTA DETAIL (TESTATA + RIGHE) ---
+          <div className="detail-view">
             <DocumentHeaderForm
               schema={orderSchema}
               uiHints={orderUiHints}
               initialData={selectedOrdine}
-              onChange={handleHeadChange}
-              readOnly={false}
+              isReadOnly={true} // in sola lettura
             />
-            
-            <h2>Righe Ordine</h2>
-            <div className="table-wrapper">
-              <div className="table-panel">
-                <TableGrid
-                  columns={detailColumns}
-                  rows={ordineRighe}
-                  selectedIds={selectedDetailIds}
-                  onRowSelectionChange={handleDetailSelectionChange}
-                  onRowClick={(rowId) => onRowNavigate(rowId)}
-                  // Aggiungi props per selezione, modifica, eliminazione righe se necessario
-                />
-              </div>
+            <div className="detail-actions">
+                <button onClick={handleNuovaRiga} className="btn-action">Aggiungi Riga</button>
+                <button onClick={handleModificaRiga} disabled={selectedDetailIds.length !== 1} className="btn-action">Modifica Riga</button>
+                <button onClick={handleEliminaRiga} disabled={selectedDetailIds.length === 0} className="btn-action btn-danger">Elimina Riga</button>
             </div>
-          </>
-        ) : (
-          // --- VISTA MASTER ---
-          <>
-            {showSearch && (
-              <FilterSearch
-                fields={ordiniFilterFields}
-                onSearch={handleSearchOrdini}
-                onApply={(data) => {
-                  setFilterData(data);
-                }}
-              />
-            )}
-            <div className="table-wrapper">
-              <div className="table-panel">
-                <TableGrid
-                  columns={masterColumns}
-                  rows={currentTableData}
-                  selectedIds={selectedMasterIds}
-                  loading={loading}
-                  onRowSelectionChange={handleMasterSelectionChange}
-                  onRowClick={(rowId) => handleOrdineSelect(rowId)} // Azione al click sulla riga
-                  sortKey={sortKey}
-                  sortOrder={sortOrder}
-                  onSort={toggleSort}
-                />
-              </div>
-            </div>
-            <div className="pagination-bar">
-              <Pagination
-                currentPage={page + 1}
-                totalPages={totalPages}
-                onPageChange={(newPage) => setPage(newPage - 1)}
-              />
-
-              <label>
-                Elementi per pagina:&nbsp;
-                <select
-                  value={rowsPerPage}
-                  onChange={(e) => {
-                    const newSize = parseInt(e.target.value, 10);
-                    setRowsPerPage(newSize);
-                    setPage(0);
-                    setTotalPages(Math.max(1, Math.ceil(totalCount / newSize)));
-                  }}
-                  disabled={loading}
-                >
-                  {rowsPerPageOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </>
+            <TableGrid
+              columns={detailColumns}
+              rows={ordineRighe}
+              onSort={() => {}} // L'ordinamento delle righe non è implementato
+              selectedIds={selectedDetailIds}
+              onRowSelect={handleDetailSelectionChange}
+            />
+          </div>
         )}
       </div>
-    </>
+        {/* Dialog per l'inserimento/modifica delle righe */}
+        <OrdineRigaDialog
+            open={isRigaDialogOpen}
+            riga={editingRiga}
+            onSave={handleSalvaRiga}
+            onClose={() => {
+                setIsRigaDialogOpen(false);
+                setEditingRiga(null);
+            }}
+        />
+    </div>
   );
 };
 
