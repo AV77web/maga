@@ -117,24 +117,7 @@
     }
   },
   "required": ["codice", "rag_soc", "partita_iva", "cf", "ruolo"],
-  "allOf": [
-    {
-      "if": {
-        "properties": { "operation": { "const": "create" } }
-      },
-      "then": {
-        "required": ["codice", "rag_soc", "partita_iva", "cf", "ruolo"]
-      }
-    },
-    {
-      "if": {
-        "properties": { "operation": { "const": "update" } }
-      },
-      "then": {
-        "required": []
-      }
-    }
-  ],
+ 
   "additionalProperties": false,
   "errorMessage": {
     "required": {

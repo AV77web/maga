@@ -19,9 +19,12 @@ const logger = require('../utils/logger');
  */
 function validateSchema(schema, property = "body") {
   // Pre-compiliamo una sola volta per efficienza
+  
+  
   const validate = ajv.compile(schema);
 
   return (req, res, next) => {
+    console.log('DEBUG validateSchema req.body:', req.body);
     const data = req[property];
     const valid = validate(data);
 

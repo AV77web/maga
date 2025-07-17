@@ -35,13 +35,6 @@
         "enum": "Il campo 'tipo' deve essere 'Privato' o 'Azienda'."
       }
     },
-    "ruolo": {
-      "type": "string",
-      "enum": ["cliente", "fornitore", "entrambi"],
-      "errorMessage": {
-        "enum": "Il campo 'ruolo' deve essere 'cliente', 'fornitore' o 'entrambi'."
-      }
-    },
     "partita_iva": {
       "type": "string",
       "minLength": 11,
@@ -105,7 +98,13 @@
       "type": "string",
       "maxLength": 500
     },
-
+    "ruolo": {
+      "type": "string",
+      "enum": ["cliente", "fornitore", "entrambi"],
+      "errorMessage": {
+        "enum": "Il campo 'ruolo' deve essere 'cliente', 'fornitore' o 'entrambi'."
+      }
+    },
     "data_creazione": {
       "type": "string",
       "format": "date-time",
@@ -118,24 +117,7 @@
     }
   },
   "required": ["codice", "rag_soc", "partita_iva", "cf", "ruolo"],
-  "allOf": [
-    {
-      "if": {
-        "properties": { "operation": { "const": "create" } }
-      },
-      "then": {
-        "required": ["codice", "rag_soc", "partita_iva", "cf", "ruolo"]
-      }
-    },
-    {
-      "if": {
-        "properties": { "operation": { "const": "update" } }
-      },
-      "then": {
-        "required": []
-      }
-    }
-  ],
+ 
   "additionalProperties": false,
   "errorMessage": {
     "required": {

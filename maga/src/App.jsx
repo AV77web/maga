@@ -27,6 +27,12 @@ import Login from "./components/Login";
 import MovimentiTable from "./components/MovimentiTable";
 import Register from "./components/Register";
 import Sidebar1 from "./components/Sidebar1";
+import TableView from "./components/TableView";
+import counterpartySchema from '../shared-schemas/part.schema.json';
+import counterpartiesApi from './api/ricambiApi';
+import genericFetchData from './utils/genericFetchData';
+import articoliSchema from '../shared-schemas/part.schema.json';
+import ricambiApi from './api/ricambiApi';
 
 // Componente per proteggere le rotte
 const ProtectedRoute = ({ isLoggedIn, children, allowedRoles, userRole }) => {
@@ -75,6 +81,14 @@ function App() {
     setCurrentUser(null);
     navigate("/login");
   };
+
+  // Funzione wrapper per la chiamata API
+  const fetchControparti = (params) => ricambiApi.fetchByFilters(params);
+  const fetchContropartiData = genericFetchData(fetchControparti, counterpartySchema);
+
+  // Funzione wrapper per la chiamata API articoli
+  const fetchArticoli = (params) => ricambiApi.fetchByFilters(params);
+  const fetchArticoliData = genericFetchData(fetchArticoli, articoliSchema);
 
   return (
     <>
@@ -171,10 +185,30 @@ function App() {
           path="/articoli"
           element={
             <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
-              <ArticoliTable
+              <TableView
                 currentUser={currentUser}
                 onLogout={handleLogout}
                 currentLocation={location.pathname}
+                schema={articoliSchema}
+                fetchDataFn={fetchArticoliData}
+                initialSortColumn="id"
+                initialSortDirection="desc"
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tabella"
+          element={
+            <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
+              <TableView
+                currentUser={currentUser}
+                onLogout={handleLogout}
+                currentLocation={location.pathname}
+                schema={counterpartySchema}
+                fetchDataFn={fetchContropartiData}
+                initialSortColumn="id"
+                initialSortDirection="desc"
               />
             </ProtectedRoute>
           }

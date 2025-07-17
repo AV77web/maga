@@ -1,22 +1,25 @@
 -- #############################################################
 --  STORED PROCEDURE – CONTROPARTI (clienti + fornitori)
 --  Compatibile con pattern esistente (JSON results, paginazione)
+--  Aggiornata per supportare schema JSON counterparty.schema.json
 -- #############################################################
 --  Tabella: controparti
 --    • id              INT PK AUTO_INCREMENT
---    • nome            VARCHAR(255)
---    • tipo            ENUM('CLIENTE','FORNITORE')
---    • codice_fiscale  VARCHAR(20)
+--    • codice          VARCHAR(10)
+--    • rag_soc         VARCHAR(255)
+--    • tipo            ENUM('Privato','Azienda')
+--    • cf              VARCHAR(20)
 --    • partita_iva     VARCHAR(20)
 --    • indirizzo       VARCHAR(255)
 --    • citta           VARCHAR(100)
---    • cap             VARCHAR(10)
---    • provincia       VARCHAR(2)
+--    • cap             VARCHAR(5)
+--    • pv              VARCHAR(2)
 --    • nazione         VARCHAR(50)
 --    • telefono        VARCHAR(20)
 --    • email           VARCHAR(100)
 --    • contatto        VARCHAR(100)
 --    • note            TEXT
+--    • ruolo           ENUM('cliente','fornitore','entrambi')
 -- #############################################################
 
 DELIMITER $$
@@ -26,26 +29,30 @@ DELIMITER $$
  *****************************************************************/
 DROP PROCEDURE IF EXISTS InsertControparte$$
 CREATE PROCEDURE InsertControparte(
-    IN p_nome           VARCHAR(255),
-    IN p_tipo           ENUM('CLIENTE','FORNITORE'),
-    IN p_codice_fiscale VARCHAR(20),
+    IN p_codice         VARCHAR(10),
+    IN p_rag_soc        VARCHAR(255),
+    IN p_tipo           ENUM('Privato','Azienda'),
+    IN p_cf             VARCHAR(20),
     IN p_partita_iva    VARCHAR(20),
     IN p_indirizzo      VARCHAR(255),
     IN p_citta          VARCHAR(100),
-    IN p_cap            VARCHAR(10),
-    IN p_provincia      VARCHAR(2),
+    IN p_cap            VARCHAR(5),
+    IN p_pv             VARCHAR(2),
     IN p_nazione        VARCHAR(50),
     IN p_telefono       VARCHAR(20),
     IN p_email          VARCHAR(100),
     IN p_contatto       VARCHAR(100),
-    IN p_note           TEXT
+    IN p_note           TEXT,
+    IN p_ruolo          ENUM('cliente','fornitore','entrambi')
 ) BEGIN
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; SELECT JSON_OBJECT('status','error','message','Errore inserimento controparte') AS response; END;
   START TRANSACTION;
-  IF p_nome IS NULL OR p_nome='' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Nome obbligatorio'; END IF;
-  IF p_tipo NOT IN ('CLIENTE','FORNITORE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Tipo non valido'; END IF;
-  INSERT INTO controparti(nome,tipo,codice_fiscale,partita_iva,indirizzo,citta,cap,provincia,nazione,telefono,email,contatto,note)
-    VALUES(p_nome,p_tipo,p_codice_fiscale,p_partita_iva,p_indirizzo,p_citta,p_cap,p_provincia,p_nazione,p_telefono,p_email,p_contatto,p_note);
+  IF p_codice IS NULL OR p_codice='' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Codice obbligatorio'; END IF;
+  IF p_rag_soc IS NULL OR p_rag_soc='' THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Ragione sociale obbligatoria'; END IF;
+  IF p_tipo NOT IN ('Privato','Azienda') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Tipo non valido'; END IF;
+  IF p_ruolo NOT IN ('cliente','fornitore','entrambi') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Ruolo non valido'; END IF;
+  INSERT INTO controparti(codice,rag_soc,tipo,cf,partita_iva,indirizzo,citta,cap,pv,nazione,telefono,email,contatto,note,ruolo)
+    VALUES(p_codice,p_rag_soc,p_tipo,p_cf,p_partita_iva,p_indirizzo,p_citta,p_cap,p_pv,p_nazione,p_telefono,p_email,p_contatto,p_note,p_ruolo);
   COMMIT;
   SELECT JSON_OBJECT('status','success','insertId',LAST_INSERT_ID()) AS response;
 END$$
@@ -56,26 +63,29 @@ END$$
 DROP PROCEDURE IF EXISTS UpdateControparte$$
 CREATE PROCEDURE UpdateControparte(
     IN p_id             INT,
-    IN p_nome           VARCHAR(255),
-    IN p_tipo           ENUM('CLIENTE','FORNITORE'),
-    IN p_codice_fiscale VARCHAR(20),
+    IN p_codice         VARCHAR(10),
+    IN p_rag_soc        VARCHAR(255),
+    IN p_tipo           ENUM('Privato','Azienda'),
+    IN p_cf             VARCHAR(20),
     IN p_partita_iva    VARCHAR(20),
     IN p_indirizzo      VARCHAR(255),
     IN p_citta          VARCHAR(100),
-    IN p_cap            VARCHAR(10),
-    IN p_provincia      VARCHAR(2),
+    IN p_cap            VARCHAR(5),
+    IN p_pv             VARCHAR(2),
     IN p_nazione        VARCHAR(50),
     IN p_telefono       VARCHAR(20),
     IN p_email          VARCHAR(100),
     IN p_contatto       VARCHAR(100),
-    IN p_note           TEXT
+    IN p_note           TEXT,
+    IN p_ruolo          ENUM('cliente','fornitore','entrambi')
 ) BEGIN
   DECLARE v_rows INT DEFAULT 0;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; SELECT JSON_OBJECT('status','error','message','Errore update controparte') AS response; END;
   START TRANSACTION;
   IF NOT EXISTS (SELECT 1 FROM controparti WHERE id=p_id) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Controparte non trovata'; END IF;
-  IF p_tipo NOT IN ('CLIENTE','FORNITORE') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Tipo non valido'; END IF;
-  UPDATE controparti SET nome=p_nome,tipo=p_tipo,codice_fiscale=p_codice_fiscale,partita_iva=p_partita_iva,indirizzo=p_indirizzo,citta=p_citta,cap=p_cap,provincia=p_provincia,nazione=p_nazione,telefono=p_telefono,email=p_email,contatto=p_contatto,note=p_note
+  IF p_tipo NOT IN ('Privato','Azienda') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Tipo non valido'; END IF;
+  IF p_ruolo NOT IN ('cliente','fornitore','entrambi') THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Ruolo non valido'; END IF;
+  UPDATE controparti SET codice=p_codice,rag_soc=p_rag_soc,tipo=p_tipo,cf=p_cf,partita_iva=p_partita_iva,indirizzo=p_indirizzo,citta=p_citta,cap=p_cap,pv=p_pv,nazione=p_nazione,telefono=p_telefono,email=p_email,contatto=p_contatto,note=p_note,ruolo=p_ruolo
     WHERE id=p_id;
   SET v_rows=ROW_COUNT();
   COMMIT;
@@ -102,9 +112,9 @@ END$$
  *****************************************************************/
 DROP PROCEDURE IF EXISTS FetchControparti$$
 CREATE PROCEDURE FetchControparti(
-    IN p_nome           VARCHAR(255),
-    IN p_tipo           ENUM('CLIENTE','FORNITORE'),
-    IN p_codice_fiscale VARCHAR(20),
+    IN p_rag_soc        VARCHAR(255),
+    IN p_tipo           ENUM('Privato','Azienda'),
+    IN p_cf             VARCHAR(20),
     IN p_partita_iva    VARCHAR(20),
     IN p_citta          VARCHAR(100),
     IN p_contatto       VARCHAR(100),
@@ -117,9 +127,9 @@ CREATE PROCEDURE FetchControparti(
   SET v_offset=(p_page-1)*p_page_size;
   -- Conteggio totale
   SELECT COUNT(*) INTO v_total FROM controparti
-    WHERE (p_nome           IS NULL OR nome LIKE CONCAT('%',p_nome,'%'))
+    WHERE (p_rag_soc        IS NULL OR rag_soc LIKE CONCAT('%',p_rag_soc,'%'))
       AND (p_tipo           IS NULL OR tipo=p_tipo)
-      AND (p_codice_fiscale IS NULL OR codice_fiscale LIKE CONCAT('%',p_codice_fiscale,'%'))
+      AND (p_cf             IS NULL OR cf LIKE CONCAT('%',p_cf,'%'))
       AND (p_partita_iva    IS NULL OR partita_iva LIKE CONCAT('%',p_partita_iva,'%'))
       AND (p_citta          IS NULL OR citta LIKE CONCAT('%',p_citta,'%'))
       AND (p_contatto       IS NULL OR contatto LIKE CONCAT('%',p_contatto,'%'));
@@ -128,18 +138,25 @@ CREATE PROCEDURE FetchControparti(
   SET @q = CONCAT(
     'SELECT JSON_ARRAYAGG(JSON_OBJECT(',
       '"id",id,',
-      '"nome",nome,',
+      '"codice",codice,',
+      '"rag_soc",rag_soc,',
       '"tipo",tipo,',
-      '"codice_fiscale",codice_fiscale,',
+      '"cf",cf,',
       '"partita_iva",partita_iva,',
+      '"indirizzo",indirizzo,',
       '"citta",citta,',
+      '"cap",cap,',
+      '"pv",pv,',
+      '"nazione",nazione,',
       '"telefono",telefono,',
       '"email",email,',
-      '"contatto",contatto',
+      '"contatto",contatto,',
+      '"note",note,',
+      '"ruolo",ruolo',
     ')) AS data FROM controparti WHERE 1=1',
-    IF(p_nome           IS NULL,'', CONCAT(' AND nome LIKE "%',p_nome,'%"')),
+    IF(p_rag_soc        IS NULL,'', CONCAT(' AND rag_soc LIKE "%',p_rag_soc,'%"')),
     IF(p_tipo           IS NULL,'', CONCAT(' AND tipo="',p_tipo,'"')),
-    IF(p_codice_fiscale IS NULL,'', CONCAT(' AND codice_fiscale LIKE "%',p_codice_fiscale,'%"')),
+    IF(p_cf             IS NULL,'', CONCAT(' AND cf LIKE "%',p_cf,'%"')),
     IF(p_partita_iva    IS NULL,'', CONCAT(' AND partita_iva LIKE "%',p_partita_iva,'%"')),
     IF(p_citta          IS NULL,'', CONCAT(' AND citta LIKE "%',p_citta,'%"')),
     IF(p_contatto       IS NULL,'', CONCAT(' AND contatto LIKE "%',p_contatto,'%"')),

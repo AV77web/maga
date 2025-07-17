@@ -43,7 +43,7 @@ exports.getCounterparties = async (req, res, next) => {
 
     const p_rag_soc = rag_soc || null;
     const p_tipo = tipo || null;
-    const p_codice_fiscale = cf || null;
+    const p_cf = cf || null;
     const p_partita_iva = partita_iva || null;
     const p_citta = citta || null;
     const p_contatto = contatto || null;
@@ -51,13 +51,13 @@ exports.getCounterparties = async (req, res, next) => {
     const p_page_size = toPositiveInt(page_size, 10);
 
     const validOrderFields = [
-      'id', 'rag_soc', 'tipo_cliente', 'cf', 'partita_iva', 'citta', 'telefono', 'email', 'contatto'
+      'id', 'codice', 'rag_soc', 'tipo', 'cf', 'partita_iva', 'citta', 'telefono', 'email', 'contatto'
     ];
     const p_order_by = validOrderFields.includes(order_by) ? order_by : 'rag_soc';
     const p_order_dir = order_dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
     logger.debug(
-      { p_rag_soc, p_tipo, p_codice_fiscale, p_partita_iva, p_citta, p_contatto, p_page, p_page_size, p_order_by, p_order_dir },
+      { p_rag_soc, p_tipo, p_cf, p_partita_iva, p_citta, p_contatto, p_page, p_page_size, p_order_by, p_order_dir },
       "Call FetchControparti"
     );
 
@@ -66,7 +66,7 @@ exports.getCounterparties = async (req, res, next) => {
       [
         p_rag_soc,
         p_tipo,
-        p_codice_fiscale,
+        p_cf,
         p_partita_iva,
         p_citta,
         p_contatto,
@@ -101,9 +101,11 @@ exports.getCounterparties = async (req, res, next) => {
  * Inserisce una nuova controparte
  */
 exports.insertCounterparty = async (req, res, next) => {
+  console.log('DEBUG BODY:', req.body); // <--- AGGIUNGI QUI
   try {
-    // Estrarre i campi payload
+    // Estrarre i campi payload secondo lo schema JSON
     const {
+      codice,
       rag_soc,
       tipo,
       cf,
@@ -111,17 +113,20 @@ exports.insertCounterparty = async (req, res, next) => {
       indirizzo,
       citta,
       cap,
-      provincia,
+      pv,
       nazione,
       telefono,
       email,
+      sito_web,
       contatto,
       note,
+      ruolo,
     } = req.body;
 
     const [results] = await db.query(
-      "CALL InsertControparte(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+      "CALL InsertControparte(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
       [
+        codice,
         rag_soc,
         tipo,
         cf,
@@ -129,16 +134,24 @@ exports.insertCounterparty = async (req, res, next) => {
         indirizzo,
         citta,
         cap,
-        provincia,
+        pv,
         nazione,
         telefono,
         email,
+        sito_web,
         contatto,
         note,
+        ruolo,
       ]
     );
 
-    const newId = results[0][0].id;
+    // Le stored procedure restituiscono un array con la risposta JSON
+    const response = results[0][0];
+    if (response.status === 'error') {
+      throw new Error(response.message);
+    }
+
+    const newId = response.insertId;
 
     res.status(201).json({
       success: true,
@@ -159,37 +172,49 @@ exports.updateCounterparty = async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
-      nome,
+      codice,
+      rag_soc,
       tipo,
-      codice_fiscale,
+      cf,
       partita_iva,
       indirizzo,
       citta,
       cap,
-      provincia,
+      pv,
       nazione,
       telefono,
       email,
       contatto,
+      sito_web,
       note,
+      ruolo,
     } = req.body;
 
-    await db.query("CALL UpdateControparte(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [
+    const [results] = await db.query("CALL UpdateControparte(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", [
       id,
-      nome,
+      codice,
+      rag_soc,
       tipo,
-      codice_fiscale,
+      cf,
       partita_iva,
       indirizzo,
       citta,
       cap,
-      provincia,
+      pv,
       nazione,
       telefono,
       email,
       contatto,
+      sito_web,
       note,
+      ruolo,
     ]);
+
+    // Le stored procedure restituiscono un array con la risposta JSON
+    const response = results[0][0];
+    if (response.status === 'error') {
+      throw new Error(response.message);
+    }
 
     res.json({ success: true, message: "Controparte aggiornata con successo." });
   } catch (error) {
@@ -205,7 +230,14 @@ exports.updateCounterparty = async (req, res, next) => {
 exports.deleteCounterparty = async (req, res, next) => {
   try {
     const { id } = req.params;
-    await db.query("CALL DeleteControparte(?)", [id]);
+    const [results] = await db.query("CALL DeleteControparte(?)", [id]);
+    
+    // Le stored procedure restituiscono un array con la risposta JSON
+    const response = results[0][0];
+    if (response.status === 'error') {
+      throw new Error(response.message);
+    }
+
     res.json({ success: true, message: "Controparte eliminata con successo." });
   } catch (error) {
     logger.error({ msg: "Errore deleteCounterparty", err: error.message });

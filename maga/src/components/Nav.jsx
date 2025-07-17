@@ -22,7 +22,9 @@ const Nav = ({ onLogout, currentUser }) => {
       <Link to="/ordini" className="mylink">
         Ordini
       </Link>
-
+      <Link to="/tabella" className="mylink">
+        Tabella
+      </Link>
       {/* Voce padre Movimenti */}
       <div
         className="mylink collapsible"

@@ -1,0 +1,123 @@
+.table-view {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 20px auto;
+  max-width: 100%;
+  /* no overflow-x here to keep scroll control on inner containers */
+}
+
+.table-scroll-container {
+  overflow-x: auto;
+  max-width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.table-view table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto; /* puoi usare fixed se preferisci larghezze fisse */
+  background-color: white;
+}
+
+.table-view th,
+.table-view td {
+  padding: 6px 10px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 14px;
+}
+
+.table-view th {
+  background-color: #e7eef8; /* blu pastello chiaro */
+  color: #1f3a93;
+  font-weight: bold;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  cursor: pointer;
+  user-select: none;
+}
+
+.table-view tr.even {
+  background-color: #ffffff;
+}
+
+.table-view tr.odd {
+  background-color: #f5f7fa;
+}
+
+.table-view tr:hover {
+  background-color: #e2e8f0;
+}
+
+.table-view input[type="text"] {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9em;
+  box-sizing: border-box;
+}
+
+.pagination {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pagination button {
+  background-color: #1f3a93;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #162c6b;
+}
+
+.pagination button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.pagination select {
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 0.9em;
+}
+
+.table-body-container {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-width: 100%;
+  max-height: calc(22 * 30px); /* Altezza per ~20 righe alte 30px */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.table-body tr {
+  height: 30px; /* Altezza riga fissa coerente con calc sopra */
+}
+
+.table-horizontal-scroll-wrapper {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.table-header-container table,
+.table-body-container table {
+  width: max-content; /* permette lo scroll orizzontale */
+  border-collapse: collapse;
+}

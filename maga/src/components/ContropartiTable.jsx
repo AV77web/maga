@@ -49,7 +49,7 @@ export default function ContropartiTable() {
 
   const filterFields = useMemo(() => [
     { name: 'rag_soc', label: 'Nome', type: 'text', placeholder: 'Cerca per nome...' },
-    { name: 'tipo', label: 'Tipo', type: 'select', options: ['CLIENTE', 'FORNITORE'], placeholder: '--Tipo--' },
+    { name: 'tipo', label: 'Tipo', type: 'select', options: ['Privato', 'Azienda'], placeholder: '--Tipo--' },
     { name: 'citta', label: 'Città', type: 'text', placeholder: 'Cerca per città...' },
   ], []);
 
@@ -58,17 +58,19 @@ export default function ContropartiTable() {
     fields: [
       { name: 'codice', label: 'Codice', type: 'text', required: true, maxLength: 10 },
       { name: 'rag_soc', label: 'Nome/Rag. Soc.', type: 'text', required: true, maxLength: 255 },
-      { name: 'tipo', label: 'Tipo', type: 'select', options: ['CLIENTE','FORNITORE'], required: true },
-      { name: 'codice_fiscale', label: 'Codice Fiscale', type: 'text', maxLength: 20, pattern: 'codiceFiscale' },
+      { name: 'tipo', label: 'Tipo', type: 'select', options: ['Privato','Azienda'], required: true },
+      { name: 'cf', label: 'Codice Fiscale', type: 'text', maxLength: 20, pattern: 'codiceFiscale' },
       { name: 'partita_iva', label: 'Partita IVA', type: 'text', maxLength: 20 },
       { name: 'indirizzo', label: 'Indirizzo', type: 'text', maxLength: 255 },
       { name: 'citta', label: 'Città', type: 'text', maxLength: 100 },
       { name: 'cap', label: 'CAP', type: 'text', maxLength: 5, pattern: 'cap' },
-      { name: 'provincia', label: 'PV', type: 'text', maxLength: 2 },
+      { name: 'pv', label: 'PV', type: 'text', maxLength: 2 },
       { name: 'nazione', label: 'Nazione', type: 'text', maxLength: 50 },
       { name: 'telefono', label: 'Telefono', type: 'text', maxLength: 20 },
       { name: 'email', label: 'Email', type: 'email', maxLength: 100 },
       { name: 'contatto', label: 'Contatto', type: 'text', maxLength: 100 },
+      { name: 'sito_web', label: 'Sito web', type: 'text', maxlength:100},
+      { name: 'ruolo', label: 'Ruolo', type: 'select', options: ['cliente', 'fornitore', 'entrambi'], required: true },
       { name: 'note', label: 'Note', type: 'textarea' },
     ],
   }), [selectedItem]);
@@ -127,20 +129,24 @@ export default function ContropartiTable() {
   const toggleSearchPanel = () => setShowSearch((prev)=>!prev);
 
   function validateCounterparty(data, isEdit = false) {
-    // Campi sempre obbligatori
-    const requiredFields = ['codice', 'rag_soc', 'tipo', 'ruolo'];
-    for (const field of requiredFields) {
-      if (!data[field] || data[field].toString().trim() === '') {
-        return `Il campo ${field} è obbligatorio.`;
+    // Campi sempre obbligatori per la creazione
+    if (!isEdit) {
+      const requiredFields = ['codice', 'rag_soc', 'partita_iva', 'cf', 'ruolo'];
+      for (const field of requiredFields) {
+        if (!data[field] || data[field].toString().trim() === '') {
+          return `Il campo ${field} è obbligatorio.`;
+        }
+      }
+    } else {
+      // Per la modifica, solo i campi base sono obbligatori
+      const requiredFields = ['codice', 'rag_soc'];
+      for (const field of requiredFields) {
+        if (!data[field] || data[field].toString().trim() === '') {
+          return `Il campo ${field} è obbligatorio.`;
+        }
       }
     }
-    // Campi obbligatori in base al ruolo
-    if ((data.ruolo === "fornitore" || data.ruolo === "entrambi") && (!data.partita_iva || data.partita_iva.trim() === '')) {
-      return "Il campo Partita IVA è obbligatorio per i fornitori.";
-    }
-    if ((data.ruolo === "cliente" || data.ruolo === "entrambi") && (!data.cf || data.cf.trim() === '')) {
-      return "Il campo Codice Fiscale è obbligatorio per i clienti.";
-    }
+    
     // In modifica, puoi aggiungere altri controlli se vuoi
     if (isEdit && !data.id) {
       return "ID mancante per la modifica.";
@@ -151,7 +157,24 @@ export default function ContropartiTable() {
 
 
   const handleAdd = () => {
-    setSelectedItem({ tipo: 'CLIENTE', nazione: 'Italia' });
+    setSelectedItem({ 
+      codice: '',
+      rag_soc: '',
+      tipo: 'Privato', 
+      cf: '',
+      partita_iva: '',
+      indirizzo: '',
+      citta: '',
+      cap: '',
+      pv: '',
+      nazione: 'Italia',
+      telefono: '',
+      email: '',
+      contatto: '',
+      sito_web: '',
+      ruolo: 'cliente',
+      note: ''
+    });
     setMode('create');
     setMessage('');
   };
@@ -162,7 +185,22 @@ export default function ContropartiTable() {
       return;
     }
     const item = list.find(r=>r.id===selectedIds[0]);
-    setSelectedItem(item);
+    
+    // Mappa i campi dal backend al frontend se necessario
+    const mappedItem = {
+      ...item,
+      // Assicurati che i campi obbligatori siano presenti
+      codice: item.codice || '',
+      rag_soc: item.rag_soc || '',
+      tipo: item.tipo || 'Privato',
+      cf: item.cf || item.codice_fiscale || '',
+      partita_iva: item.partita_iva || '',
+      ruolo: item.ruolo || 'cliente',
+      pv: item.pv || item.provincia || '',
+      nazione: item.nazione || 'Italia'
+    };
+    
+    setSelectedItem(mappedItem);
     setMode('edit');
   };
 
@@ -186,6 +224,7 @@ export default function ContropartiTable() {
 
   const handleSave = async () => {
     if (!selectedItem) return;
+    console.log("DEBUG selectedItem", selectedItem);
     const isEdit = !!selectedItem.id;
     const validationError = validateCounterparty(selectedItem, isEdit);
     if (validationError) {
@@ -195,11 +234,35 @@ export default function ContropartiTable() {
 
     setLoading(true);
     try {
+      const allFields = {
+        codice: selectedItem.codice || '',
+        rag_soc: selectedItem.rag_soc || '',
+        tipo: selectedItem.tipo || '',
+        partita_iva: selectedItem.partita_iva || '',
+        cf: selectedItem.cf || '',
+        indirizzo: selectedItem.indirizzo || '',
+        citta: selectedItem.citta || '',
+        cap: selectedItem.cap || '',
+        pv: selectedItem.pv || '',
+        nazione: selectedItem.nazione || '',
+        telefono: selectedItem.telefono || '',
+        email: selectedItem.email || '',
+        sito_web: selectedItem.sito_web || '',
+        contatto: selectedItem.contatto || '',
+        note: selectedItem.note || '',
+        ruolo: selectedItem.ruolo || '',
+        operation: isEdit ? 'update' : 'create'
+      };
+      // Normalizza sito_web
+      if (allFields.sito_web && !allFields.sito_web.startsWith('http')) {
+        allFields.sito_web = 'https://' + allFields.sito_web;
+      }
+
       if(selectedItem.id){
-        await counterpartiesApi.update(selectedItem.id, {...selectedItem, operation: 'update'});
+        await counterpartiesApi.update(selectedItem.id, allFields);
         setMessage('✅ Aggiornamento completato');
       } else {
-        await counterpartiesApi.insert({...selectedItem, operation: 'create'});
+        await counterpartiesApi.insert(allFields);
         setMessage('✅ Inserimento completato');
       }
       setSelectedItem(null);
