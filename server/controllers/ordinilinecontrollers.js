@@ -22,10 +22,16 @@ exports.getOrderLines = async (req, res, next) => {
 exports.insertOrderLine = async (req, res, next) => {
   try {
     const { id_ordine, nome_articolo, descrizione, prezzo_unitario, quantita } = req.body;
-    const [result] = await db.query('CALL InsertOrdini_righe(?,?,?,?,?)', [
+    const [[result]] = await db.query('CALL InsertOrdini_righe(?,?,?,?,?)', [
       id_ordine, nome_articolo, descrizione, prezzo_unitario, quantita
     ]);
-    res.status(201).json({ success: true, id: result[0]?.id_riga });
+    
+    const response = result.response;
+    if (response.status === 'error') {
+        return res.status(400).json({ success: false, message: response.message });
+    }
+    
+    res.status(201).json({ success: true, ...response });
   } catch (err) {
     next(err);
   }
@@ -36,10 +42,16 @@ exports.updateOrderLine = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { id_ordine, nome_articolo, descrizione, prezzo_unitario, quantita } = req.body;
-    await db.query('CALL UpdateOrdini_righe(?,?,?,?,?,?)', [
+    const [[result]] = await db.query('CALL UpdateOrdini_righe(?,?,?,?,?,?)', [
       id, id_ordine, nome_articolo, descrizione, prezzo_unitario, quantita
     ]);
-    res.json({ success: true });
+
+    const response = result.response;
+    if (response.status === 'error' || response.rowsAffected === 0) {
+        return res.status(404).json({ success: false, message: response.message || 'Riga ordine non trovata.' });
+    }
+
+    res.json({ success: true, ...response });
   } catch (err) {
     next(err);
   }
@@ -49,14 +61,14 @@ exports.updateOrderLine = async (req, res, next) => {
 exports.deleteOrderLine = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const [result] = await db.query('CALL DeleteOrdini_righe(?)', [id]);
-    // La SP restituisce un JSON_OBJECT come response
-    const response = result[0]?.response ? JSON.parse(result[0].response) : null;
-    if (response && response.status === 'success') {
-      res.json({ success: true, ...response });
-    } else {
-      res.status(404).json({ success: false, ...response });
+    const [[result]] = await db.query('CALL DeleteOrdini_righe(?)', [id]);
+
+    const response = result.response;
+    if (response.status === 'error' || response.rowsDeleted === 0) {
+        return res.status(404).json({ success: false, message: response.message || 'Riga ordine non trovata.' });
     }
+
+    res.json({ success: true, ...response });
   } catch (err) {
     next(err);
   }

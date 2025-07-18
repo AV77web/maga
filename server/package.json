@@ -23,6 +23,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.14.1",
+    "node-windows": "^1.0.0-beta.8",
     "pino": "^9.7.0",
     "rate-limit": "^0.1.1"
   },

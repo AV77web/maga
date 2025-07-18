@@ -1,0 +1,243 @@
+﻿delimiter $$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `FetchOrdini_righe`(IN p_id_ordine INT, IN p_page INT, IN p_page_size INT, IN p_order_by VARCHAR(50), IN p_order_dir VARCHAR(4))
+BEGIN
+  DECLARE v_offset INT DEFAULT 0; DECLARE v_total INT DEFAULT 0; SET v_offset=(p_page-1)*p_page_size;
+  SELECT COUNT(*) INTO v_total FROM ordini_righe WHERE (p_id_ordine IS NULL OR id_ordine=p_id_ordine);
+  SET @q = CONCAT('SELECT JSON_ARRAYAGG(JSON_OBJECT("id_riga",id_riga,"id_ordine",id_ordine,"nome_articolo",nome_articolo,"quantita",quantita,"prezzo_unitario",prezzo_unitario,"totale_righe",totale_righe)) AS data FROM ordini_righe WHERE 1=1',
+                  IF(p_id_ordine IS NULL,'', CONCAT(' AND id_ordine=',p_id_ordine)),
+                  ' ORDER BY ',p_order_by,' ',p_order_dir,' LIMIT ',p_page_size,' OFFSET ',v_offset);
+  PREPARE s FROM @q; EXECUTE s; DEALLOCATE PREPARE s; SELECT JSON_OBJECT('status','success','totalRows',v_total,'page',p_page,'pageSize',p_page_size) AS meta;
+END $$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertOrdini_righe`(IN p_id_ordine INT, IN p_descrizione VARCHAR(255), IN p_prezzo_unitario DECIMAL(10,2), IN p_nome_articolo VARCHAR(100), IN p_quantita DECIMAL(12,2))
+BEGIN
+  DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; SELECT JSON_OBJECT('status','error','message','Errore inserimento riga ordine') AS response; END;
+  START TRANSACTION; IF p_quantita<=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Quantit├á >0'; END IF; IF p_prezzo_unitario<=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Prezzo_unitario >0'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM ordini WHERE id_ordine=p_id_ordine) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Ordine non trovato'; END IF;
+  INSERT INTO ordini_righe(id_ordine,descrizione,prezzo_unitario,nome_articolo,quantita) VALUES(p_id_ordine,p_descrizione,p_prezzo_unitario,p_nome_articolo,p_quantita);
+  COMMIT; SELECT JSON_OBJECT('status','success','insertId',LAST_INSERT_ID()) AS response;
+END $$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateOrdini_righe`(IN p_id_riga INT, IN p_id_ordine INT, IN p_descrizione VARCHAR(255), IN p_prezzo_unitario DECIMAL(10,2), IN p_nome_articolo VARCHAR(100), IN p_quantita DECIMAL(12,2))
+BEGIN
+  DECLARE v INT; DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; SELECT JSON_OBJECT('status','error','message','Errore update riga ordine') AS response; END;
+  START TRANSACTION; IF NOT EXISTS (SELECT 1 FROM ordini_righe WHERE id_riga=p_id_riga) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Riga non trovata'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM ordini WHERE id_ordine=p_id_ordine) THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Ordine non trovato'; END IF;
+  IF p_quantita<=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Quantit├á >0'; END IF; IF p_prezzo_unitario<=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Prezzo_unitario >0'; END IF;
+  UPDATE ordini_righe SET id_ordine=p_id_ordine,descrizione=p_descrizione,prezzo_unitario=p_prezzo_unitario,nome_articolo=p_nome_articolo,quantita=p_quantita WHERE id_riga=p_id_riga;
+  SET v=ROW_COUNT(); COMMIT; SELECT JSON_OBJECT('status',IF(v>0,'success','warning'),'rowsAffected',v) AS response;
+END $$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `DeleteOrdini_righe`(IN p_id_riga INT)
+BEGIN DECLARE v INT; DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; SELECT JSON_OBJECT('status','error','message','Errore delete riga ordine') AS response; END;
+  START TRANSACTION; DELETE FROM ordini_righe WHERE id_riga=p_id_riga; SET v=ROW_COUNT(); IF v=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Riga non trovata'; END IF; COMMIT; SELECT JSON_OBJECT('status','success','rowsDeleted',v) AS response;
+END $$
+
+delimiter ;
+
+*=====================
+Nuove Stored Procedure
+*=====================
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `FetchOrdini_righe1`(
+    IN p_id_ordine   INT,
+    IN p_page        INT,
+    IN p_page_size   INT,
+    IN p_order_by    VARCHAR(50),
+    IN p_order_dir   VARCHAR(4)
+)
+BEGIN
+    
+    DECLARE v_offset       INT DEFAULT 0;
+    DECLARE v_total_rows   INT DEFAULT 0;
+
+  
+    IF p_page < 1 THEN SET p_page = 1; END IF;
+    IF p_page_size <= 0 THEN SET p_page_size = 10; END IF;
+    SET v_offset = (p_page - 1) * p_page_size;
+
+    
+    SELECT COUNT(*) INTO v_total_rows
+    FROM ordini_righe
+    WHERE (p_id_ordine IS NULL OR id_ordine = p_id_ordine);
+
+   
+    SELECT JSON_ARRAYAGG(
+               JSON_OBJECT(
+                   'id_riga',         id_riga,
+                   'id_ordine',       id_ordine,
+                   'nome_articolo',   nome_articolo,
+                   'quantita',        quantita,
+                   'prezzo_unitario', prezzo_unitario,
+                   'totale_righe',    totale_righe
+               )
+           ) AS data
+    FROM (
+        SELECT
+            id_riga,
+            id_ordine,
+            nome_articolo,
+            quantita,
+            prezzo_unitario,
+            (quantita * prezzo_unitario) AS totale_righe
+        FROM
+            ordini_righe
+        WHERE
+            (p_id_ordine IS NULL OR id_ordine = p_id_ordine)
+        ORDER BY
+            CASE
+                WHEN p_order_by = 'nome_articolo' AND UPPER(p_order_dir) = 'ASC'  THEN nome_articolo
+                WHEN p_order_by = 'nome_articolo' AND UPPER(p_order_dir) = 'DESC' THEN NULL
+                WHEN p_order_by = 'quantita'      AND UPPER(p_order_dir) = 'ASC'  THEN quantita
+                WHEN p_order_by = 'quantita'      AND UPPER(p_order_dir) = 'DESC' THEN NULL
+                WHEN p_order_by = 'prezzo_unitario' AND UPPER(p_order_dir) = 'ASC'  THEN prezzo_unitario
+                WHEN p_order_by = 'prezzo_unitario' AND UPPER(p_order_dir) = 'DESC' THEN NULL
+                ELSE id_riga
+            END ASC,
+            id_riga ASC -- fallback order
+        LIMIT p_page_size OFFSET v_offset
+    ) AS sub;
+
+
+    SELECT JSON_OBJECT(
+        'status',     'success',
+        'totalRows',  v_total_rows,
+        'page',       p_page,
+        'pageSize',   p_page_size
+    ) AS meta;
+END $$
+
+
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertOrdini_righe1`(
+    IN p_id_ordine        INT,
+    IN p_descrizione      VARCHAR(255),
+    IN p_prezzo_unitario  DECIMAL(10,2),
+    IN p_nome_articolo    VARCHAR(100),
+    IN p_quantita         DECIMAL(12,2)
+)
+BEGIN
+    -- Gestione errori: se qualcosa va storto esegui ROLLBACK e ritorna JSON di errore
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT JSON_OBJECT(
+            'status',  'error',
+            'message', 'Errore durante l\'inserimento della riga ordine'
+        ) AS response;
+    END;
+
+    START TRANSACTION;
+
+    -- Validazioni di input
+    IF p_quantita <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La quantità deve essere maggiore di 0';
+    END IF;
+
+    IF p_prezzo_unitario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Il prezzo unitario deve essere maggiore di 0';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM ordini WHERE id_ordine = p_id_ordine) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Ordine non trovato';
+    END IF;
+
+    -- Inserisci la nuova riga ordine
+    INSERT INTO ordini_righe
+    (
+        id_ordine,
+        descrizione,
+        prezzo_unitario,
+        nome_articolo,
+        quantita
+    )
+    VALUES
+    (
+        p_id_ordine,
+        p_descrizione,
+        p_prezzo_unitario,
+        p_nome_articolo,
+        p_quantita
+    );
+
+    COMMIT;
+
+    -- Ritorna JSON di successo con insertId
+    SELECT JSON_OBJECT(
+        'status',    'success',
+        'insertId',  LAST_INSERT_ID(),
+        'message',   'Riga ordine inserita correttamente'
+    ) AS response;
+END $$
+
+delimiter $$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateOrdini_righe1`(
+    IN p_id_riga          INT,
+    IN p_id_ordine        INT,
+    IN p_descrizione      VARCHAR(255),
+    IN p_prezzo_unitario  DECIMAL(10,2),
+    IN p_nome_articolo    VARCHAR(100),
+    IN p_quantita         DECIMAL(12,2)
+)
+BEGIN
+    -- Gestione errori: rollback + messaggio JSON
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT JSON_OBJECT(
+            'status',  'error',
+            'message', 'Errore durante l\'aggiornamento della riga ordine'
+        ) AS response;
+    END;
+
+    START TRANSACTION;
+
+    -- Controllo che la riga da aggiornare esista
+    IF NOT EXISTS (SELECT 1 FROM ordini_righe WHERE id_riga = p_id_riga) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Riga ordine non trovata';
+    END IF;
+
+    -- Controllo che l'ordine esista
+    IF NOT EXISTS (SELECT 1 FROM ordini WHERE id_ordine = p_id_ordine) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Ordine non trovato';
+    END IF;
+
+    -- Validazioni di input
+    IF p_quantita <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'La quantità deve essere maggiore di 0';
+    END IF;
+
+    IF p_prezzo_unitario <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Il prezzo unitario deve essere maggiore di 0';
+    END IF;
+
+    -- Esegui l'update
+    UPDATE ordini_righe
+    SET
+        id_ordine        = p_id_ordine,
+        descrizione      = p_descrizione,
+        prezzo_unitario  = p_prezzo_unitario,
+        nome_articolo    = p_nome_articolo,
+        quantita         = p_quantita
+    WHERE id_riga = p_id_riga;
+
+    -- Conta le righe modificate
+    IF ROW_COUNT() = 0 THEN
+        COMMIT;
+        SELECT JSON_OBJECT(
+            'status',        'warning',
+            'rowsAffected',  0,
+            'message',       'Nessuna modifica: i dati erano già aggiornati'
+        ) AS response;
+    ELSE
+        COMMIT;
+        SELECT JSON_OBJECT(
+            'status',        'success',
+            'rowsAffected',  ROW_COUNT(),
+            'message',       'Riga ordine aggiornata correttamente'
+        ) AS response;
+    END IF;
+END $$

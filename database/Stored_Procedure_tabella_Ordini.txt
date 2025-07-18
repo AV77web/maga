@@ -1,0 +1,240 @@
+Delimiter $$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `FetchOrdini1`(
+    IN p_num_ordine   VARCHAR(20),         -- filtro facoltativo sul numero ordine
+    IN p_fornitore_id INT,                 -- filtro facoltativo per fornitore
+    IN p_page         INT,                 -- numero pagina (parte da 1)
+    IN p_page_size    INT,                 -- righe per pagina
+    IN p_order_by     ENUM('id_ordine', 'num_ordine', 'data_ordine', 'fornitore_id', 'stato'), -- colonne consentite
+    IN p_order_dir    ENUM('ASC', 'DESC')  -- direzione consentita
+)
+BEGIN
+    DECLARE v_offset INT DEFAULT 0;
+    SET v_offset = (p_page - 1) * p_page_size;
+
+    -- CTE per contare righe totali e selezionare righe paginate
+    WITH filtered AS (
+        SELECT
+            id_ordine,
+            num_ordine,
+            DATE_FORMAT(data_ordine, '%Y-%m-%d') AS data_ordine,
+            fornitore_id,
+            stato,
+            IFNULL(note, '') AS note
+        FROM ordini
+        WHERE (p_num_ordine   IS NULL OR p_num_ordine   = '' OR num_ordine   LIKE CONCAT('%', p_num_ordine, '%'))
+          AND (p_fornitore_id IS NULL OR p_fornitore_id = 0 OR fornitore_id = p_fornitore_id)
+    ),
+    total_count AS (
+        SELECT COUNT(*) AS totalRows FROM filtered
+    ),
+    paginated AS (
+        SELECT *
+        FROM filtered
+        ORDER BY
+            CASE p_order_by
+                WHEN 'id_ordine'   THEN id_ordine
+                WHEN 'num_ordine'  THEN num_ordine
+                WHEN 'data_ordine' THEN data_ordine
+                WHEN 'fornitore_id'THEN fornitore_id
+                WHEN 'stato'       THEN stato
+            END
+            COLLATE utf8mb4_general_ci
+            -- Direzione dinamica
+            ASC,
+            CASE p_order_dir
+                WHEN 'DESC' THEN -1
+                ELSE 1
+            END
+        LIMIT p_page_size OFFSET v_offset
+    )
+    
+    -- Restituisce dati e meta insieme in un JSON
+    SELECT JSON_OBJECT(
+        'status', 'success',
+        'page', p_page,
+        'pageSize', p_page_size,
+        'totalRows', (SELECT totalRows FROM total_count),
+        'data', JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id_ordine',   id_ordine,
+                'num_ordine',  num_ordine,
+                'data_ordine', data_ordine,
+                'fornitore_id',fornitore_id,
+                'stato',       stato,
+                'note',        note
+            )
+        )
+    ) AS result
+    FROM paginated;
+END $$
+
+delimiter ;
+
+
+
+delimiter $$
+
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertOrdini1`(
+    IN p_num_ordine    VARCHAR(20),
+    IN p_data          DATE,
+    IN p_fornitore_id  INT,
+    IN p_stato         ENUM('APERTO', 'INVIATO', 'CHIUSO', 'ANNULLATO'),
+    IN p_note          TEXT
+)
+BEGIN
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT JSON_OBJECT(
+            'status',  'error',
+            'message', 'Errore durante l\'inserimento dell\'ordine'
+        ) AS response;
+    END;
+
+    START TRANSACTION;
+
+
+    IF NOT EXISTS (
+        SELECT 1 FROM fornitori WHERE id = p_fornitore_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Fornitore non trovato';
+    END IF;
+
+
+    INSERT INTO ordini (
+        num_ordine,
+        data_ordine,
+        fornitore_id,
+        stato,
+        note
+    ) VALUES (
+        p_num_ordine,
+        p_data,
+        p_fornitore_id,
+        p_stato,
+        p_note
+    );
+
+    COMMIT;
+
+
+    SELECT JSON_OBJECT(
+        'status',    'success',
+        'insertId',  LAST_INSERT_ID(),
+        'message',   'Ordine inserito correttamente'
+    ) AS response;
+END $$
+
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateOrdini1`(
+    IN p_id            INT,
+    IN p_num_ordine    VARCHAR(20),
+    IN p_data          DATE,
+    IN p_fornitore_id  INT,
+    IN p_stato         ENUM('APERTO', 'INVIATO', 'CHIUSO', 'ANNULLATO'),
+    IN p_note          TEXT
+)
+BEGIN
+ 
+    DECLARE v_rows_affected INT DEFAULT 0;
+
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT JSON_OBJECT(
+            'status',  'error',
+            'message', 'Errore durante l\'aggiornamento dell\'ordine'
+        ) AS response;
+    END;
+
+    START TRANSACTION;
+
+
+    IF NOT EXISTS (
+        SELECT 1 FROM ordini WHERE id_ordine = p_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Ordine non trovato';
+    END IF;
+
+
+    IF NOT EXISTS (
+        SELECT 1 FROM fornitori WHERE id = p_fornitore_id
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Fornitore non esiste';
+    END IF;
+
+
+    UPDATE ordini
+    SET
+        num_ordine    = p_num_ordine,
+        data_ordine   = p_data,
+        fornitore_id  = p_fornitore_id,
+        stato         = p_stato,
+        note          = p_note
+    WHERE
+        id_ordine = p_id;
+
+
+    SET v_rows_affected = ROW_COUNT();
+
+    COMMIT;
+
+
+    SELECT JSON_OBJECT(
+        'status',        IF(v_rows_affected > 0, 'success', 'warning'),
+        'rowsAffected',  v_rows_affected,
+        'message',       IF(v_rows_affected > 0,
+                            'Ordine aggiornato correttamente',
+                            'Nessuna modifica effettuata')
+    ) AS response;
+END$$
+
+
+DELIMITER $$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `DeleteOrdini1`(
+    IN p_id INT
+)
+BEGIN
+    DECLARE v_rows_deleted INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT JSON_OBJECT(
+            'status',  'error',
+            'message', 'Errore durante l\'eliminazione dell\'ordine'
+        ) AS response;
+    END;
+
+    START TRANSACTION;
+
+    DELETE FROM ordini
+    WHERE id_ordine = p_id;
+
+    SET v_rows_deleted = ROW_COUNT();
+
+    IF v_rows_deleted = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Ordine non trovato';
+    END IF;
+
+    COMMIT;
+
+    SELECT JSON_OBJECT(
+        'status',       'success',
+        'rowsDeleted',  v_rows_deleted,
+        'message',      'Ordine eliminato correttamente'
+    ) AS response;
+END $$
+
+DELIMITER ;

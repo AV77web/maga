@@ -3,40 +3,29 @@
 //Script che gestisce le chiamate http verso
 //le api per le righe degli ordini.
 //@author: "villari.andrea@libero.it"
-//@version: "1.0.0 2025-07-08"
+//@version: "1.1.0 2025-07-19" // Refactored for correctness
 //===========================================
 
 import { createApiClient } from './apiClientFactory';
 
-const ordiniRigheApi = createApiClient('ordini-righe'); // Endpoint base: /api/ordini-righe
+// createApiClient() fornisce già i metodi standard (insert, update, delete, etc.)
+// che operano sull'endpoint 'orderlines' (/api/v1/orderlines).
+const ordiniRigheApi = createApiClient('orderlines');
 
 /**
  * Recupera le righe di un ordine specifico.
+ * Questo è un metodo custom perché l'endpoint è nidificato sotto 'ordini'.
  * @param {string|number} ordineId - L'ID dell'ordine padre.
  * @returns {Promise<Array<object>>}
  */
-ordiniRigheApi.fetchByOrdineId = (ordineId) => ordiniRigheApi._request("get", `/api/ordini/${ordineId}/righe`);
+ordiniRigheApi.fetchByOrdineId = (ordineId) => {
+  // Assicura che la chiamata usi il path corretto e versionato dell'API.
+  const customUrl = `/api/v1/orders/${ordineId}/items`;
+  return ordiniRigheApi._request("get", customUrl);
+}
 
-/**
- * Inserisce una nuova riga d'ordine.
- * @param {object} rigaData - I dati della riga da inserire.
- * @returns {Promise<object>}
- */
-ordiniRigheApi.insert = (rigaData) => ordiniRigheApi._request("post", "/", rigaData);
-
-/**
- * Aggiorna una riga d'ordine esistente.
- * @param {string|number} id - L'ID della riga da aggiornare.
- * @param {object} rigaData - I nuovi dati della riga.
- * @returns {Promise<object>}
- */
-ordiniRigheApi.update = (id, rigaData) => ordiniRigheApi._request("put", `/${id}`, rigaData);
-
-/**
- * Rimuove una riga d'ordine.
- * @param {string|number} id - L'ID della riga da rimuovere.
- * @returns {Promise<object>}
- */
-ordiniRigheApi.remove = (id) => ordiniRigheApi._request("delete", `/${id}`);
+// Le implementazioni custom di 'insert', 'update', e 'remove' sono state rimosse
+// perché erano errate e puntavano a endpoint sbagliati (es. '/').
+// Ora vengono utilizzati i metodi corretti forniti di default da createApiClient.
 
 export default ordiniRigheApi;

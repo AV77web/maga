@@ -6,7 +6,7 @@
 //========================================
 import React from "react";
 import { CgAdd, CgTrash } from "react-icons/cg"; // Assicurati che queste icone siano ancora necessarie
-import { CiEdit, CiSearch, CiBoxList, CiCircleChevLeft, CiUser, CiSaveDown2 } from "react-icons/ci"; // Importa l'icona Indietro e Salva
+import { CiEdit, CiSearch, CiBoxList, CiCircleChevLeft, CiUser, CiSaveDown2, CiViewList } from "react-icons/ci"; // Importa le icone necessarie
 import "../css/Header.css";
 //import { on } from "../../../server/db/db";
 
@@ -14,6 +14,7 @@ const Header = ({
   onAdd,
   onDelete,
   onEdit,
+  editButtonIcon, // 'view' o 'edit'
   onSearch,
   onManageBOM,
   onSave, // Nuova prop per il salvataggio
@@ -52,8 +53,8 @@ const Header = ({
         </button>
       )}
       { onEdit && (
-        <button className="icon-button" onClick={onEdit} title="Aggiorna" disabled={disableEditAndDelete}>
-        <CiEdit />
+        <button className="icon-button" onClick={onEdit} title="Modifica/Visualizza" disabled={disableEditAndDelete}>
+        {editButtonIcon === 'view' ? <CiViewList /> : <CiEdit />}
         </button>
       )}      
       {onDelete && (

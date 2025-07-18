@@ -2,7 +2,10 @@
 // Hook: useOrder.js
 // Gestisce fetch, cache e salvataggi di un ordine
 // (testata + righe) tramite TanStack React Query.
+// @author: "villari.andrea@libero.it"
+// @version: "1.0.0 2025-07-18"
 // ===============================================
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import ordiniApi from '../api/ordiniApi';
 import ordiniRigheApi from '../api/ordiniRigheApi';

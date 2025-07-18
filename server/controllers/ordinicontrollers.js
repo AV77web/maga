@@ -32,37 +32,20 @@ exports.getOrdini = async (req, res, next) => {
       order_dir = "ASC",
     } = req.query;
 
-    // Normalizzazioni / default
     const p_num_ordine   = num_ordine || null;
     const p_fornitore_id = fornitore_id || null;
     const p_page         = Math.max(parseInt(page, 10) || 1, 1);
     const p_page_size    = Math.max(parseInt(page_size, 10) || 10, 1);
-    /* Mappa i nomi colonna usati sul frontend (id) a quelli reali nel DB */
-    const orderMap = {
-      id: "id_ordine",
-      num_ordine: "num_ordine",
-      data_ordine: "data_ordine",
-      fornitore_id: "fornitore_id",
-      stato: "stato",
-    };
-
-    const p_order_by     = orderMap[order_by] || order_by;
+    const p_order_by     = order_by || "num_ordine";
     const p_order_dir    = order_dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
     logger.debug(
-      {
-        p_num_ordine,
-        p_fornitore_id,
-        p_page,
-        p_page_size,
-        p_order_by,
-        p_order_dir,
-      },
-      "Call FetchOrdini"
+      { p_num_ordine, p_fornitore_id, p_page, p_page_size, p_order_by, p_order_dir },
+      "Call FetchOrdini1"
     );
 
-    // La nuova SP accetta 6 parametri (2 filtri + paginazione + ordinamento)
-    const [resultSets] = await db.query("CALL FetchOrdini(?,?,?,?,?,?)", [
+    // Chiama la nuova stored procedure che restituisce un singolo JSON
+    const [resultSet] = await db.query("CALL FetchOrdini1(?,?,?,?,?,?)", [
       p_num_ordine,
       p_fornitore_id,
       p_page,
@@ -70,39 +53,63 @@ exports.getOrdini = async (req, res, next) => {
       p_order_by,
       p_order_dir,
     ]);
+    
+    // La SP potrebbe non restituire righe se il risultato è vuoto. Dobbiamo gestirlo.
+    const result = resultSet[0] ? resultSet[0].result : null;
 
-    // Decodifica output { rows, meta }
-    let rows, meta;
-    if (
-      Array.isArray(resultSets) &&
-      resultSets.length >= 2 &&
-      resultSets[0][0]?.data !== undefined
-    ) {
-      const rawRows = resultSets[0][0].data;
-      const rawMeta = resultSets[1][0]?.meta ?? {};
-      rows = typeof rawRows === "string" ? JSON.parse(rawRows) : rawRows;
-      meta = typeof rawMeta === "string" ? JSON.parse(rawMeta) : rawMeta;
-    } else {
-      // Fallback legacy (non JSON aggregato)
-      rows = resultSets[0];
-      meta = {
-        page: p_page,
-        pageSize: p_page_size,
-        totalRows: Array.isArray(rows) ? rows.length : 0,
-        status: "success",
+    // Controlla lo stato e formatta la risposta per il frontend
+    if (result && result.status === 'success') {
+      const rows = result.data || [];
+      const meta = {
+        page: result.page,
+        pageSize: result.pageSize,
+        totalRows: result.totalRows,
+        status: result.status,
       };
+      logger.debug({ rows: rows.length, meta }, "Rows returned FetchOrdini1");
+      res.json({ success: true, result: { rows, meta } });
+    } else {
+      // Se la SP non restituisce righe, è un successo con dati vuoti, non un errore.
+      logger.warn({ msg: "FetchOrdini1 non ha restituito risultati, invio array vuoto." });
+      res.json({ 
+        success: true, 
+        result: { 
+          rows: [], 
+          meta: { page: p_page, pageSize: p_page_size, totalRows: 0, status: 'success' } 
+        } 
+      });
     }
 
-    // Safety slice nel caso la SP restituisca più righe del previsto
-    if (Array.isArray(rows) && rows.length > meta.pageSize) {
-      const start = (meta.page - 1) * meta.pageSize;
-      rows = rows.slice(start, start + meta.pageSize);
-    }
-
-    logger.debug({ rows: rows.length, meta }, "Rows returned FetchOrdini");
-    res.json({ success: true, result: { rows, meta } });
   } catch (error) {
     logger.error({ msg: "Errore FetchOrdini", error: error.message, stack: error.stack });
+    next(error);
+  }
+};
+
+// --------------------------------------------------
+// GET /api/v1/orders/:id  – recupera un singolo ordine
+// --------------------------------------------------
+exports.getOrdineById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ success: false, message: "ID Ordine mancante." });
+    }
+
+    const [[result]] = await db.query("CALL FetchOrdineById(?)", [id]);
+    
+    // La SP restituisce un singolo campo 'result' che contiene l'oggetto JSON di risposta.
+    const response = result.result;
+
+    if (!response || response.status === 'not_found') {
+      return res.status(404).json({ success: false, message: "Ordine non trovato." });
+    }
+
+    // Passiamo direttamente l'oggetto 'data' estratto dalla risposta della SP.
+    res.json({ success: true, data: response.data });
+
+  } catch (error) {
+    logger.error({ msg: `Errore FetchOrdineById con id ${req.params.id}`, error: error.message, stack: error.stack });
     next(error);
   }
 };
@@ -162,28 +169,25 @@ exports.getOrdineRighe = async (req, res, next) => {
 // POST: crea un nuovo ordine
 exports.insertOrdine = async (req, res, next) => {
   try {
-    // Crea una copia del body per poter convertire i tipi senza modificare l'originale
-    const dataToValidate = { ...req.body };
-    if (dataToValidate.fornitore_id) {
-        dataToValidate.fornitore_id = Number(dataToValidate.fornitore_id);
-    }
-
-    const { num_ordine, data_ordine, fornitore_id, stato, note } = dataToValidate;
+    const { num_ordine, data_ordine, fornitore_id, stato, note } = req.body;
     
-    // Assumendo una SP 'InsertOrdine'
-    const [results] = await db.query("CALL InsertOrdini(?, ?, ?, ?, ?)", [
+    // Chiama la nuova SP e si aspetta un singolo oggetto JSON `response`
+    const [[{ response }]] = await db.query("CALL InsertOrdini1(?, ?, ?, ?, ?)", [
       num_ordine,
       data_ordine,
-      fornitore_id,
+      Number(fornitore_id),
       stato,
       note || null,
     ]);
 
-    const newId = results[0][0].id_ordine; // Assumendo che la SP restituisca l'ID
+    if (response.status === 'error') {
+      // Errore di validazione o logica di business dalla SP
+      return res.status(400).json({ success: false, message: response.message });
+    }
 
-    res.status(201).json({ success: true, id_ordine: newId, message: "Ordine creato con successo." });
+    res.status(201).json({ success: true, ...response });
   } catch (error) {
-    console.error("Errore nell'inserimento dell'ordine:", error.message);
+    logger.error({ msg: "Errore in insertOrdine", error: error.message, stack: error.stack });
     next(error);
   }
 };
@@ -192,24 +196,25 @@ exports.insertOrdine = async (req, res, next) => {
 exports.updateOrdine = async (req, res, next) => {
   try {
     const { id_ordine } = req.params;
+    const { num_ordine, data_ordine, fornitore_id, stato, note } = req.body;
 
-    const dataToValidate = { ...req.body };
-    if (dataToValidate.fornitore_id) {
-        dataToValidate.fornitore_id = Number(dataToValidate.fornitore_id);
-    }
-
-    const { num_ordine, data_ordine, fornitore_id, stato, note } = dataToValidate;
-
-    // Assumendo una SP 'UpdateOrdine'
-    const [result] = await db.query("CALL UpdateOrdini(?, ?, ?, ?, ?, ?)", [ id_ordine, num_ordine, data_ordine, fornitore_id, stato, note || null]);
+    // Chiama la nuova SP e si aspetta un singolo oggetto JSON `response`
+    const [[{ response }]] = await db.query("CALL UpdateOrdini1(?, ?, ?, ?, ?, ?)", [ 
+      id_ordine, 
+      num_ordine, 
+      data_ordine, 
+      Number(fornitore_id), 
+      stato, 
+      note || null
+    ]);
     
-    if (result.affectedRows === 0) {
-        return res.status(404).json({ success: false, message: "Ordine non trovato per l'aggiornamento." });
+    if (response.status === 'error' || response.rowsAffected === 0) {
+      return res.status(404).json({ success: false, message: response.message || 'Ordine non trovato o dati invariati.' });
     }
 
-    res.json({ success: true, message: "Ordine aggiornato con successo." });
+    res.json({ success: true, ...response });
   } catch (error) {
-    console.error(`Errore nell'aggiornamento dell'ordine con ID ${req.params.id_ordine}:`, error.message);
+    logger.error({ msg: `Errore nell'aggiornamento dell'ordine con ID ${req.params.id_ordine}:`, error: error.message, stack: error.stack });
     next(error);
   }
 };
@@ -219,16 +224,16 @@ exports.deleteOrdine = async (req, res, next) => {
   try {
     const { id_ordine } = req.params;
 
-    // Assumendo una SP 'DeleteOrdine'
-    const [result] = await db.query("CALL DeleteOrdini(?)", [id_ordine]);
+    // Chiama la nuova SP e si aspetta un singolo oggetto JSON `response`
+    const [[{ response }]] = await db.query("CALL DeleteOrdini1(?)", [id_ordine]);
 
-    if (result.affectedRows === 0) {
-        return res.status(404).json({ success: false, message: "Ordine non trovato per l'eliminazione." });
+    if (response.status === 'error') {
+        return res.status(404).json({ success: false, message: response.message });
     }
-
-    res.json({ success: true, message: "Ordine eliminato con successo." });
+    
+    res.json({ success: true, ...response });
   } catch (error) {
-    console.error(`Errore nell'eliminazione dell'ordine con ID ${req.params.id_ordine}:`, error.message);
+    logger.error({ msg: `Errore nell'eliminazione dell'ordine con ID ${req.params.id_ordine}:`, error: error.message, stack: error.stack });
     next(error);
   }
 };

@@ -1,23 +1,28 @@
-// ===============================================
-// File: orderlines.routes.js
-// Rotte per la gestione delle righe ordine
-// ===============================================
+// server/modules/orderlines/orderlines.routes.js
+//=================================================
+// Rotte per le righe d'ordine (Order Lines) – v1
+//=================================================
 const express = require('express');
 const router = express.Router();
+const orderLinesController = require('./orderlines.controller');
 const validateSchema = require('../../middleware/validateSchema');
 const orderLineSchema = require('../../schemas/orderline.schema.json');
-const orderLinesCtrl = require('../../controllers/ordinilinecontrollers');
 
-// GET tutte le righe di un ordine
-router.get('/orders/:orderId/lines', orderLinesCtrl.getOrderLines);
+// POST /api/v1/orderlines - Crea una nuova riga d'ordine
+router.post(
+    '/', 
+    validateSchema(orderLineSchema, { operation: 'create' }), 
+    orderLinesController.createOrderLine
+);
 
-// POST nuova riga ordine
-router.post('/orders/:orderId/lines', validateSchema(orderLineSchema), orderLinesCtrl.insertOrderLine);
+// PUT /api/v1/orderlines/:id - Aggiorna una riga d'ordine esistente
+router.put(
+    '/:id', 
+    validateSchema(orderLineSchema, { operation: 'update' }), 
+    orderLinesController.updateOrderLine
+);
 
-// PUT aggiorna riga ordine
-router.put('/order-lines/:id', validateSchema(orderLineSchema), orderLinesCtrl.updateOrderLine);
-
-// DELETE elimina riga ordine
-router.delete('/order-lines/:id', orderLinesCtrl.deleteOrderLine);
+// DELETE /api/v1/orderlines/:id - Elimina una riga d'ordine
+router.delete('/:id', orderLinesController.deleteOrderLine);
 
 module.exports = router; 

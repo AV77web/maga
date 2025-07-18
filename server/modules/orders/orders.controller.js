@@ -10,6 +10,10 @@ module.exports = {
    */
   getOrders: ordiniController.getOrdini,
   /**
+   * GET /api/v1/orders/:id
+   */
+  getOrderById: ordiniController.getOrdineById,
+  /**
    * GET /api/v1/orders/:orderId/items (righe ordine)
    */
   getOrderLines: ordiniController.getOrdineRighe,

@@ -127,7 +127,7 @@ const TableView = ({
         }
     };
 
-    useEffect(() => {
+        useEffect(() => {
         fetchData();
         fetchTotalCount();
     }, [
