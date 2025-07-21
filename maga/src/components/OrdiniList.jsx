@@ -11,6 +11,8 @@ import TableGrid from './TableGrid';
 import Pagination from './Pagination1';
 import '../css/Ordini.css';
 
+const rowsPerPageOptions = [5, 10, 20, 50];
+
 const masterColumns = [
     { key: 'id', label: 'ID Ordine', cellClassName: 'text-center' },
     { key: 'num_ordine', label: 'Numero Ordine', cellClassName: 'text-left' },
@@ -26,7 +28,7 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
     const [sortOrder, setSortOrder] = useState("asc");
 
     const { data, isLoading, error } = useOrdini({
-        page,
+        page: page + 1,
         pageSize,
         sortKey,
         sortOrder,
@@ -68,25 +70,62 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
 
     if (isLoading) return <div className="loader">Caricamento ordini...</div>;
     if (error) return <div className="error-message">Errore nel caricamento degli ordini: {error.message}</div>;
+      // Parametri per paginazione e ordinamento lato server
+      const queryParams = {
+        page: page + 1, // la SP usa 1-based index
+        page_size: pageSize,
+        order_by: sortKey || "name",
+        order_dir: sortOrder,
+      };
 
     return (
-        <div className="master-view">
-            <TableGrid
-                columns={masterColumns}
-                rows={ordini}
-                sortKey={sortKey}
-                sortOrder={sortOrder}
-                onSort={handleSort}
-                selectedIds={selectedIds}
-                onRowSelectionChange={onSelectionChange} // Passa la funzione dal genitore
-                onRowDoubleClick={onOrdineSelect}
-            />
-            <Pagination
-                page={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-            />
-        </div>
+        <div  className="container">
+            <div className="table-panel">
+                <div className="table-wrapper">
+                <div className="master-view">
+                    <TableGrid
+                        title="Gestione Ordini"
+                        columns={masterColumns}
+                        rows={ordini}
+                        sortKey={sortKey}
+                        sortOrder={sortOrder}
+                        onSort={handleSort}
+                        selectedIds={selectedIds}
+                        onRowSelectionChange={onSelectionChange} // Passa la funzione dal genitore
+                        onRowDoubleClick={onOrdineSelect}
+                    />
+                    <div className="pagination-bar">
+                <Pagination
+                    page={page + 1}
+                    totalPages={totalPages}
+                    onPageChange={(newPage) => setPage(newPage - 1)}
+                />
+                    <label>
+                        Elementi per pagina:&nbsp;
+                        <select
+                            value={pageSize}
+                            onChange={e => {
+                            const newSize = parseInt(e.target.value, 10);
+                               setPageSize(newSize);
+                            setPage(0); // Reset to first page when page size changes
+                            }}
+                            disabled={isLoading}
+                        >
+                        {rowsPerPageOptions.map((option) => (
+                            <option key={option} value={option}>
+                            {option}
+                            </option>
+                        ))}
+                        </select>
+                    </label>
+                </div>
+                </div>
+            
+             
+                </div>
+                </div>
+            </div>
+    
     );
 };
 

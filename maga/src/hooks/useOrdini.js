@@ -24,7 +24,7 @@ export const useOrdini = ({ page, pageSize, sortKey, sortOrder, filters = {} }) 
 
   const queryFn = async () => {
     const queryParams = {
-      page: page + 1, // L'API potrebbe essere 1-based
+      page, // L'API potrebbe essere 1-based
       page_size: pageSize,
       order_by: sortKey,
       order_dir: sortOrder,

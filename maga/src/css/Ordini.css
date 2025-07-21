@@ -1,14 +1,52 @@
 
-.title-gestione-ordini {
-  text-align: center;
-  margin-top: 20px;
-  font-size: 3rem; /* oppure quello che preferisci */
-  color: #333; /* colore opzionale */
+/** Ordini.css - Stili coerenti con ArticoliTable.css e MovimentiTable.css **/
+
+.container {
+  width: 100%;
+  padding: 32px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
+h2, .title-gestione-ordini {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-top: 20px;
+  color: #333;
+}
 
-/* Ordini.css - Styling per HeadDocument */
+.table-panel {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(90, 90, 90, 0.5);
+  padding: 16px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
 
+.table-wrapper {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.table-wrapper .ricambi-table {
+  width: auto;
+  margin: 0 auto;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Stili per la doc-header (HeadDocument) */
 .doc-header {
   margin: 1rem 0;
   padding: 1rem;
@@ -18,7 +56,7 @@
 }
 
 .doc-title {
-  text-align: center; /* CENTRA IL TITOLO */
+  text-align: center;
   margin-bottom: 1.5rem;
   font-size: 1.6rem;
   font-weight: 600;
@@ -66,32 +104,9 @@
   margin-top: 0.25rem;
 }
 
-.table-panel {
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(90, 90, 90, 0.5);
-  padding: 16px;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  width: auto;
-}
-
-/* Centra le tabelle nei pannelli che usano .table-wrapper */
-.table-wrapper {
-  display: flex;
-  justify-content: center; /* centra la tabella orizzontalmente */
-  overflow-x: auto;        /* permette lo scroll orizzontale se necessario */
-}
-
-.table-wrapper .ricambi-table {
-  width: auto;             /* evita che la tabella occupi sempre il 100% e fuoriesca */
-  margin: 0 auto;          /* fallback di centratura se il flex non applica */
-}
-
 .required-field {
   border: 2px solid #e53935 !important;
   box-shadow: 0 0 2px #e53935;
 }
+
+

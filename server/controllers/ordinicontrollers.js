@@ -43,7 +43,7 @@ exports.getOrdini = async (req, res, next) => {
       { p_num_ordine, p_fornitore_id, p_page, p_page_size, p_order_by, p_order_dir },
       "Call FetchOrdini1"
     );
-
+  c
     // Chiama la nuova stored procedure che restituisce un singolo JSON
     const [resultSet] = await db.query("CALL FetchOrdini1(?,?,?,?,?,?)", [
       p_num_ordine,
@@ -54,36 +54,36 @@ exports.getOrdini = async (req, res, next) => {
       p_order_dir,
     ]);
     
-    // La SP potrebbe non restituire righe se il risultato è vuoto. Dobbiamo gestirlo.
-    const result = resultSet[0] ? resultSet[0].result : null;
 
-    // Controlla lo stato e formatta la risposta per il frontend
-    if (result && result.status === 'success') {
-      const rows = result.data || [];
+    // CORRECTED PARSING: Safely extract the result JSON from the nested structure
+    const spResult = resultSet && resultSet[0] && resultSet[0][0] ? resultSet[0][0].result : null;
+
+    // Handle the result
+    if (spResult && spResult.status === 'success') {
+      const rows = spResult.data || [];
       const meta = {
-        page: result.page,
-        pageSize: result.pageSize,
-        totalRows: result.totalRows,
-        status: result.status,
-      };
-      logger.debug({ rows: rows.length, meta }, "Rows returned FetchOrdini1");
-      res.json({ success: true, result: { rows, meta } });
+      page: spResult.page,
+      pageSize: spResult.pageSize,
+      totalRows: spResult.totalRows,
+      status: spResult.status,
+    };
+    logger.debug({ rows: rows.length, meta }, "Rows returned FetchOrdini1");
+    res.json({ success: true, result: { rows, meta } });
     } else {
-      // Se la SP non restituisce righe, è un successo con dati vuoti, non un errore.
-      logger.warn({ msg: "FetchOrdini1 non ha restituito risultati, invio array vuoto." });
-      res.json({ 
-        success: true, 
-        result: { 
-          rows: [], 
-          meta: { page: p_page, pageSize: p_page_size, totalRows: 0, status: 'success' } 
-        } 
-      });
-    }
+    logger.warn({ msg: "FetchOrdini1 non ha restituito risultati validi, invio array vuoto." });
+    res.json({ 
+      success: true, 
+      result: { 
+      rows: [], 
+      meta: { page: p_page, pageSize: p_page_size, totalRows: 0, status: 'success' } 
+    } 
+  });
+}
 
-  } catch (error) {
-    logger.error({ msg: "Errore FetchOrdini", error: error.message, stack: error.stack });
-    next(error);
-  }
+} catch (error) {
+logger.error({ msg: "Errore FetchOrdini", error: error.message, stack: error.stack });
+next(error);
+}
 };
 
 // --------------------------------------------------
