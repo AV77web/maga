@@ -20,7 +20,9 @@ const ordiniRigheApi = createApiClient('orderlines');
  */
 ordiniRigheApi.fetchByOrdineId = (ordineId) => {
   // Assicura che la chiamata usi il path corretto e versionato dell'API.
-  const customUrl = `/api/v1/orders/${ordineId}/items`;
+  console.log("ordiniRigheApi.fetchByOrdineId chiamato con ordineId:", ordineId);
+  const customUrl = `http://localhost:3001/api/v1/orders/${ordineId}/items`;
+  console.log("Chiamo _request con URL:", customUrl);
   return ordiniRigheApi._request("get", customUrl);
 }
 

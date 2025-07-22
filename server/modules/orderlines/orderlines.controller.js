@@ -11,7 +11,7 @@ module.exports = {
   /**
    * GET /api/v1/orders/:orderId/items
    */
-  getOrderLines: centralizedController.getOrderLines,
+  getOrdineRighe: centralizedController.getOrdineRighe,
   /**
    * POST /api/v1/orderlines
    */

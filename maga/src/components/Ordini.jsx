@@ -7,7 +7,7 @@
 //@version: "2.0.0 2025-07-19" // Refactored with Hooks and Composition
 //============================================================
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Header from './Header';
 import OrdiniList from './OrdiniList';
 import OrdineDetail from './OrdineDetail';
@@ -27,6 +27,10 @@ const Ordini = ({ currentUser, onLogout }) => {
   const [viewMode, setViewMode] = useState(VIEW_MODES.LIST);
   const [selectedOrdineId, setSelectedOrdineId] = useState(null);
   const [selectedMasterIds, setSelectedMasterIds] = useState([]); // Stato per la selezione
+
+  useEffect(() => {
+    console.log('selectedOrderId:', selectedOrdineId, 'viewMode:', viewMode);
+  }, [selectedOrdineId, viewMode]);
 
   // --- HANDLER PER LA NAVIGAZIONE ---
 
@@ -52,10 +56,12 @@ const Ordini = ({ currentUser, onLogout }) => {
   
   // Mostra i dettagli dell'ordine selezionato dalla lista
   const handleShowSelectedDetail = useCallback(() => {
+    console.log("Visualizza dettaglio", selectedOrdineId);
     if (selectedMasterIds.length !== 1) {
       alert("Seleziona un singolo ordine da visualizzare.");
       return;
     }
+    
     handleShowDetail(selectedMasterIds[0]);
   }, [selectedMasterIds, handleShowDetail]);
 

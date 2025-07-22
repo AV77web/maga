@@ -13,6 +13,7 @@ const API_ROOT = "http://localhost:3001/api/v1";
 
 // Funzione generica per gestire le chiamate API con gestione degli errori
 export async function baseRequest(method, url, data = null, params = null) { // Aggiunto export
+  console.log("[baseRequest] CHIAMATA:", method, url, data, params);
   try {
     const token = localStorage.getItem('authToken'); // o da dove lo recuperi
 
@@ -32,7 +33,9 @@ export async function baseRequest(method, url, data = null, params = null) { // 
     if (params) {
       config.params = params;
     }
+    console.log("[baseRequest] CONFIG:", config);
     const response = await axios(config);
+    console.log("[baseRequest] RISPOSTA:", response);
     //===================================
     //Modifica per controllo errori
     //==================================

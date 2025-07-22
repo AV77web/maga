@@ -26,6 +26,8 @@ exports.getOrdini = async (req, res, next) => {
     const {
       num_ordine,
       fornitore_id,
+      data_da,
+      data_a,
       page = 1,
       page_size = 10,
       order_by = "num_ordine",
@@ -34,24 +36,29 @@ exports.getOrdini = async (req, res, next) => {
 
     const p_num_ordine   = num_ordine || null;
     const p_fornitore_id = fornitore_id || null;
+    const p_data_da      = data_da || null;
+    const p_data_a       = data_a || null;
     const p_page         = Math.max(parseInt(page, 10) || 1, 1);
     const p_page_size    = Math.max(parseInt(page_size, 10) || 10, 1);
     const p_order_by     = order_by || "num_ordine";
     const p_order_dir    = order_dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
     logger.debug(
-      { p_num_ordine, p_fornitore_id, p_page, p_page_size, p_order_by, p_order_dir },
+      { p_num_ordine, p_fornitore_id, p_data_da, p_data_a, p_page, p_page_size, p_order_by, p_order_dir },
       "Call FetchOrdini1"
     );
-  c
+  
     // Chiama la nuova stored procedure che restituisce un singolo JSON
-    const [resultSet] = await db.query("CALL FetchOrdini1(?,?,?,?,?,?)", [
+    const [resultSet] = await db.query("CALL FetchOrdini1(?,?,?,?,?,?,?,?)", [
       p_num_ordine,
       p_fornitore_id,
+      p_data_da,
+      p_data_a,
       p_page,
       p_page_size,
       p_order_by,
       p_order_dir,
+
     ]);
     
 
@@ -96,16 +103,20 @@ exports.getOrdineById = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "ID Ordine mancante." });
     }
 
-    const [[result]] = await db.query("CALL FetchOrdineById(?)", [id]);
-    
-    // La SP restituisce un singolo campo 'result' che contiene l'oggetto JSON di risposta.
-    const response = result.result;
+    const resultArr = await db.query("CALL FetchOrdineById(?)", [id]);
+    console.log('FetchOrdineById FULL RESULT:', JSON.stringify(resultArr, null, 2));
 
-    if (!response || response.status === 'not_found') {
+    const result = resultArr[0][0][0];
+    console.log('FetchOrdineById raw result:', result);
+
+    const response = result && result.result ? result.result : null;
+    console.log('FetchOrdineById parsed response:', response);
+
+    if (!response || response.status !== 'success') {
+      console.log('RESPONSE 404:', response);
       return res.status(404).json({ success: false, message: "Ordine non trovato." });
     }
 
-    // Passiamo direttamente l'oggetto 'data' estratto dalla risposta della SP.
     res.json({ success: true, data: response.data });
 
   } catch (error) {

@@ -29,6 +29,7 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes"); // Importa le rotte degli utenti
 // const dibaRoutes = require("./routes/dibaroutes"); // deprecato
 // const ordiniRoutes = require("./routes/ordini.js"); // deprecato
+
 const partsRoutes = require("./modules/parts/parts.routes");
 const ordersRoutesV1 = require("./modules/orders/orders.routes");
 const counterpartiesRoutes = require("./modules/counterparties/counterparties.routes");
@@ -116,7 +117,8 @@ logger.warn("Legacy /api/* routes disabilitate. Aggiornare i client a /api/v1/*"
 // app.use("/api/ordini", authenticateToken, ordiniRoutes);
 
 // Nuovo endpoint v1
-app.use("/api/v1/orders", authenticateToken, ordersRoutesV1);
+//app.use("/api/v1/orders", authenticateToken, ordersRoutesV1);
+app.use('/api/v1/orders', require('./modules/orders/orders.routes'));
 app.use('/api/v1/orderlines', authenticateToken, orderLinesModule);
 
 // 🔵 Nuove rotte versione v1

@@ -23,13 +23,16 @@ const detailColumns = [
 ];
 
 const OrdineDetail = ({ ordineId, onBack, onEdit }) => {
+    console.log("OrdineDetail", ordineId);
     const [selectedDetailIds, setSelectedDetailIds] = useState([]);
     const [isRigaDialogOpen, setIsRigaDialogOpen] = useState(false);
     const [editingRiga, setEditingRiga] = useState(null);
 
     // Fetch dei dati
     const { data: ordineData, isLoading: isLoadingOrdine, error: errorOrdine } = useOrdine(ordineId);
+    console.log("OrdineDetail: ordineId ricevuto:", ordineId);
     const { data: righeData, isLoading: isLoadingRighe, error: errorRighe } = useOrdineRighe(ordineId);
+
     const { createRiga, updateRiga, deleteRiga, isLoading: isMutating } = useOrdineRigheMutations(ordineId);
 
     const testata = useMemo(() => {

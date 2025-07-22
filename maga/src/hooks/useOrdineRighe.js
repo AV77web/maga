@@ -15,11 +15,12 @@ import ordiniRigheApi from '../api/ordiniRigheApi';
  * @returns {object} Lo stato della query.
  */
 export const useOrdineRighe = (ordineId) => {
+  const enabled = !!ordineId;
   return useQuery({
     queryKey: ['ordineRighe', ordineId],
     queryFn: () => ordiniRigheApi.fetchByOrdineId(ordineId),
-    enabled: !!ordineId, // La query si attiva solo se ordineId è fornito
-    staleTime: 5 * 60 * 1000, // 5 minuti
+    enabled,
+    staleTime: 5 * 60 * 1000,
   });
 };
 
