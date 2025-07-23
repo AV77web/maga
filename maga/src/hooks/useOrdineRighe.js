@@ -16,6 +16,7 @@ import ordiniRigheApi from '../api/ordiniRigheApi';
  */
 export const useOrdineRighe = (ordineId) => {
   const enabled = !!ordineId;
+  
   return useQuery({
     queryKey: ['ordineRighe', ordineId],
     queryFn: () => ordiniRigheApi.fetchByOrdineId(ordineId),

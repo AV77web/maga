@@ -9,7 +9,7 @@ const db = require('../db/db');
 
 // GET tutte le righe di un ordine
 exports.getOrderLines = async (req, res, next) => {
-  console.log("A T T E N Z I O N E...getOrderLines");
+
   try {
     const { orderId } = req.params;
     const [resultSets] = await db.query('CALL FetchOrdini_righe(?,1,100,"id_riga", "ASC")', [orderId]);
@@ -21,26 +21,13 @@ exports.getOrderLines = async (req, res, next) => {
 
 // GET ordine righe
 exports.getOrdineRighe = async (req, res, next) => {
-  console.log("A T T E N Z I O N E...req.params:", req.params);
   try {
-    const ordineId = req.params.id;
-    if (!ordineId) {
-      return res.status(400).json({ success: false, message: "ID Ordine mancante." });
-    }
+    const ordineId = Number(req.params.id);
+    const p_page = Number(req.query.page) || 1;
+    const p_page_size = Number(req.query.pageSize) || 50;
+    const p_order_by = req.query.orderBy || 'id_riga';
+    const p_order_dir = req.query.orderDir || 'ASC';
 
-    const {
-      page = 1,
-      page_size = 50,
-      order_by = "id_riga",
-      order_dir = "ASC",
-    } = req.query;
-
-    const p_page        = Math.max(parseInt(page, 10) || 1, 1);
-    const p_page_size   = Math.max(parseInt(page_size, 10) || 50, 1);
-    const p_order_by    = order_by;
-    const p_order_dir   = order_dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
-
-    // Esegui la stored procedure
     const resultSets = await db.query("CALL FetchOrdini_righe1(?,?,?,?,?)", [
       ordineId,
       p_page,
@@ -49,20 +36,59 @@ exports.getOrdineRighe = async (req, res, next) => {
       p_order_dir,
     ]);
 
-    console.log("DEBUG resultSets:", JSON.stringify(resultSets, null, 2));
+    const allRows = resultSets[0] || [];
 
-    // resultSets[0] = primo resultset (array di righe con colonna 'data')
-    // resultSets[1] = secondo resultset (array di righe con colonna 'meta')
-    const rawRows = resultSets[0][0]?.data;
-    const rawMeta = resultSets[1][0]?.meta;
+    if (!allRows.length) {
+      return res.json({
+        success: true,
+        result: {
+          rows: [],
+          meta: { status: "success", totalRows: 0, page: p_page, pageSize: p_page_size }
+        }
+      });
+    }
 
-    const rows = rawRows ? JSON.parse(rawRows) : [];
-    const meta = rawMeta ? JSON.parse(rawMeta) : { page: p_page, pageSize: p_page_size, totalRows: 0, status: "success" };
+    // La stored procedure restituisce un oggetto con chiavi numeriche (0,1,2,...) contenenti i dati delle righe
+    // più una riga di metadati MySQL che dobbiamo filtrare
+    const dataRow = allRows.find(row => !row.hasOwnProperty('fieldCount')); // Trova la riga con i dati
+    
+    if (!dataRow) {
+      return res.json({
+        success: true,
+        result: {
+          rows: [],
+          meta: { status: "success", totalRows: 0, page: p_page, pageSize: p_page_size }
+        }
+      });
+    }
 
-    console.log("Sto per rispondere con:", { rows, meta });
+    // Estrai le righe individuali dalle chiavi numeriche
+    const rows = [];
+    let meta = { status: "success", totalRows: 0, page: p_page, pageSize: p_page_size };
+    
+    // Itera attraverso le chiavi numeriche per estrarre ogni riga
+    for (let i = 0; ; i++) {
+      if (dataRow[i.toString()]) {
+        const rigaData = dataRow[i.toString()];
+        // Estrai i metadati dalla prima riga
+        if (i === 0) {
+          meta = {
+            status: rigaData.status || "success",
+            totalRows: rigaData.totalRows || 0,
+            page: rigaData.page || p_page,
+            pageSize: rigaData.pageSize || p_page_size
+          };
+        }
+        // Aggiungi solo i dati della riga (senza metadati)
+        const { status, totalRows, page, pageSize, ...rigaSenzaMetadati } = rigaData;
+        rows.push(rigaSenzaMetadati);
+      } else {
+        break; // Non ci sono più righe
+      }
+    }
+
     res.json({ success: true, result: { rows, meta } });
   } catch (error) {
-    // logger.error({ msg: "Errore FetchOrdini_righe", error: error.message, stack: error.stack }); // Assuming logger is defined elsewhere
     next(error);
   }
 };

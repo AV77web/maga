@@ -9,13 +9,11 @@ const validateSchema = require('../../middleware/validateSchema');
 const orderSchema = require('../../schemas/order.schema.json');
 const orderLinesController = require('../orderlines/orderlines.controller');
 
-console.log("ORDERS.ROUTES.JS LOADED");
-
 
 router.get('/', ordersController.getOrders);
 router.get('/:id', ordersController.getOrderById);
 router.get('/:id/items', (req, res, next) => {
-  console.log('ROUTE /api/v1/orders/:id/items HIT, req.params:', req.params);
+  //console.log('ROUTE /api/v1/orders/:id/items HIT, req.params:', req.params);
   orderLinesController.getOrdineRighe(req, res, next);
 });
 router.post('/', validateSchema(orderSchema), ordersController.insertOrder);

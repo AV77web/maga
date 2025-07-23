@@ -1,7 +1,7 @@
 {
   "$id": "https://example.com/schemas/order.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Order",
+  "title": "Ordine",
   "description": "Schema unico per creazione (POST) e aggiornamento (PATCH) di un ordine",
   "type": "object",
   "properties": {

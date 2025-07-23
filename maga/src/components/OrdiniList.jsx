@@ -34,7 +34,7 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
         sortOrder,
     });
     // DEBUG: stampa i dati ricevuti dall'API
-    console.log('OrdiniList: Received data from useOrdini:', data);
+    //console.log('OrdiniList: Received data from useOrdini:', data);
 
     const ordini = useMemo(() => {
         // CORREZIONE DEFINITIVA: l'apiClientFactory "scarta" l'involucro 'result',
@@ -56,7 +56,7 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
     const totalPages = Math.ceil(totalCount / pageSize);
 
     // DEBUG: stampa i dati ricevuti dall'API
-    console.log('OrdiniList: Pagination info :',{totalCount, totalPages, isLoading, error});
+    //console.log('OrdiniList: Pagination info :',{totalCount, totalPages, isLoading, error});
 
     const handleSort = useCallback((key) => {
         if (key === sortKey) {
@@ -92,7 +92,9 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
                         onSort={handleSort}
                         selectedIds={selectedIds}
                         onRowSelectionChange={onSelectionChange} // Passa la funzione dal genitore
-                        onRowDoubleClick={onOrdineSelect}
+                        onRowDoubleClick={(id) => {
+                            onOrdineSelect(id);
+                        }}
                     />
                     <div className="pagination-bar">
                 <Pagination

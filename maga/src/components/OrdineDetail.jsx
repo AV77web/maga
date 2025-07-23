@@ -16,23 +16,31 @@ import { orderUiHints } from '../uiHints/orderUiHints';
 
 const detailColumns = [
     { key: 'id', label: 'ID Riga', cellClassName: 'text-center' },
-    { key: 'id_articolo', label: 'ID Articolo', cellClassName: 'text-center' },
     { key: 'nome_articolo', label: 'Nome Articolo', cellClassName: 'text-left' },
     { key: 'quantita', label: 'Quantità', cellClassName: 'text-right' },
     { key: 'prezzo_unitario', label: 'Prezzo', cellClassName: 'text-right' },
+    { key: 'totale_righe', label: 'Totale', cellClassName: 'text-right' }, // Nuovo campo dalla stored procedure
 ];
 
 const OrdineDetail = ({ ordineId, onBack, onEdit }) => {
-    console.log("OrdineDetail", ordineId);
+    
+    // Controllo se ordineId è valido
+    if (!ordineId) {
+        return (
+            <div className="error-message">
+                Errore: ID ordine mancante o non valido. OrdineId ricevuto: {String(ordineId)}
+            </div>
+        );
+    }
+    
     const [selectedDetailIds, setSelectedDetailIds] = useState([]);
     const [isRigaDialogOpen, setIsRigaDialogOpen] = useState(false);
     const [editingRiga, setEditingRiga] = useState(null);
 
     // Fetch dei dati
     const { data: ordineData, isLoading: isLoadingOrdine, error: errorOrdine } = useOrdine(ordineId);
-    console.log("OrdineDetail: ordineId ricevuto:", ordineId);
     const { data: righeData, isLoading: isLoadingRighe, error: errorRighe } = useOrdineRighe(ordineId);
-
+    
     const { createRiga, updateRiga, deleteRiga, isLoading: isMutating } = useOrdineRigheMutations(ordineId);
 
     const testata = useMemo(() => {
@@ -45,7 +53,19 @@ const OrdineDetail = ({ ordineId, onBack, onEdit }) => {
         return { ...ordineData, data_ordine: dataISO };
     }, [ordineData]);
 
-    const righe = useMemo(() => righeData?.rows || [], [righeData]);
+    const righe = useMemo(() => {
+        
+        // Ora il backend restituisce direttamente le righe nel formato corretto
+        const rawRighe = righeData?.result?.rows || righeData?.rows || [];
+        
+        // Trasforma i dati mappando id_riga a id per compatibilità con TableGrid
+        const transformedRighe = rawRighe.map(riga => ({
+            ...riga,
+            id: riga.id_riga  // TableGrid richiede 'id' come campo chiave
+        }));
+        
+        return transformedRighe;
+    }, [righeData]);
 
     // Handlers per le azioni sulle righe
     const handleNuovaRiga = () => {
@@ -64,7 +84,11 @@ const OrdineDetail = ({ ordineId, onBack, onEdit }) => {
         if (selectedDetailIds.length === 0) return;
         if (window.confirm(`Sei sicuro di voler eliminare ${selectedDetailIds.length} riga/e?`)) {
             try {
-                await Promise.all(selectedDetailIds.map(id => deleteRiga(id)));
+                // Usa id_riga per l'eliminazione nel backend, ma selectedDetailIds contiene gli id trasformati
+                await Promise.all(selectedDetailIds.map(id => {
+                    const riga = righe.find(r => r.id === id);
+                    return deleteRiga(riga.id_riga);
+                }));
                 setSelectedDetailIds([]);
             } catch (err) {
                 alert(`Errore durante l'eliminazione: ${err.message}`);
@@ -107,11 +131,15 @@ const OrdineDetail = ({ ordineId, onBack, onEdit }) => {
                 <button onClick={handleEliminaRiga} disabled={selectedDetailIds.length === 0} className="btn-action btn-danger">Elimina Riga</button>
                 <button onClick={onEdit} className="btn-action">Modifica Testata</button>
             </div>
+            
+            {isLoadingRighe && <div className="loader">Caricamento righe ordine...</div>}
+            {errorRighe && <div className="error-message">Errore caricamento righe: {errorRighe.message}</div>}
+            
             <TableGrid
                 columns={detailColumns}
                 rows={righe}
                 selectedIds={selectedDetailIds}
-                onRowSelect={(id, checked) => setSelectedDetailIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id))}
+                onRowSelectionChange={(id, checked) => setSelectedDetailIds(prev => checked ? [...prev, id] : prev.filter(i => i !== id))}
             />
             <OrdineRigaDialog
                 open={isRigaDialogOpen}
@@ -126,4 +154,4 @@ const OrdineDetail = ({ ordineId, onBack, onEdit }) => {
     );
 };
 
-export default OrdineDetail; 
+export default OrdineDetail;

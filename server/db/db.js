@@ -33,4 +33,5 @@ const pool = mysql.createPool({
   // Per prepared statements ripetitivi, usare connection.prepare() dove serve
 });
 
+
 module.exports = pool;

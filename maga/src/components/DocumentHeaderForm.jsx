@@ -77,7 +77,7 @@ export default function DocumentHeaderForm({
     [schema, uiHints]
   );
   const visibleFields = fields.filter(f => !HIDDEN_FIELDS.includes(f.name));
-  console.log('FIELDS:', visibleFields.map(f => f.name));
+  //console.log('FIELDS:', visibleFields.map(f => f.name));
 
   const requiredFields = schema.required || [];
 

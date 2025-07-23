@@ -25,7 +25,7 @@ exports.getOrdini = async (req, res, next) => {
   try {
     const {
       num_ordine,
-      fornitore_id,
+      controparte_id,
       data_da,
       data_a,
       page = 1,
@@ -35,7 +35,7 @@ exports.getOrdini = async (req, res, next) => {
     } = req.query;
 
     const p_num_ordine   = num_ordine || null;
-    const p_fornitore_id = fornitore_id || null;
+    const p_controparte_id = controparte_id || null;
     const p_data_da      = data_da || null;
     const p_data_a       = data_a || null;
     const p_page         = Math.max(parseInt(page, 10) || 1, 1);
@@ -44,14 +44,14 @@ exports.getOrdini = async (req, res, next) => {
     const p_order_dir    = order_dir.toUpperCase() === "DESC" ? "DESC" : "ASC";
 
     logger.debug(
-      { p_num_ordine, p_fornitore_id, p_data_da, p_data_a, p_page, p_page_size, p_order_by, p_order_dir },
+      { p_num_ordine, p_controparte_id, p_data_da, p_data_a, p_page, p_page_size, p_order_by, p_order_dir },
       "Call FetchOrdini1"
     );
   
     // Chiama la nuova stored procedure che restituisce un singolo JSON
     const [resultSet] = await db.query("CALL FetchOrdini1(?,?,?,?,?,?,?,?)", [
       p_num_ordine,
-      p_fornitore_id,
+      p_controparte_id,
       p_data_da,
       p_data_a,
       p_page,
@@ -61,7 +61,8 @@ exports.getOrdini = async (req, res, next) => {
 
     ]);
     
-
+    //const [testRows] = await db.query("SELECT * FROM ordini WHERE num_ordine = ?", [p_num_ordine]);
+    //console.log("DEBUG ordini diretta:", testRows);
     // CORRECTED PARSING: Safely extract the result JSON from the nested structure
     const spResult = resultSet && resultSet[0] && resultSet[0][0] ? resultSet[0][0].result : null;
 
@@ -104,13 +105,13 @@ exports.getOrdineById = async (req, res, next) => {
     }
 
     const resultArr = await db.query("CALL FetchOrdineById(?)", [id]);
-    console.log('FetchOrdineById FULL RESULT:', JSON.stringify(resultArr, null, 2));
+    //console.log('FetchOrdineById FULL RESULT:', JSON.stringify(resultArr, null, 2));
 
     const result = resultArr[0][0][0];
-    console.log('FetchOrdineById raw result:', result);
+    //console.log('FetchOrdineById raw result:', result);
 
     const response = result && result.result ? result.result : null;
-    console.log('FetchOrdineById parsed response:', response);
+    //console.log('FetchOrdineById parsed response:', response);
 
     if (!response || response.status !== 'success') {
       console.log('RESPONSE 404:', response);
@@ -180,13 +181,13 @@ exports.getOrdineRighe = async (req, res, next) => {
 // POST: crea un nuovo ordine
 exports.insertOrdine = async (req, res, next) => {
   try {
-    const { num_ordine, data_ordine, fornitore_id, stato, note } = req.body;
+    const { num_ordine, data_ordine, controparte_id, stato, note } = req.body;
     
     // Chiama la nuova SP e si aspetta un singolo oggetto JSON `response`
     const [[{ response }]] = await db.query("CALL InsertOrdini1(?, ?, ?, ?, ?)", [
       num_ordine,
       data_ordine,
-      Number(fornitore_id),
+      Number(controparte_id),
       stato,
       note || null,
     ]);
@@ -207,14 +208,14 @@ exports.insertOrdine = async (req, res, next) => {
 exports.updateOrdine = async (req, res, next) => {
   try {
     const { id_ordine } = req.params;
-    const { num_ordine, data_ordine, fornitore_id, stato, note } = req.body;
+    const { num_ordine, data_ordine, controparte_id, stato, note } = req.body;
 
     // Chiama la nuova SP e si aspetta un singolo oggetto JSON `response`
     const [[{ response }]] = await db.query("CALL UpdateOrdini1(?, ?, ?, ?, ?, ?)", [ 
       id_ordine, 
       num_ordine, 
       data_ordine, 
-      Number(fornitore_id), 
+      Number(controparte_id), 
       stato, 
       note || null
     ]);

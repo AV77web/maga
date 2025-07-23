@@ -19,10 +19,14 @@ const ordiniRigheApi = createApiClient('orderlines');
  * @returns {Promise<Array<object>>}
  */
 ordiniRigheApi.fetchByOrdineId = (ordineId) => {
+  // Validazione dell'ordineId
+  if (!ordineId || ordineId === 'undefined' || ordineId === 'null') {
+    return Promise.reject(new Error(`Invalid ordineId: ${ordineId}`));
+  }
+  
   // Assicura che la chiamata usi il path corretto e versionato dell'API.
-  console.log("ordiniRigheApi.fetchByOrdineId chiamato con ordineId:", ordineId);
   const customUrl = `http://localhost:3001/api/v1/orders/${ordineId}/items`;
-  console.log("Chiamo _request con URL:", customUrl);
+  
   return ordiniRigheApi._request("get", customUrl);
 }
 
