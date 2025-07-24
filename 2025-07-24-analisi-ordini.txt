@@ -1,0 +1,246 @@
+Perfetto, il log è chiarissimo e ci ha portato alla soluzione!
+Cosa ci dicono i log
+Il warning NaN è sparito: la tabella è corretta.
+visibleFields in DocumentHeaderForm include tutti i campi, anche quelli di sola lettura: lo schema e gli uiHints sono corretti.
+initialData in DocumentHeaderForm contiene solo i dati base dell'ordine
+
+{
+    "note": "CCCCCCCCCCCCCC",
+    "stato": "APERTO",
+    "id_ordine": 8,
+    "num_ordine": "10",
+    "data_ordine": "2025-07-09",
+    "controparte_id": 21
+  }
+
+Mancano rag_soc, partita_iva, indirizzo_fatturazione, indirizzo_spedizione, contatto.
+Analisi del problema
+Il componente che mostra la lista (OrdiniList) riceve tutti i dati, ma quando un ordine viene selezionato, solo un sottoinsieme dei dati viene passato al form DocumentHeaderForm.
+Il problema è nel componente parent che gestisce la selezione e passa i dati a DocumentHeaderForm.
+Soluzione
+Dobbiamo trovare dove viene gestita la selezione dell'ordine e assicurarci che l'intero oggetto ordine venga passato come initialData a DocumentHeaderForm.
+Per farlo, devo analizzare la pagina che contiene sia OrdiniList che DocumentHeaderForm. Probabilmente si chiama OrdersListPage.jsx o simile.
+Prima, cerco il file esatto.
+Ok, ho trovato il file maga/src/pages/OrdersListPage.jsx. Ora lo leggo per capire come vengono passati i dati da OrdiniList a DocumentHeaderForm e perché i campi di sola lettura non arrivano.
+Ok, OrdersListPage.jsx è solo un wrapper. Il componente che gestisce la logica è Ordini.jsx.
+Analizzo Ordini.jsx per capire come vengono gestiti i dati.
+Perfetto, ho analizzato Ordini.jsx. Ecco la spiegazione completa del problema:
+Flusso dei dati
+OrdiniList: Carica la lista degli ordini, inclusi rag_soc, partita_iva, ecc.
+Selezione: Quando selezioni un ordine e clicchi “Visualizza Dettaglio”, viene chiamata handleShowSelectedDetail -> handleShowDetail.
+handleShowDetail: Salva solo l’ordineId nello stato:
+const handleShowDetail = useCallback((ordineId) => {
+      setSelectedOrdineId(ordineId); // <-- Salvi solo l'ID, non l'oggetto!
+      // ...
+      setViewMode(VIEW_MODES.DETAIL);
+    }, []);
+
+
+Soluzione: passare l'intero oggetto
+La soluzione più efficiente è evitare di ricaricare i dati se li hai già.
+Modificherò Ordini.jsx per:
+Salvare l'intero oggetto dell'ordine selezionato nello stato, non solo l'ID.
+Passare l'intero oggetto a OrdineDetail, che a sua volta lo passerà a DocumentHeaderForm.
+Ecco come interverrò.
+
+Soluzione: passare l'intero oggetto
+La soluzione più efficiente è evitare di ricaricare i dati se li hai già.
+Modificherò Ordini.jsx per:
+Salvare l'intero oggetto dell'ordine selezionato nello stato, non solo l'ID.
+Passare l'intero oggetto a OrdineDetail, che a sua volta lo passerà a DocumentHeaderForm.
+Ecco come interverrò.
+
+
+// ... existing code ...
+import OrdiniList from './OrdiniList';
+import OrdineDetail from './OrdineDetail';
+import OrdineForm from './OrdineForm';
+import { useOrdini } from '../hooks/useOrdini'; // Importa l'hook
+import '../css/Ordini.css';
+
+// Definiamo le modalità di visualizzazione
+const VIEW_MODES = {
+// ... existing code ...
+const Ordini = ({ currentUser, onLogout }) => {
+  // Stato per gestire la vista corrente e l'ID dell'ordine selezionato
+  const [viewMode, setViewMode] = useState(VIEW_MODES.LIST);
+  const [selectedOrdine, setSelectedOrdine] = useState(null); // Salva l'intero oggetto
+  const [selectedMasterIds, setSelectedMasterIds] = useState([]); // Stato per la selezione
+
+  const { data: ordiniData } = useOrdini({ enabled: viewMode === VIEW_MODES.LIST });
+
+
+  useEffect(() => {
+    // console.log('selectedOrdine:', selectedOrdine, 'viewMode:', viewMode);
+  }, [selectedOrdine, viewMode]);
+
+  // --- HANDLER PER LA NAVIGAZIONE ---
+
+// ... existing code ...
+  }, []);
+
+  // Mostra il form per un nuovo ordine
+  const handleShowNewForm = useCallback(() => {
+    setSelectedOrdine(null);
+    setSelectedMasterIds([]);
+    setViewMode(VIEW_MODES.NEW_FORM);
+  }, []);
+
+  // Mostra i dettagli di un ordine esistente
+  const handleShowDetail = useCallback((ordine) => {
+    setSelectedOrdine(ordine);
+    setSelectedMasterIds([]);
+    setViewMode(VIEW_MODES.DETAIL);
+  }, []);
+  
+  // Mostra i dettagli dell'ordine selezionato dalla lista
+  const handleShowSelectedDetail = useCallback(() => {
+    if (selectedMasterIds.length !== 1) {
+      alert("Seleziona un singolo ordine da visualizzare.");
+      return;
+    }
+    const ordineId = selectedMasterIds[0];
+    const ordineCompleto = ordiniData?.rows?.find(o => o.id_ordine === ordineId);
+    if (ordineCompleto) {
+      handleShowDetail(ordineCompleto);
+    } else {
+      // Fallback: se non trovi l'ordine, carica solo con l'ID
+      handleShowDetail({ id_ordine: ordineId });
+    }
+  }, [selectedMasterIds, handleShowDetail, ordiniData]);
+
+  // Mostra il form di modifica per l'ordine correntemente visualizzato
+  const handleShowEditForm = useCallback(() => {
+// ... existing code ...
+  // Gestisce il salvataggio (sia creazione che modifica) e torna alla lista
+  const handleSaveSuccess = useCallback(() => {
+    setSelectedOrdine(null);
+    setSelectedMasterIds([]);
+    setViewMode(VIEW_MODES.LIST);
+  }, []);
+
+  // Torna alla vista precedente (lista o dettaglio)
+  const handleBack = useCallback(() => {
+    if (viewMode === VIEW_MODES.EDIT_FORM) {
+      setViewMode(VIEW_MODES.DETAIL); // Da modifica torna al dettaglio
+    } else {
+      setSelectedOrdine(null);
+      setSelectedMasterIds([]);
+      setViewMode(VIEW_MODES.LIST); // Da dettaglio o nuovo, torna alla lista
+    }
+// ... existing code ...
+        );
+      case VIEW_MODES.EDIT_FORM:
+        return (
+          <OrdineForm
+            initialData={selectedOrdine}
+            onSaveSuccess={handleSaveSuccess}
+            onCancel={handleBack}
+          />
+        );
+      case VIEW_MODES.DETAIL:
+        return (
+          <OrdineDetail
+            initialData={selectedOrdine}
+            onEdit={handleShowEditForm}
+            onBack={handleBack}
+          />
+        );
+      case VIEW_MODES.LIST:
+      default:
+        return (
+          <OrdiniList
+            onOrdineSelect={(id) => {
+              const ordineCompleto = ordiniData?.rows?.find(o => o.id_ordine === id);
+              handleShowDetail(ordineCompleto || { id_ordine: id });
+            }}
+            selectedIds={selectedMasterIds}
+            onSelectionChange={handleMasterSelectionChange}
+          />
+        );
+    }
+// ... existing code ...
+      <Header
+        currentUser={currentUser}
+        onAdd={handleShowNewForm}
+        onEdit={isViewActionEnabled ? handleShowSelectedDetail : (viewMode === VIEW_MODES.DETAIL ? handleShowEditForm : null)}
+        onBack={viewMode !== VIEW_MODES.LIST ? handleBack : null}
+        editButtonIcon={viewMode === VIEW_MODES.LIST ? 'view' : 'edit'}
+      />
+      
+      <div className="ordini-content">
+// ... existing code ...
+
+
+erfetto, ho trovato OrdineDetail.jsx. Lo leggo per assicurarmi che passi correttamente i dati ricevuti a DocumentHeaderForm.
+Perfetto, ho analizzato OrdineDetail.jsx. Il problema è qui:
+
+
+const OrdineDetail = ({ ordineId, onBack, onEdit }) => {
+    // ...
+    // Fetch dei dati
+    const { data: ordineData, isLoading: isLoadingOrdine, error: errorOrdine } = useOrdine(ordineId);
+    // ...
+}
+
+Analisi del problema
+Il componente OrdineDetail riceve solo ordineId.
+Usa l'hook useOrdine per caricare di nuovo i dati dell'ordine, ma questo hook probabilmente non carica i dati anagrafici della controparte (rag_soc, partita_iva, ecc.).
+Di conseguenza, DocumentHeaderForm riceve solo i dati base dell'ordine e non può visualizzare i campi di sola lettura.
+Soluzione
+Modificherò OrdineDetail.jsx per:
+Accettare initialData (l'intero oggetto dell'ordine) invece di ordineId.
+Usare initialData se disponibile, altrimenti caricare i dati da capo (come fallback).
+Passare initialData a DocumentHeaderForm.
+Ecco come interverrò.
+// ... existing code ...
+import orderSchema from '#schemas/order.schema.json';
+import { orderUiHints } from '../uiHints/orderUiHints';
+
+const detailColumns = [
+// ... existing code ...
+    { key: 'totale_righe', label: 'Totale', cellClassName: 'text-right' }, // Nuovo campo dalla stored procedure
+];
+
+const OrdineDetail = ({ initialData, onBack, onEdit }) => {
+    const ordineId = initialData?.id_ordine;
+    
+    // Controllo se ordineId è valido
+    if (!ordineId) {
+// ... existing code ...
+    const [editingRiga, setEditingRiga] = useState(null);
+
+    // Fetch dei dati solo se initialData non è completo
+    const { data: fetchedData, isLoading: isLoadingOrdine, error: errorOrdine } = useOrdine(ordineId, {
+        enabled: !initialData || !initialData.rag_soc, // Carica solo se mancano i dati della controparte
+    });
+    
+    const { createRiga, updateRiga, deleteRiga, isLoading: isMutating } = useOrdineRigheMutations(ordineId);
+
+    const testata = useMemo(() => {
+        const ordineData = initialData?.rag_soc ? initialData : fetchedData;
+        if (!ordineData) return null;
+        // Normalizzazione dati per il form
+        let dataISO = ordineData.data_ordine;
+// ... existing code ...
+    const isLoading = (isLoadingOrdine && !initialData?.rag_soc) || isLoadingRighe || isMutating;
+    const error = errorOrdine || errorRighe;
+
+    if (isLoading) return <div className="loader">Caricamento dettagli ordine...</div>;
+// ... existing code ...
+
+Perfetto, ho applicato la patch.
+Cosa ho corretto
+Componente Ordini.jsx:
+Ora salva l’intero oggetto dell’ordine selezionato nello stato, non solo l’ID.
+Passa l’intero oggetto a OrdineDetail.
+In questo modo, si evita di ricaricare i dati se sono già disponibili, migliorando le performance.
+Componente OrdineDetail.jsx:
+Ora accetta initialData (l’intero oggetto dell’ordine) invece di ordineId.
+Usa i dati di initialData se disponibili, altrimenti carica i dati da capo (come fallback).
+Passa initialData a DocumentHeaderForm, che ora riceverà tutti i campi (inclusi rag_soc, partita_iva, ecc.) e potrà visualizzarli.
+Risultato
+Ora il flusso dati è corretto: i dati vengono caricati una sola volta nella lista e poi passati ai componenti figli.
+I campi di sola lettura dovrebbero essere visibili nel form, perché DocumentHeaderForm riceve finalmente tutti i dati necessari.
+L’applicazione è più efficiente e robusta.
+Se hai ancora problemi o vuoi fare ulteriori miglioramenti, fammi sapere!

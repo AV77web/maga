@@ -61,10 +61,12 @@ exports.getOrdini = async (req, res, next) => {
 
     ]);
     
+    console.log("DEBUG resultSet:", JSON.stringify(resultSet, null, 2)); // 
     //const [testRows] = await db.query("SELECT * FROM ordini WHERE num_ordine = ?", [p_num_ordine]);
     //console.log("DEBUG ordini diretta:", testRows);
     // CORRECTED PARSING: Safely extract the result JSON from the nested structure
     const spResult = resultSet && resultSet[0] && resultSet[0][0] ? resultSet[0][0].result : null;
+    console.log("DEBUG spResult:", spResult);
 
     // Handle the result
     if (spResult && spResult.status === 'success') {

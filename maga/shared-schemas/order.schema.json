@@ -26,13 +26,33 @@
         "format": "Il campo 'data_ordine' deve essere una data valida (YYYY-MM-DD)."
       }
     },
-    "fornitore_id": {
+    "controparte_id": {
       "type": "integer",
       "minimum": 1,
       "errorMessage": {
         "type": "Il campo 'fornitore_id' deve essere un numero intero.",
         "minimum": "Il campo 'fornitore_id' deve essere maggiore di 0."
-      }
+      }  
+    },
+    "rag_soc": { 
+      "type": "string",
+      "maxLength": 100
+    },
+    "partita_iva": {
+      "type": "string",
+      "maxLength": 11
+    },
+    "indirizzo_fatturazione":{
+      "type": "string",
+      "maxLength": 100 
+    },
+    "indirizzo_spedizione":{
+      "type": "string",
+      "maxLength": 100
+    },
+    "contatto": {
+      "type": "string",
+      "maxLength":100
     },
     "stato": {
       "type": "string",
@@ -41,10 +61,81 @@
         "enum": "Il campo 'stato' deve essere 'Aperto', 'Chiuso' o 'Annullato'."
       }
     },
+    "magazzino_origine": {
+      "type": "string",
+      "maxLenght": 100
+    },
+    "magazzino_destinazione": {
+      "type": "string",
+      "maxLenght": 1000
+    },
+    "data_consegna_prevista":  {
+      "type": "string",
+      "format": "date"
+    },
+    "priorita": { 
+      "type": "string",
+      "ENUM":["Alta", "Media", "Bassa"]},
+    "vettore": {
+      "type": "string",
+      "maxLenght": 100
+    },
+    "tipo_trasporto": {
+      "type": "string",
+      "maxLenght": 100
+    },
+    "valuta":{
+      "type": "string",
+      "maxLength": 20
+    },
+    "listino": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "sconto_totale": {
+      "type": "number",
+      "minimum": 0,
+      "errorMessage": {
+        "minimum": "Il campo sconto totale non può essere  negativo."
+      }
+    },
+    "condizioni_pagamento": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "aliqluota_iva": {
+      "type": "number",
+      "minimum0": 0
+    },
+    "dcocumento_collegato":{
+      "type": "string",
+      "maxLength": 50
+    },
+    "utente_creazione": {
+      "type": "string",
+      "maxLength": 50
+    },
+    "causale": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at":{
+      "type": "string",
+      "format": "date-time" 
+    },
     "note": {
       "type": "string",
       "maxLength": 500
-    }
+    },
+    "rag_soc": { "type": "string" },
+    "partita_iva": { "type": "string" },
+    "indirizzo_fatturazione": { "type": "string" },
+    "indirizzo_spedizione": { "type": "string" },
+    "contatto": { "type": "string" }
   },
   "required": ["num_ordine", "data_ordine", "fornitore_id", "stato"],
   "allOf": [

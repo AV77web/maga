@@ -58,11 +58,19 @@ const TableBody = ({
                     <td key="selection-cell">
                       <input type="checkbox" checked={selectedIds.includes(row.id)} onChange={(e) => onRowSelectionChange(row.id, e.target.checked)} aria-label={`Seleziona riga ${row.id}`} />
                     </td>
-                    {columns.map((column) => (
-                      <td key={column.key} className={typeof column.cellClassName === 'function' ? column.cellClassName(row) : (column.cellClassName || '')} title={column.titleAccessor ? column.titleAccessor(row) : row[column.key]?.toString()}>
-                        {column.render ? column.render(row) : row[column.key]}
-                      </td>
-                    ))}
+                    {columns.map((column) => {
+                      let value = column.render ? column.render(row) : row[column.key];
+                      // Log e fix per NaN
+                      if (typeof value === 'number' && isNaN(value)) {
+                        console.warn('NaN detected in column:', column.key, 'row:', row);
+                        value = '';
+                      }
+                      return (
+                        <td key={column.key} className={typeof column.cellClassName === 'function' ? column.cellClassName(row) : (column.cellClassName || '')} title={column.titleAccessor ? column.titleAccessor(row) : (value !== undefined && value !== null ? value.toString() : '')}>
+                          {value ?? ''}
+                        </td>
+                      );
+                    })}
                   </tr>
                 )}
               </Draggable>

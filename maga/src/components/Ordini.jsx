@@ -12,6 +12,7 @@ import Header from './Header';
 import OrdiniList from './OrdiniList';
 import OrdineDetail from './OrdineDetail';
 import OrdineForm from './OrdineForm';
+import { useOrdini } from '../hooks/useOrdini'; // Importa l'hook
 import '../css/Ordini.css';
 
 // Definiamo le modalità di visualizzazione
@@ -25,12 +26,15 @@ const VIEW_MODES = {
 const Ordini = ({ currentUser, onLogout }) => {
   // Stato per gestire la vista corrente e l'ID dell'ordine selezionato
   const [viewMode, setViewMode] = useState(VIEW_MODES.LIST);
-  const [selectedOrdineId, setSelectedOrdineId] = useState(null);
+  const [selectedOrdine, setSelectedOrdine] = useState(null); // Salva l'intero oggetto
   const [selectedMasterIds, setSelectedMasterIds] = useState([]); // Stato per la selezione
 
+  const { data: ordiniData } = useOrdini({ enabled: viewMode === VIEW_MODES.LIST });
+
+
   useEffect(() => {
-    // console.log('selectedOrderId:', selectedOrdineId, 'viewMode:', viewMode);
-  }, [selectedOrdineId, viewMode]);
+    // console.log('selectedOrdine:', selectedOrdine, 'viewMode:', viewMode);
+  }, [selectedOrdine, viewMode]);
 
   // --- HANDLER PER LA NAVIGAZIONE ---
 
@@ -42,28 +46,33 @@ const Ordini = ({ currentUser, onLogout }) => {
 
   // Mostra il form per un nuovo ordine
   const handleShowNewForm = useCallback(() => {
-    setSelectedOrdineId(null);
+    setSelectedOrdine(null);
     setSelectedMasterIds([]);
     setViewMode(VIEW_MODES.NEW_FORM);
   }, []);
 
   // Mostra i dettagli di un ordine esistente
-  const handleShowDetail = useCallback((ordineId) => {
-    setSelectedOrdineId(ordineId);
+  const handleShowDetail = useCallback((ordine) => {
+    setSelectedOrdine(ordine);
     setSelectedMasterIds([]);
     setViewMode(VIEW_MODES.DETAIL);
   }, []);
   
   // Mostra i dettagli dell'ordine selezionato dalla lista
   const handleShowSelectedDetail = useCallback(() => {
-    // console.log("Visualizza dettaglio", selectedOrdineId);
     if (selectedMasterIds.length !== 1) {
       alert("Seleziona un singolo ordine da visualizzare.");
       return;
     }
-    
-    handleShowDetail(selectedMasterIds[0]);
-  }, [selectedMasterIds, handleShowDetail]);
+    const ordineId = selectedMasterIds[0];
+    const ordineCompleto = ordiniData?.rows?.find(o => o.id_ordine === ordineId);
+    if (ordineCompleto) {
+      handleShowDetail(ordineCompleto);
+    } else {
+      // Fallback: se non trovi l'ordine, carica solo con l'ID
+      handleShowDetail({ id_ordine: ordineId });
+    }
+  }, [selectedMasterIds, handleShowDetail, ordiniData]);
 
   // Mostra il form di modifica per l'ordine correntemente visualizzato
   const handleShowEditForm = useCallback(() => {
@@ -72,7 +81,7 @@ const Ordini = ({ currentUser, onLogout }) => {
 
   // Gestisce il salvataggio (sia creazione che modifica) e torna alla lista
   const handleSaveSuccess = useCallback(() => {
-    setSelectedOrdineId(null);
+    setSelectedOrdine(null);
     setSelectedMasterIds([]);
     setViewMode(VIEW_MODES.LIST);
   }, []);
@@ -82,7 +91,7 @@ const Ordini = ({ currentUser, onLogout }) => {
     if (viewMode === VIEW_MODES.EDIT_FORM) {
       setViewMode(VIEW_MODES.DETAIL); // Da modifica torna al dettaglio
     } else {
-      setSelectedOrdineId(null);
+      setSelectedOrdine(null);
       setSelectedMasterIds([]);
       setViewMode(VIEW_MODES.LIST); // Da dettaglio o nuovo, torna alla lista
     }
@@ -102,7 +111,7 @@ const Ordini = ({ currentUser, onLogout }) => {
       case VIEW_MODES.EDIT_FORM:
         return (
           <OrdineForm
-            ordineId={selectedOrdineId}
+            initialData={selectedOrdine}
             onSaveSuccess={handleSaveSuccess}
             onCancel={handleBack}
           />
@@ -110,7 +119,7 @@ const Ordini = ({ currentUser, onLogout }) => {
       case VIEW_MODES.DETAIL:
         return (
           <OrdineDetail
-            ordineId={selectedOrdineId}
+            initialData={selectedOrdine}
             onEdit={handleShowEditForm}
             onBack={handleBack}
           />
@@ -119,7 +128,10 @@ const Ordini = ({ currentUser, onLogout }) => {
       default:
         return (
           <OrdiniList
-            onOrdineSelect={handleShowDetail}
+            onOrdineSelect={(id) => {
+              const ordineCompleto = ordiniData?.rows?.find(o => o.id_ordine === id);
+              handleShowDetail(ordineCompleto || { id_ordine: id });
+            }}
             selectedIds={selectedMasterIds}
             onSelectionChange={handleMasterSelectionChange}
           />
@@ -136,9 +148,7 @@ const Ordini = ({ currentUser, onLogout }) => {
         onAdd={handleShowNewForm}
         onEdit={isViewActionEnabled ? handleShowSelectedDetail : (viewMode === VIEW_MODES.DETAIL ? handleShowEditForm : null)}
         onBack={viewMode !== VIEW_MODES.LIST ? handleBack : null}
-        // L'icona "onEdit" ora serve sia per "Visualizza Dettaglio" che per "Modifica Testata"
-        // a seconda del contesto. Potremmo voler usare un'icona più generica o diversa.
-        editButtonIcon={viewMode === VIEW_MODES.LIST ? 'view' : 'edit'} // Esempio per cambiare icona
+        editButtonIcon={viewMode === VIEW_MODES.LIST ? 'view' : 'edit'}
       />
       
       <div className="ordini-content">

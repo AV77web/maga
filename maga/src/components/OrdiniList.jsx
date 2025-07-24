@@ -17,7 +17,7 @@ const masterColumns = [
     { key: 'id', label: 'ID Ordine', cellClassName: 'text-center' },
     { key: 'num_ordine', label: 'Numero Ordine', cellClassName: 'text-left' },
     { key: 'data_ordine', label: 'Data', cellClassName: 'text-center' },
-    { key: 'fornitore_id', label: 'Fornitore', cellClassName: 'text-left' },
+    { key: 'rag_soc', label: 'Fornitore/Cliente', cellClassName: 'text-left' },
     { key: 'stato', label: 'Stato', cellClassName: 'text-center' },
 ];
 
@@ -41,10 +41,10 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
         // quindi i dati arrivano al componente come { rows: [...], meta: {...} }.
         if (!data || !data.rows) return [];
         const mapped = data.rows.map((o) => ({
-            id: Number(o.id_ordine),
-            num_ordine: String(o.num_ordine).trim(),
+            id: Number(o.id_ordine) || 0,
+            num_ordine: String(o.num_ordine || '').trim(),
             data_ordine: new Date(o.data_ordine).toLocaleDateString('it-IT'),
-            fornitore_id: Number(o.fornitore_id),
+            rag_soc: o.rag_soc || '', // Mostra la ragione sociale
             stato: String(o.stato || '').trim(),
             note: o.note || '',
         }));

@@ -22,7 +22,8 @@ const detailColumns = [
     { key: 'totale_righe', label: 'Totale', cellClassName: 'text-right' }, // Nuovo campo dalla stored procedure
 ];
 
-const OrdineDetail = ({ ordineId, onBack, onEdit }) => {
+const OrdineDetail = ({ initialData, onBack, onEdit }) => {
+    const ordineId = initialData?.id_ordine;
     
     // Controllo se ordineId è valido
     if (!ordineId) {
@@ -37,13 +38,15 @@ const OrdineDetail = ({ ordineId, onBack, onEdit }) => {
     const [isRigaDialogOpen, setIsRigaDialogOpen] = useState(false);
     const [editingRiga, setEditingRiga] = useState(null);
 
-    // Fetch dei dati
-    const { data: ordineData, isLoading: isLoadingOrdine, error: errorOrdine } = useOrdine(ordineId);
-    const { data: righeData, isLoading: isLoadingRighe, error: errorRighe } = useOrdineRighe(ordineId);
+    // Fetch dei dati solo se initialData non è completo
+    const { data: fetchedData, isLoading: isLoadingOrdine, error: errorOrdine } = useOrdine(ordineId, {
+        enabled: !initialData || !initialData.rag_soc, // Carica solo se mancano i dati della controparte
+    });
     
     const { createRiga, updateRiga, deleteRiga, isLoading: isMutating } = useOrdineRigheMutations(ordineId);
 
     const testata = useMemo(() => {
+        const ordineData = initialData?.rag_soc ? initialData : fetchedData;
         if (!ordineData) return null;
         // Normalizzazione dati per il form
         let dataISO = ordineData.data_ordine;
@@ -51,12 +54,12 @@ const OrdineDetail = ({ ordineId, onBack, onEdit }) => {
             dataISO = new Date(dataISO).toISOString().split('T')[0];
         }
         return { ...ordineData, data_ordine: dataISO };
-    }, [ordineData]);
+    }, [initialData, fetchedData]);
 
     const righe = useMemo(() => {
         
         // Ora il backend restituisce direttamente le righe nel formato corretto
-        const rawRighe = righeData?.result?.rows || righeData?.rows || [];
+        const rawRighe = initialData?.righe || fetchedData?.result?.rows || fetchedData?.rows || [];
         
         // Trasforma i dati mappando id_riga a id per compatibilità con TableGrid
         const transformedRighe = rawRighe.map(riga => ({
@@ -65,7 +68,7 @@ const OrdineDetail = ({ ordineId, onBack, onEdit }) => {
         }));
         
         return transformedRighe;
-    }, [righeData]);
+    }, [initialData, fetchedData]);
 
     // Handlers per le azioni sulle righe
     const handleNuovaRiga = () => {
@@ -110,7 +113,7 @@ const OrdineDetail = ({ ordineId, onBack, onEdit }) => {
         }
     };
 
-    const isLoading = isLoadingOrdine || isLoadingRighe || isMutating;
+    const isLoading = (isLoadingOrdine && !initialData?.rag_soc) || isLoadingRighe || isMutating;
     const error = errorOrdine || errorRighe;
 
     if (isLoading) return <div className="loader">Caricamento dettagli ordine...</div>;
