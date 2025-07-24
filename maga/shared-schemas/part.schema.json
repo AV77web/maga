@@ -1,90 +1,58 @@
 {
-  "$id": "https://example.com/schemas/part.schema.json",
+  "$id": "https://example.com/schemas/ordine.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Part",
-  "description": "Schema unico per creazione (POST) e aggiornamento (PATCH) di un ricambio (part)",
+  "title": "Ordine",
+  "description": "Schema per creazione (POST) e aggiornamento (PATCH) di un ordine di magazzino",
   "type": "object",
   "properties": {
     "operation": {
       "type": "string",
-      "enum": ["create", "update"],
-      "description": "Indica se la validazione è per creazione o aggiornamento"
+      "enum": ["create", "update"]
     },
-    "name": {
+    "num_ordine": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 100,
-      "errorMessage": {
-        "minLength": "Il campo 'name' non può essere vuoto.",
-        "maxLength": "Il campo 'name' non può superare 100 caratteri."
-      }
+      "maxLength": 20
     },
-    "description": {
+    "data_ordine": {
       "type": "string",
-      "minLength": 1,
-      "maxLength": 255,
-      "errorMessage": {
-        "minLength": "Il campo 'description' non può essere vuoto.",
-        "maxLength": "Il campo 'description' non può superare 255 caratteri."
-      }
+      "format": "date"
     },
-    "quantita": {
-      "type": "number",
-      "minimum": 0,
-      "errorMessage": {
-        "minimum": "Il campo 'quantita' non può essere negativo."
-      }
+    "controparte_id": {
+      "type": "integer",
+      "minimum": 1
     },
-    "min": {
-      "type": "number",
-      "minimum": 0,
-      "errorMessage": {
-        "minimum": "Il campo 'min' non può essere negativo."
-      }
-    },
-    "max": {
-      "type": "number",
-      "minimum": 0,
-      "errorMessage": {
-        "minimum": "Il campo 'max' non può essere negativo."
-      }
-    },
-    "supplier": {
+    "stato": {
       "type": "string",
-      "minLength": 1,
-      "maxLength": 100,
-      "errorMessage": {
-        "minLength": "Il campo 'supplier' non può essere vuoto.",
-        "maxLength": "Il campo 'supplier' non può superare 100 caratteri."
-      }
+      "enum": ["APERTO", "INVIATO", "CHIUSO", "ANNULLATO"]
     },
-    "um": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 10,
-      "errorMessage": {
-        "minLength": "Il campo 'um' non può essere vuoto.",
-        "maxLength": "Il campo 'um' non può superare 10 caratteri."
-      }
+    "magazzino_origine": { "type": ["string", "null"], "maxLength": 100 },
+    "magazzino_destinazione": { "type": ["string", "null"], "maxLength": 100 },
+    "data_consegna_prevista": { "type": ["string", "null"], "format": "date" },
+    "priorita": {
+      "type": ["string", "null"],
+      "enum": ["Alta", "Media", "Bassa", null]
     },
-    "prezzo": {
-      "type": "number",
-      "minimum": 0,
-      "errorMessage": {
-        "minimum": "Il campo 'prezzo' non può essere negativo."
-      }
-    }
+    "vettore": { "type": ["string", "null"], "maxLength": 100 },
+    "tipo_trasporto": { "type": ["string", "null"], "maxLength": 50 },
+    "valuta": { "type": ["string", "null"], "maxLength": 20 },
+    "listino": { "type": ["string", "null"], "maxLength": 50 },
+    "sconto_totale": { "type": ["number", "null"] },
+    "condizioni_pagamento": { "type": ["string", "null"], "maxLength": 50 },
+    "aliquota_iva": { "type": ["number", "null"] },
+    "documento_collegato": { "type": ["string", "null"], "maxLength": 50 },
+    "utente_creazione": { "type": ["string", "null"], "maxLength": 50 },
+    "causale": { "type": ["string", "null"], "maxLength": 100 },
+    "note": { "type": ["string", "null"] }
   },
-  "required": ["operation"],
+  "required": ["num_ordine", "data_ordine", "controparte_id", "stato"],
   "allOf": [
     {
       "if": {
         "properties": { "operation": { "const": "create" } }
       },
       "then": {
-        "required": [
-          "name", "description", "quantita", "min", "max", "supplier", "um", "prezzo"
-        ]
+        "required": ["num_ordine", "data_ordine", "controparte_id", "stato"]
       }
     },
     {
@@ -96,18 +64,5 @@
       }
     }
   ],
-  "additionalProperties": false,
-  "errorMessage": {
-    "required": {
-      "name": "Il campo 'name' è obbligatorio.",
-      "description": "Il campo 'description' è obbligatorio.",
-      "quantita": "Il campo 'quantita' è obbligatorio.",
-      "min": "Il campo 'min' è obbligatorio.",
-      "max": "Il campo 'max' è obbligatorio.",
-      "supplier": "Il campo 'supplier' è obbligatorio.",
-      "um": "Il campo 'um' è obbligatorio.",
-      "prezzo": "Il campo 'prezzo' è obbligatorio."
-    },
-    "additionalProperties": "Sono presenti campi non ammessi nella richiesta di ricambio."
-  }
+  "additionalProperties": false
 }

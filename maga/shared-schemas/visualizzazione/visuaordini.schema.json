@@ -1,0 +1,109 @@
+{
+    "$id": "https://example.com/schemas/ordine-view.schema.json",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "TestataOrdine",
+    "description": "Schema per la visualizzazione della testata di un ordine, inclusi i dati della controparte",
+    "type": "object",
+    "properties": {
+      "id_ordine": {
+        "type": "integer"
+      },
+      "num_ordine": {
+        "type": "string"
+      },
+      "data_ordine": {
+        "type": "string",
+        "format": "date"
+      },
+      "controparte_id": {
+        "type": "integer"
+      },
+      "rag_soc": {
+        "type": "string"
+      },
+      "partita_iva": {
+        "type": "string"
+      },
+      "indirizzo_fatturazione": {
+        "type": "string"
+      },
+      "indirizzo_spedizione": {
+        "type": "string"
+      },
+      "contatto": {
+        "type": "string"
+      },
+      "stato": {
+        "type": "string",
+        "enum": ["Aperto", "Chiuso", "Annullato"]
+      },
+      "magazzino_origine": {
+        "type": ["string", "null"]
+      },
+      "magazzino_destinazione": {
+        "type": ["string", "null"]
+      },
+      "data_consegna": {
+        "type": ["string", "null"],
+        "format": "date"
+      },
+      "priorita": {
+        "type": ["string", "null"]
+      },
+      "vettore": {
+        "type": ["string", "null"]
+      },
+      "tipo_trasporto": {
+        "type": ["string", "null"]
+      },
+      "valuta": {
+        "type": ["string", "null"]
+      },
+      "listino": {
+        "type": ["string", "null"]
+      },
+      "sconto_totale": {
+        "type": ["number", "null"]
+      },
+      "condizioni_pagamento": {
+        "type": ["string", "null"]
+      },
+      "aliquota_iva": {
+        "type": ["number", "null"]
+      },
+      "documento_collegato": {
+        "type": ["string", "null"]
+      },
+      "utente_creazione": {
+        "type": ["string", "null"]
+      },
+      "created_at": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "updated_at": {
+        "type": "string",
+        "format": "date-time"
+      },
+      "causale": {
+        "type": ["string", "null"]
+      },
+      "note": {
+        "type": ["string", "null"]
+      }
+    },
+    "required": [
+      "id_ordine",
+      "num_ordine",
+      "data_ordine",
+      "controparte_id",
+      "rag_soc",
+      "partita_iva",
+      "indirizzo_fatturazione",
+      "indirizzo_spedizione",
+      "contatto",
+      "stato"
+    ],
+    "additionalProperties": false
+  }
+  
