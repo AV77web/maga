@@ -26,17 +26,23 @@
         "format": "Il campo 'data_ordine' deve essere una data valida (YYYY-MM-DD)."
       }
     },
-    "controparte_id": {
+    "idanagrafica": {
       "type": "integer",
       "minimum": 1,
       "errorMessage": {
         "type": "Il campo 'Fornitore/Cliente' deve essere un numero intero.",
         "minimum": "Il campo 'Fornitore/Cliente' deve essere maggiore di 0."
-      }  
+      }
+      
     },
+    "codice": {
+        "type": "string",
+        "maxLength": 13
+      },
+    
     "rag_soc": { 
       "type": "string",
-      "maxLength": 100
+      "maxLength": 255
     },
     "partita_iva": {
       "type": "string",
@@ -133,14 +139,14 @@
     }
 
   },
-  "required": ["num_ordine", "data_ordine", "controparte_id", "stato"],
+  "required": ["num_ordine", "data_ordine", "idanagrafica", "stato"],
   "allOf": [
     {
       "if": {
         "properties": { "operation": { "const": "create" } }
       },
       "then": {
-        "required": ["num_ordine", "data_ordine", "controparte_id", "stato"]
+        "required": ["num_ordine", "data_ordine", "idanagrafica", "stato"]
       }
     },
     {
@@ -157,7 +163,7 @@
     "required": {
       "num_ordine": "Il campo 'num_ordine' è obbligatorio.",
       "data_ordine": "Il campo 'data_ordine' è obbligatorio.",
-      "controparte_id": "Il campo 'controparte_id' è obbligatorio.",
+      "idanagrafica": "Il campo 'idanagrafica' è obbligatorio.",
       "stato": "Il campo 'stato' è obbligatorio."
     },
     "additionalProperties": "Sono presenti campi non ammessi nella richiesta di ordine."

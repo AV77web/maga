@@ -185,7 +185,7 @@ function App() {
           path="/articoli"
           element={
             <ProtectedRoute isLoggedIn={loggedIn} userRole={currentUser?.role}>
-              <TableView
+              <ArticoliTable
                 currentUser={currentUser}
                 onLogout={handleLogout}
                 currentLocation={location.pathname}
