@@ -30,8 +30,8 @@
       "type": "integer",
       "minimum": 1,
       "errorMessage": {
-        "type": "Il campo 'fornitore_id' deve essere un numero intero.",
-        "minimum": "Il campo 'fornitore_id' deve essere maggiore di 0."
+        "type": "Il campo 'Fornitore/Cliente' deve essere un numero intero.",
+        "minimum": "Il campo 'Fornitore/Cliente' deve essere maggiore di 0."
       }  
     },
     "rag_soc": { 
@@ -103,11 +103,11 @@
       "type": "string",
       "maxLength": 50
     },
-    "aliqluota_iva": {
+    "aliquota_iva": {
       "type": "number",
       "minimum0": 0
     },
-    "dcocumento_collegato":{
+    "documento_collegato":{
       "type": "string",
       "maxLength": 50
     },
@@ -130,21 +130,17 @@
     "note": {
       "type": "string",
       "maxLength": 500
-    },
-    "rag_soc": { "type": "string" },
-    "partita_iva": { "type": "string" },
-    "indirizzo_fatturazione": { "type": "string" },
-    "indirizzo_spedizione": { "type": "string" },
-    "contatto": { "type": "string" }
+    }
+
   },
-  "required": ["num_ordine", "data_ordine", "fornitore_id", "stato"],
+  "required": ["num_ordine", "data_ordine", "controparte_id", "stato"],
   "allOf": [
     {
       "if": {
         "properties": { "operation": { "const": "create" } }
       },
       "then": {
-        "required": ["num_ordine", "data_ordine", "fornitore_id", "stato"]
+        "required": ["num_ordine", "data_ordine", "controparte_id", "stato"]
       }
     },
     {
@@ -161,7 +157,7 @@
     "required": {
       "num_ordine": "Il campo 'num_ordine' è obbligatorio.",
       "data_ordine": "Il campo 'data_ordine' è obbligatorio.",
-      "fornitore_id": "Il campo 'fornitore_id' è obbligatorio.",
+      "controparte_id": "Il campo 'controparte_id' è obbligatorio.",
       "stato": "Il campo 'stato' è obbligatorio."
     },
     "additionalProperties": "Sono presenti campi non ammessi nella richiesta di ordine."

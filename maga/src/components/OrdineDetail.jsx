@@ -7,12 +7,29 @@
 
 import React, { useState, useMemo } from 'react';
 import { useOrdine } from '../hooks/useOrdine';
-import { useOrdineRighe, useOrdineRigheMutations } from '../hooks/useOrdineRighe';
+import { useOrdineRighe } from '../hooks/useOrdineRighe';
+import { useOrdineRigheMutations } from '../hooks/useOrdineRighe';
 import DocumentHeaderForm from './DocumentHeaderForm';
 import TableGrid from './TableGrid';
 import OrdineRigaDialog from './OrdineRigaDialog';
 import orderSchema from '#schemas/order.schema.json';
 import { orderUiHints } from '../uiHints/orderUiHints';
+
+// Utility to normalize date fields and nulls
+function normalizeFormData(data, dateFields = []) {
+  const result = {};
+  for (const key in data) {
+    let value = data[key];
+    if (dateFields.includes(key) && typeof value === 'string') {
+      value = value.split('T')[0].split(' ')[0];
+    }
+    if (value === null || value === undefined) {
+      value = '';
+    }
+    result[key] = value;
+  }
+  return result;
+}
 
 const detailColumns = [
     { key: 'id', label: 'ID Riga', cellClassName: 'text-center' },
@@ -42,7 +59,8 @@ const OrdineDetail = ({ initialData, onBack, onEdit }) => {
     const { data: fetchedData, isLoading: isLoadingOrdine, error: errorOrdine } = useOrdine(ordineId, {
         enabled: !initialData || !initialData.rag_soc, // Carica solo se mancano i dati della controparte
     });
-    
+    const { data:righeData, isLoading: isLoadingRighe, error: errorRighe } = useOrdineRighe(ordineId);
+
     const { createRiga, updateRiga, deleteRiga, isLoading: isMutating } = useOrdineRigheMutations(ordineId);
 
     const testata = useMemo(() => {
@@ -53,22 +71,26 @@ const OrdineDetail = ({ initialData, onBack, onEdit }) => {
         if (typeof dataISO === 'string' && !dataISO.match(/^\d{4}-\d{2}-\d{2}$/)) {
             dataISO = new Date(dataISO).toISOString().split('T')[0];
         }
-        return { ...ordineData, data_ordine: dataISO };
+        // Normalize all fields
+        const dateFields = [
+          'data_ordine',
+          'created_at',
+          'updated_at',
+          'data_consegna_prevista'
+        ];
+        return normalizeFormData({ ...ordineData, data_ordine: dataISO }, dateFields);
     }, [initialData, fetchedData]);
 
     const righe = useMemo(() => {
-        
-        // Ora il backend restituisce direttamente le righe nel formato corretto
-        const rawRighe = initialData?.righe || fetchedData?.result?.rows || fetchedData?.rows || [];
-        
-        // Trasforma i dati mappando id_riga a id per compatibilità con TableGrid
-        const transformedRighe = rawRighe.map(riga => ({
-            ...riga,
-            id: riga.id_riga  // TableGrid richiede 'id' come campo chiave
-        }));
-        
-        return transformedRighe;
-    }, [initialData, fetchedData]);
+  // Usa le righe da initialData solo se presenti (es. ottimizzazione SSR), altrimenti prendi quelle dalla query
+  const rawRighe = initialData?.righe || righeData?.rows || [];
+  return rawRighe.map(riga => ({
+    ...riga,
+    id: riga.id_riga
+  }));
+}, [initialData, righeData]);
+    
+    
 
     // Handlers per le azioni sulle righe
     const handleNuovaRiga = () => {
@@ -135,8 +157,8 @@ const OrdineDetail = ({ initialData, onBack, onEdit }) => {
                 <button onClick={onEdit} className="btn-action">Modifica Testata</button>
             </div>
             
-            {isLoadingRighe && <div className="loader">Caricamento righe ordine...</div>}
-            {errorRighe && <div className="error-message">Errore caricamento righe: {errorRighe.message}</div>}
+            {isLoading && <div className="loader">Caricamento righe ordine...</div>}
+            {error && <div className="error-message">Errore caricamento righe: {error.message}</div>}
             
             <TableGrid
                 columns={detailColumns}

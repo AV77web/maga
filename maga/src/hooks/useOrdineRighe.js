@@ -19,12 +19,32 @@ export const useOrdineRighe = (ordineId) => {
   
   return useQuery({
     queryKey: ['ordineRighe', ordineId],
-    queryFn: () => ordiniRigheApi.fetchByOrdineId(ordineId),
+    queryFn: async () => {
+    const data = await ordiniRigheApi.fetchByOrdineId(ordineId);
+    console.log('Valore fetchByOrdineId in useQuery:', data); // <-- LOG QUI
+    return data;
+    },
     enabled,
     staleTime: 5 * 60 * 1000,
+    
   });
+ 
+  // return useQuery({
+ // queryKey: ['ordineRighe', ordineId],
+ //queryFn: () => ordiniRigheApi.fetchByOrdineId(ordineId),
+ //enabled,
+ //staleTime: 5 * 60 * 1000,
+ //});
+ 
+ // queryFn: async () => {
+ // const data = await ordiniRigheApi.fetchByOrdineId(ordineId);
+ // console.log('Valore fetchByOrdineId in useQuery:', data); // <-- LOG QUI
+ // return data;
+ // },
+  
 };
 
+//console.log("DEBUG useOrdineRighe:", JSON.stringify(useOrdineRighe, null, 2));
 /**
  * Hook per le operazioni di mutazione (create, update, delete) sulle righe d'ordine.
  * @param {number|null} ordineId - L'ID dell'ordine a cui le righe appartengono,

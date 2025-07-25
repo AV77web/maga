@@ -46,7 +46,7 @@ export default function DocumentHeaderForm({
   onChange,           // callback (debounced)
   readOnly = false,
 }) {
-  console.log("initialData:", JSON.stringify(initialData, null, 2));
+  //console.log("initialData:", JSON.stringify(initialData, null, 2));
   /* ---------- AJV ---------- */
   const ajv = useMemo(() => {
     const a = new Ajv({ allErrors: true, coerceTypes: true });
@@ -78,7 +78,22 @@ export default function DocumentHeaderForm({
     [schema, uiHints]
   );
   const visibleFields = fields.filter(f => !HIDDEN_FIELDS.includes(f.name));
-  console.log("visibleFields:", visibleFields.map(f => f.name));
+
+  // Raggruppa i campi per group (che ora è il titolo della sezione)
+  const groupedFields = useMemo(() => {
+    const groups = {};
+    visibleFields.forEach(f => {
+      const group = f.group || 'Altri'; // fallback se manca
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(f);
+    });
+    // Ordina i gruppi per come vuoi visualizzarli (qui in ordine di apparizione)
+    return Object.entries(groups).map(([group, fields]) => ({
+      group,
+      fields: fields.sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+    }));
+  }, [visibleFields]);
+  //console.log("visibleFields:", visibleFields.map(f => f.name));
 
   const requiredFields = schema.required || [];
 
@@ -155,7 +170,17 @@ export default function DocumentHeaderForm({
   return (
     <form className="doc-header" noValidate>
       <h3>{uiHints?.title || schema.title || 'Dettaglio Documento'}</h3>
-      <div className="fields-grid">{visibleFields.map(renderField)}</div>
+      <div className="fields-groups">
+        {groupedFields.map(({ group, fields }, idx) => (
+          <div key={group} className="fields-group">
+            {idx > 0 && <hr className="fields-group-divider" />}
+            <h4 className="fields-group-title">{group}</h4>
+            <div className="fields-grid">
+              {fields.map(renderField)}
+            </div>
+          </div>
+        ))}
+      </div>
     </form>
   );
 } 

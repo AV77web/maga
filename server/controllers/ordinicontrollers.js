@@ -61,12 +61,12 @@ exports.getOrdini = async (req, res, next) => {
 
     ]);
     
-    console.log("DEBUG resultSet:", JSON.stringify(resultSet, null, 2)); // 
+    //console.log("DEBUG resultSet:", JSON.stringify(resultSet, null, 2)); // 
     //const [testRows] = await db.query("SELECT * FROM ordini WHERE num_ordine = ?", [p_num_ordine]);
     //console.log("DEBUG ordini diretta:", testRows);
     // CORRECTED PARSING: Safely extract the result JSON from the nested structure
     const spResult = resultSet && resultSet[0] && resultSet[0][0] ? resultSet[0][0].result : null;
-    console.log("DEBUG spResult:", spResult);
+    //console.log("DEBUG spResult:", spResult);
 
     // Handle the result
     if (spResult && spResult.status === 'success') {
@@ -158,6 +158,8 @@ exports.getOrdineRighe = async (req, res, next) => {
       p_order_dir,
     ]);
 
+    console.log("DEBUG resultSets:", JSON.stringify(resultSets, null, 2));
+
     let rows, meta;
     if (
       Array.isArray(resultSets) &&
@@ -172,7 +174,7 @@ exports.getOrdineRighe = async (req, res, next) => {
       rows = resultSets[0];
       meta = { page: p_page, pageSize: p_page_size, totalRows: rows.length, status: "success" };
     }
-
+    console.log("DEBUG rawRows:", JSON.stringify(rawRows, null, 2));
     res.json({ success: true, result: { rows, meta } });
   } catch (error) {
     logger.error({ msg: "Errore FetchOrdini_righe", error: error.message, stack: error.stack });

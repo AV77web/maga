@@ -11,6 +11,22 @@ import DocumentHeaderForm from './DocumentHeaderForm';
 import orderSchema from '#schemas/order.schema.json';
 import { orderUiHints } from '../uiHints/orderUiHints';
 
+// Utility to normalize date fields and nulls
+function normalizeFormData(data, dateFields = []) {
+  const result = {};
+  for (const key in data) {
+    let value = data[key];
+    if (dateFields.includes(key) && typeof value === 'string') {
+      value = value.split('T')[0].split(' ')[0];
+    }
+    if (value === null || value === undefined) {
+      value = '';
+    }
+    result[key] = value;
+  }
+  return result;
+}
+
 const newOrdineTemplate = {
   num_ordine: '',
   data_ordine: new Date().toISOString().split('T')[0],
@@ -73,7 +89,12 @@ const OrdineForm = ({ ordineId, onSaveSuccess, onCancel }) => {
     <DocumentHeaderForm
       schema={orderSchema}
       uiHints={orderUiHints}
-      initialData={formData}
+      initialData={formData ? normalizeFormData(formData, [
+        'data_ordine',
+        'created_at',
+        'updated_at',
+        'data_consegna_prevista'
+      ]) : formData}
       onChange={handleChange}
       onSave={handleSave}
       onCancel={onCancel}
