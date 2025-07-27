@@ -2,7 +2,7 @@
 //=================================================
 // Orders Controller – wrapper sul vecchio ordinicontrollers
 //=================================================
-const ordiniController = require('../../controllers/ordinicontrollers');
+const ordiniController = require("../../controllers/ordinicontrollers");
 
 module.exports = {
   /**
@@ -29,4 +29,4 @@ module.exports = {
    * DELETE /api/v1/orders/:id_ordine
    */
   deleteOrder: ordiniController.deleteOrdine,
-}; 
+};

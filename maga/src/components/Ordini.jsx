@@ -7,20 +7,20 @@
 //@version: "2.0.0 2025-07-19" // Refactored with Hooks and Composition
 //============================================================
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import Header from './Header';
-import OrdiniList from './OrdiniList';
-import OrdineDetail from './OrdineDetail';
-import OrdineForm from './OrdineForm';
-import { useOrdini } from '../hooks/useOrdini'; // Importa l'hook
-import '../css/Ordini.css';
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+import Header from "./Header";
+import OrdiniList from "./OrdiniList";
+import OrdineDetail from "./OrdineDetail";
+import OrdineForm from "./OrdineForm";
+import { useOrdini } from "../hooks/useOrdini"; // Importa l'hook
+import "../css/Ordini.css";
 
 // Definiamo le modalità di visualizzazione
 const VIEW_MODES = {
-  LIST: 'list',
-  DETAIL: 'detail',
-  EDIT_FORM: 'edit_form',
-  NEW_FORM: 'new_form',
+  LIST: "list",
+  DETAIL: "detail",
+  EDIT_FORM: "edit_form",
+  NEW_FORM: "new_form",
 };
 
 const Ordini = ({ currentUser, onLogout }) => {
@@ -29,8 +29,7 @@ const Ordini = ({ currentUser, onLogout }) => {
   const [selectedOrdine, setSelectedOrdine] = useState(null); // Salva l'intero oggetto
   const [selectedMasterIds, setSelectedMasterIds] = useState([]); // Stato per la selezione
 
-  const { data: ordiniData } = useOrdini({ enabled: viewMode === VIEW_MODES.LIST });
-
+  // Rimosso useOrdini da qui, verrà usato direttamente in OrdiniList
 
   useEffect(() => {
     // console.log('selectedOrdine:', selectedOrdine, 'viewMode:', viewMode);
@@ -57,7 +56,7 @@ const Ordini = ({ currentUser, onLogout }) => {
     setSelectedMasterIds([]);
     setViewMode(VIEW_MODES.DETAIL);
   }, []);
-  
+
   // Mostra i dettagli dell'ordine selezionato dalla lista
   const handleShowSelectedDetail = useCallback(() => {
     if (selectedMasterIds.length !== 1) {
@@ -65,14 +64,10 @@ const Ordini = ({ currentUser, onLogout }) => {
       return;
     }
     const ordineId = selectedMasterIds[0];
-    const ordineCompleto = ordiniData?.rows?.find(o => o.id_ordine === ordineId);
-    if (ordineCompleto) {
-      handleShowDetail(ordineCompleto);
-    } else {
-      // Fallback: se non trovi l'ordine, carica solo con l'ID
-      handleShowDetail({ id_ordine: ordineId });
-    }
-  }, [selectedMasterIds, handleShowDetail, ordiniData]);
+    // Poiché non abbiamo più ordiniData qui, dobbiamo orchestrare diversamente
+    // Per ora, passiamo solo l'ID. OrdineDetail dovrà fare il fetch.
+    handleShowDetail({ id_ordine: ordineId });
+  }, [selectedMasterIds, handleShowDetail]);
 
   // Mostra il form di modifica per l'ordine correntemente visualizzato
   const handleShowEditForm = useCallback(() => {
@@ -103,10 +98,7 @@ const Ordini = ({ currentUser, onLogout }) => {
     switch (viewMode) {
       case VIEW_MODES.NEW_FORM:
         return (
-          <OrdineForm 
-            onSaveSuccess={handleSaveSuccess}
-            onCancel={handleBack}
-          />
+          <OrdineForm onSaveSuccess={handleSaveSuccess} onCancel={handleBack} />
         );
       case VIEW_MODES.EDIT_FORM:
         return (
@@ -129,8 +121,9 @@ const Ordini = ({ currentUser, onLogout }) => {
         return (
           <OrdiniList
             onOrdineSelect={(id) => {
-              const ordineCompleto = ordiniData?.rows?.find(o => o.id_ordine === id);
-              handleShowDetail(ordineCompleto || { id_ordine: id });
+              // Qui passiamo l'intero oggetto se disponibile, altrimenti l'ID
+              // Poiché OrdiniList ora fa il fetch, potremmo non avere l'oggetto completo
+              handleShowDetail({ id_ordine: id });
             }}
             selectedIds={selectedMasterIds}
             onSelectionChange={handleMasterSelectionChange}
@@ -139,21 +132,26 @@ const Ordini = ({ currentUser, onLogout }) => {
     }
   };
 
-  const isViewActionEnabled = viewMode === VIEW_MODES.LIST && selectedMasterIds.length === 1;
+  const isViewActionEnabled =
+    viewMode === VIEW_MODES.LIST && selectedMasterIds.length === 1;
 
   return (
     <div className="ordini-container">
       <Header
         currentUser={currentUser}
         onAdd={handleShowNewForm}
-        onEdit={isViewActionEnabled ? handleShowSelectedDetail : (viewMode === VIEW_MODES.DETAIL ? handleShowEditForm : null)}
+        onEdit={
+          isViewActionEnabled
+            ? handleShowSelectedDetail
+            : viewMode === VIEW_MODES.DETAIL
+            ? handleShowEditForm
+            : null
+        }
         onBack={viewMode !== VIEW_MODES.LIST ? handleBack : null}
-        editButtonIcon={viewMode === VIEW_MODES.LIST ? 'view' : 'edit'}
+        editButtonIcon={viewMode === VIEW_MODES.LIST ? "view" : "edit"}
       />
-      
-      <div className="ordini-content">
-        {renderContent()}
-      </div>
+
+      <div className="ordini-content">{renderContent()}</div>
     </div>
   );
 };
