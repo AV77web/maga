@@ -75,15 +75,21 @@ h2, .title-gestione-ordini {
 }
 
 .field label {
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.1rem;
   font-weight: 500;
   color: #555;
+}
+
+h4 {
+  margin-bottom: 0.2rem;
+  margin-top: 0.2
+  rem; 
 }
 
 .field input,
 .field select,
 .field textarea {
-  padding: 0.5rem;
+  padding: 0.1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 1rem;

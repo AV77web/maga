@@ -1,0 +1,83 @@
+Grazie per aver condiviso la struttura della tabella ordini. Hai già una base molto completa, e questo apre a diverse possibilità per migliorare la tabella visibile nell'interfaccia utente, sia in termini di informazioni utili per l'utente che di ottimizzazione della gestione operativa.
+
+✅ Colonne attualmente previste per la UI:
+num_ordine
+
+data_ordine
+
+idanagrafica (→ nome Cliente/Fornitore)
+
+stato
+
+magazzino (presumo magazzino_origine)
+
+✨ Campi consigliati da aggiungere alla tabella visibile in UI
+Ecco i campi che ha senso mostrare (anche opzionalmente o su richiesta, tipo con un toggle “mostra colonne aggiuntive”):
+
+🟢 1. Data di consegna prevista
+Campo: data_consegna_prevista
+
+Perché mostrarlo: utile a livello operativo e per la pianificazione logistica.
+
+✅ Mostralo se l'utente ha ruoli legati a logistica, acquisti o produzione.
+
+🟢 2. Priorità
+Campo: priorita
+
+UI: badge colorato (es. rosso = Alta, giallo = Media, grigio = Bassa)
+
+✅ Aiuta a ordinare o filtrare gli ordini urgenti.
+
+🟡 3. Vettore e tipo trasporto
+Campi: vettore, tipo_trasporto
+
+UI: icona camion 🚚 accanto al nome
+
+✅ Utile per logistica o consegna, può essere visibile solo su richiesta o in un dettaglio esteso.
+
+🟡 4. Valuta e listino
+Campi: valuta, listino
+
+✅ Mostralo in contesti internazionali o se la gestione è multivaluta/multilistino.
+
+🟢 5. Sconto Totale
+Campo: sconto_totale
+
+✅ Interessante per il commerciale e per valutare margini; mostrare con %.
+
+🟢 6. Condizioni di pagamento
+Campo: condizioni_pagamento
+
+✅ Molto utile per l’amministrazione; puoi mostrarlo in un tooltip o una colonna estensibile.
+
+🟡 7. Documento collegato
+Campo: documento_collegato
+
+✅ Se presente, inserisci un’icona 📎 cliccabile per visualizzare il documento PDF/DOC.
+
+🟢 8. Utente creazione
+Campo: utente_creazione
+
+✅ Ottimo per tracciabilità, specialmente in ambienti multiutente.
+
+🟡 9. Causale
+Campo: causale
+
+✅ Se utilizzata regolarmente, potresti includerla come filtro o colonna visibile.
+
+🟢 10. Note
+Campo: note
+
+✅ Mostrale come icona 📝 apribile in popup/tooltip per non appesantire la vista.
+
+🧠 Proposta UI dinamica (colonne base + estese)
+Base (sempre visibili)	Avanzate (toggle “mostra di più”)
+Numero ordine	Data consegna prevista
+Data ordine	Priorità
+Cliente/Fornitore	Vettore / tipo trasporto
+Stato	Valuta / Listino
+Magazzino origine/destinazione	Condizioni pagamento
+Documento collegato
+Utente creazione
+Note / Causale
+
