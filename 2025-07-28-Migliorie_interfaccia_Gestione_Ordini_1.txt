@@ -11,23 +11,23 @@ Stato Ordine	Usare badge colorati (es. rosso = annullato, giallo = in attesa, ve
 Magazzino	Mostrare come dropdown o tag se ci sono più magazzini. Icona di magazzino 🏬 facoltativa.
 
 🎨 Suggerimenti di stile (UI)
-Header fisso e ben contrastato
+Header fisso e ben contrastato X 
+ 
+Sfondo grigio chiaro o bianco X 
 
-Sfondo grigio chiaro o bianco
-
-Font bold
+Font bold X 
 
 Divider visibili
 
-Color coding dello stato ordine
+Color coding dello stato ordine X
 
-Colori consistenti (es. danger, warning, success, info) aiutano la scansione visiva.
+Colori consistenti (es. danger, warning, success, info) aiutano la scansione visiva. X 
 
-Badge con bordi stondati migliorano la leggibilità.
+Badge con bordi stondati migliorano la leggibilità. 
 
-Hover e selezione righe
-
-Al passaggio del mouse: evidenziare la riga (background-color: #f5f5f5)
+Hover e selezione righe X 
+ 
+Al passaggio del mouse: evidenziare la riga (background-color: #f5f5f5) X
 
 Selezione multipla? Checkbox a sinistra con azioni multiple in alto (es. “Annulla ordini selezionati”)
 
@@ -50,7 +50,7 @@ Azioni rapide per ogni riga
 
 Icone azione (🖊️ modifica, ❌ cancella, 👁️ dettaglio) visibili su hover
 
-Paginazione o infinite scroll
+Paginazione o infinite scroll X 
 
 Se hai tanti ordini, usa paginazione o caricamento incrementale
 
