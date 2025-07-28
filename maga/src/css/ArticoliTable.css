@@ -143,6 +143,9 @@ h2 {
   background-color: #f4850f;
 }
 
+.not-selected-row:hover {
+  background-color: #ebb57b;
+}
 /* --- Stili per Drag & Drop --- */
 
 /* Stile per la riga mentre viene trascinata */
@@ -335,6 +338,8 @@ h2 {
   border: 2px solid #e53935 !important;
   box-shadow: 0 0 2px #e53935;
 }
+
+
 
 
 /* Responsive table - optional uncommented section

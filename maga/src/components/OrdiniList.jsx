@@ -18,8 +18,39 @@ const masterColumns = [
   { key: "num_ordine", label: "Numero Ordine", cellClassName: "text-left" },
   { key: "data_ordine", label: "Data", cellClassName: "text-center" },
   { key: "rag_soc", label: "Fornitore/Cliente", cellClassName: "text-left" },
-  { key: "stato", label: "Stato", cellClassName: "text-center" },
+  { 
+    key: "stato",
+    label: "Stato",
+    cellClassName: (row) => {
+      let classes = "text-center";
+      if (row.stato === "APERTO") {
+        classes += " stato-aperto";
+      } else if (row.stato === "CHIUSO") {
+        classes += " stato-chiuso";
+      } else if (row.stato === "INVIATO") {
+        classes += " stato-inviato";
+      } else if (row.stato === "ANNULLATO") {
+        classes += " stato-annullato";
+      }
+      return classes;
+    },
+  },
+  { key: "magazzino_origine", label: "Magazzino Origine", cellClassName: "text-left" },
+  { key: "magazzino_destinazione", label: "Magazzino Destinazione", cellClassName: "text-left" },
 ];
+
+// Mappatura delle chiavi delle colonne ai valori accettati dalla stored procedure
+const columnKeyMapping = {
+  "id": "id_ordine",
+  "num_ordine": "num_ordine", 
+  "data_ordine": "data_ordine",
+  "rag_soc": "idanagrafica", // rag_soc corrisponde al campo idanagrafica nella SP
+  "stato": "stato",
+  "magazzino_origine": "id_ordine", // Fallback a id_ordine per colonne non ordinabili
+  "magazzino_destinazione": "id_ordine", // Fallback a id_ordine per colonne non ordinabili
+};
+
+console.log(masterColumns);
 
 const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
   // Stati per filtri e paginazione
@@ -31,12 +62,17 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [sort, setSort] = useState({ key: "id_ordine", order: "desc" });
+  
+  // Stati per la ricerca nelle colonne
+  const [activeSearchFields, setActiveSearchFields] = useState([]);
+  const [searchValues, setSearchValues] = useState({});
 
   // Hook per il recupero dati
   const { data, isLoading, error } = useOrdini({
     enabled: true,
     filters: {
       ...filters,
+      ...searchValues, // Aggiungi i valori di ricerca ai filtri
       page,
       pageSize,
       orderBy: sort.key,
@@ -60,14 +96,17 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   const handleSort = useCallback((key) => {
+    // Mappa la chiave della colonna al valore accettato dalla stored procedure
+    const mappedKey = columnKeyMapping[key] || "id_ordine";
+    
     setSort((prevSort) => {
-      if (key === prevSort.key) {
+      if (mappedKey === prevSort.key) {
         return {
           ...prevSort,
           order: prevSort.order === "asc" ? "desc" : "asc",
         };
       }
-      return { key, order: "asc" };
+      return { key: mappedKey, order: "asc" };
     });
     setPage(1);
   }, []);
@@ -77,6 +116,33 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
     setFilters((prev) => ({ ...prev, [name]: value }));
     setPage(1); // Reset pagina quando cambiano i filtri
   };
+
+  // Gestione della ricerca nelle colonne
+  const handleToggleSearchField = useCallback((fieldKey) => {
+    setActiveSearchFields((prev) => {
+      if (prev.includes(fieldKey)) {
+        // Rimuovi il campo dalla ricerca
+        const newFields = prev.filter(field => field !== fieldKey);
+        setSearchValues((prevValues) => {
+          const newValues = { ...prevValues };
+          delete newValues[fieldKey];
+          return newValues;
+        });
+        return newFields;
+      } else {
+        // Aggiungi il campo alla ricerca
+        return [...prev, fieldKey];
+      }
+    });
+  }, []);
+
+  const handleSearchValueChange = useCallback((fieldKey, value) => {
+    setSearchValues((prev) => ({
+      ...prev,
+      [fieldKey]: value
+    }));
+    setPage(1); // Reset pagina quando cambiano i filtri di ricerca
+  }, []);
 
   if (isLoading) return <div className="loader">Caricamento ordini...</div>;
   if (error)
@@ -122,6 +188,10 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
               selectedIds={selectedIds}
               onRowSelectionChange={onSelectionChange}
               onRowDoubleClick={onOrdineSelect}
+              activeSearchFields={activeSearchFields}
+              onToggleSearchField={handleToggleSearchField}
+              searchValues={searchValues}
+              onSearchValueChange={handleSearchValueChange}
             />
             <div className="pagination-bar">
               <Pagination

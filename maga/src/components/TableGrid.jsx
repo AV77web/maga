@@ -26,6 +26,11 @@ const TableGrid = ({
   onClearAllSelections,
   areAnyRowsSelected,
   droppableId,
+  // Props per la ricerca
+  activeSearchFields = [],
+  onToggleSearchField = () => {},
+  searchValues = {},
+  onSearchValueChange = () => {},
 }) => {
   // Calcola il colSpan per la riga di "nessun dato" o "caricamento".
   const colSpanForBody = columns.length + 1;
@@ -48,7 +53,10 @@ const TableGrid = ({
           onSort={onSort}
           onClearAllSelections={onClearAllSelections}
           areAnyRowsSelected={areAnyRowsSelected}
-          // La gestione della UI di ricerca non appartiene più a questo componente
+          activeSearchFields={activeSearchFields}
+          onToggleSearchField={onToggleSearchField}
+          searchValues={searchValues}
+          onSearchValueChange={onSearchValueChange}
         />
         <TableBody
           columns={columns}

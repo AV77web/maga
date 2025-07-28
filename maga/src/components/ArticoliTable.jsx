@@ -57,6 +57,10 @@ export default function ArticoliTable({
   const [popoverData, setPopoverData] = useState(null); // Stato unificato per i dati del popover
   const [popoverAnchorEl, setPopoverAnchorEl] = useState(null);
   const [popoverLoading, setPopoverLoading] = useState(false);
+  // Stato per la gestione delle colonne visibili
+  const [visibleColumns, setVisibleColumns] = useState([
+    "diba_icon", "id", "name", "description", "quantita", "um", "prezzo", "min", "max", "supplier"
+  ]);
 
   const toggleSort = (key) => {
     if (key === sortKey) {
@@ -321,11 +325,11 @@ export default function ArticoliTable({
     }
   }, [fetchRicambi, formData, isEditing]);
 
-  const tableColumns = useMemo(() => {
-    const allColumns = [
+  const allColumns = useMemo(() => {
+    const columns = [
       {
         key: "diba_icon",
-        label: "", // Nessuna etichetta per la colonna
+        label: "Distinta Base", // Etichetta per il menu
         cellClassName: "text-center",
         headerClassName: "col-icon",
         render: (row) => {
@@ -383,17 +387,23 @@ export default function ArticoliTable({
       { key: "prezzo", label: "Prezzo", cellClassName: "text-right" },
       { key: "min", label: "Minimo", cellClassName: "text-right" },
       { key: "max", label: "Massimo", cellClassName: "text-right" },
-      { key: "supplier", label: "Fornitore", cellClassName: "text-left" }, // Esempio, puoi usare text-right se preferisci
+      { key: "supplier", label: "Fornitore", cellClassName: "text-left" },
     ];
+    
+    return columns;
+  }, [handleDibaIconClick]);
+
+  const tableColumns = useMemo(() => {
+    let filteredColumns = allColumns.filter(col => visibleColumns.includes(col.key));
 
     if (viewMode === "bom") {
-      return allColumns.filter((col) =>
+      filteredColumns = filteredColumns.filter((col) =>
         ["diba_icon", "name", "description"].includes(col.key)
       );
     }
 
-    return allColumns;
-  }, [handleDibaIconClick, viewMode]);
+    return filteredColumns;
+  }, [allColumns, visibleColumns, viewMode]);
 
   // Definisci i campi per il filtro dei ricambi
   const ricambiFilterFields = useMemo(
@@ -482,6 +492,17 @@ export default function ArticoliTable({
     // (non implementiamo il riordino qui)
   };
 
+  // Gestore per il cambio di visibilità delle colonne
+  const handleColumnVisibilityChange = useCallback((columnKey, isVisible) => {
+    setVisibleColumns(prev => {
+      if (isVisible) {
+        return [...prev, columnKey];
+      } else {
+        return prev.filter(key => key !== columnKey);
+      }
+    });
+  }, []);
+
   return (
     <>
       <Header
@@ -563,6 +584,9 @@ export default function ArticoliTable({
         currentUser={currentUser} // Passa currentUser a Header
         currentLocation={currentLocation}
         onLogout={onLogout} // Passa la funzione di logout a Header
+        onColumnVisibility={handleColumnVisibilityChange}
+        columns={allColumns}
+        visibleColumns={visibleColumns}
       />
 
       <DragDropContext onDragEnd={onDragEnd}>
@@ -573,6 +597,8 @@ export default function ArticoliTable({
               onSearch={handleSearchRicambi} // Passa la funzione unificata
             />
           )}
+
+
 
           {message && <div className="message-info">{message}</div>}
           <div className={viewMode === "bom" ? "bom-view-container" : ""}>

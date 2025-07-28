@@ -88,7 +88,7 @@ const TableBody = ({
       {rows.map((row, index) => (
         <tr
           key={row.id ?? `row-${index}`}
-          className={selectedIds.includes(row.id) ? "selected-row" : ""}
+          className={selectedIds.includes(row.id) ? "selected-row" : "not-selected-row"}
           onDoubleClick={(e) => { if (onRowDoubleClick && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON' && !e.target.closest('button')) { onRowDoubleClick(row.id); } }}
           style={{ cursor: onRowDoubleClick ? 'pointer' : 'default' }}
         >

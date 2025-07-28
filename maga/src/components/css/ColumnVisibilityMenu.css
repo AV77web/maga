@@ -1,0 +1,75 @@
+/*==================================================
+// File: ColumnVisibilityMenu.css
+// Stili per il componente ColumnVisibilityMenu
+// @author: "villari.andrea@libero.it"
+// @version: "1.0.0 2025-07-28"
+//==================================================*/
+
+.column-visibility-menu {
+  display: inline-block;
+}
+
+.column-visibility-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.2s ease;
+  min-height: 32px;
+}
+
+.column-visibility-trigger:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.column-visibility-trigger:active {
+  background: #e9ecef;
+  transform: translateY(1px);
+}
+
+.column-count {
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.column-visibility-actions {
+  border-bottom: 1px solid #e9ecef;
+  margin-bottom: 8px;
+}
+
+.column-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.column-list .dropdown-item {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.column-list .dropdown-item-icon {
+  font-size: 14px;
+  margin-right: 6px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .column-visibility-trigger {
+    padding: 8px 12px;
+    min-height: 40px;
+    font-size: 16px;
+  }
+  
+  .column-list .dropdown-item {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+} 

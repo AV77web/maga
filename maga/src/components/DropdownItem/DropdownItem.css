@@ -1,0 +1,81 @@
+/*==================================================
+// File: DropdownItem.css
+// Stili per il componente DropdownItem
+// @author: "villari.andrea@libero.it"
+// @version: "1.0.0 2025-07-28"
+//==================================================*/
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  font-size: 14px;
+  color: #333;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  min-height: 36px;
+}
+
+.dropdown-item:hover:not(.disabled) {
+  background-color: #f8f9fa;
+}
+
+.dropdown-item:active:not(.disabled) {
+  background-color: #e9ecef;
+}
+
+.dropdown-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: #6c757d;
+}
+
+.dropdown-item-checkbox {
+  padding-left: 12px;
+}
+
+.dropdown-checkbox {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.dropdown-item-icon {
+  margin-right: 8px;
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  color: #6c757d;
+}
+
+.dropdown-item-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dropdown-separator {
+  height: 1px;
+  background-color: #e9ecef;
+  margin: 4px 0;
+}
+
+/* Stili per elementi con icone */
+.dropdown-item:has(.dropdown-item-icon) {
+  padding-left: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dropdown-item {
+    padding: 10px 16px;
+    min-height: 44px;
+    font-size: 16px;
+  }
+}

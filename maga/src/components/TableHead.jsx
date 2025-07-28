@@ -12,7 +12,7 @@ import React from "react";
 const TableHead = ({
   columns,
   areAllCurrentPageRowsSelected,
-  onSelectAllCurrentPageRowsChange,
+  onSelectAllCurrentPageRowsSelected,
   sortKey,
   sortOrder,
   onSort,
@@ -25,6 +25,14 @@ const TableHead = ({
    * della colonna (aggiungere se non presente, rimuovere se già presente).
    */
   onToggleSearchField = () => {},
+  /*
+   * Valori di ricerca per ogni colonna.
+   */
+  searchValues = {},
+  /*
+   * Callback per cambiare il valore di ricerca di una colonna.
+   */
+  onSearchValueChange = () => {},
 }) => {
   return (
     <thead>
@@ -33,7 +41,7 @@ const TableHead = ({
           <input
             type="checkbox"
             checked={areAllCurrentPageRowsSelected}
-            onChange={(e) => onSelectAllCurrentPageRowsChange(e.target.checked)}
+            onChange={(e) => onSelectAllCurrentPageRowsSelected(e.target.checked)}
             title="Seleziona/Deseleziona tutto in questa pagina"
           />
         </th>
@@ -66,6 +74,31 @@ const TableHead = ({
           </th>
         ))}
       </tr>
+      {/* Riga per i campi di ricerca */}
+      {activeSearchFields.length > 0 && (
+        <tr>
+          <th></th> {/* Cella vuota per la colonna checkbox */}
+          {columns.map(({ key, label }) => (
+            <th key={`search-${key}`}>
+              {activeSearchFields.includes(key) && (
+                <input
+                  type="text"
+                  placeholder={`Cerca in ${label}...`}
+                  value={searchValues[key] || ""}
+                  onChange={(e) => onSearchValueChange(key, e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "4px 8px",
+                    fontSize: "12px",
+                    border: "1px solid #ccc",
+                    borderRadius: "4px"
+                  }}
+                />
+              )}
+            </th>
+          ))}
+        </tr>
+      )}
     </thead>
   );
 };

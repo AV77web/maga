@@ -82,8 +82,7 @@ h2, .title-gestione-ordini {
 
 h4 {
   margin-bottom: 0.2rem;
-  margin-top: 0.2
-  rem; 
+  margin-top: 0.2rem; 
 }
 
 .field input,
@@ -114,6 +113,13 @@ h4 {
   border: 2px solid #e53935 !important;
   box-shadow: 0 0 2px #e53935;
 }
+
+/*.selected-row {
+  background-color: #f4850f;
+}
+.selected-row:hover {
+  background-color: #f5f4f5;
+}*/
 
 .doc-header input[type="text"],
 .doc-header input[type="number"],
@@ -150,4 +156,27 @@ h4 {
   height: 1px;
 }
 
+/* Stili per colorare le celle 'stato' in base al valore */
+.stato-aperto {
+  background-color: #b7e3f5 !important;
+  color: #0a2570 !important;
+  font-weight: bold !important;
+}
 
+.stato-chiuso {
+  background-color: #afd1b7 !important;
+  color: #155724 !important;
+  font-weight: bold !important;
+}
+
+.stato-inviato {
+  background-color: #ece9b6 !important;
+  color: #b6aa01 !important;
+  font-weight: bold !important;
+}
+
+.stato-annullato {
+  background-color: #f5c6cb !important;
+  color: #830a16 !important;
+  font-weight: bold !important;
+}

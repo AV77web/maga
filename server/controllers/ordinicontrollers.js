@@ -41,6 +41,10 @@ exports.getOrdini = async (req, res, next) => {
       sanitizedOrderDir = "DESC";
     }
 
+    // Validazione del parametro orderBy per corrispondere ai valori accettati dalla stored procedure
+    const validOrderByValues = ['id_ordine', 'num_ordine', 'data_ordine', 'idanagrafica', 'stato'];
+    const sanitizedOrderBy = validOrderByValues.includes(orderBy) ? orderBy : 'id_ordine';
+
     const query = `CALL FetchOrdini1(?, ?, ?, ?, ?, ?, ?, ?);`;
 
     const [results] = await db.query(query, [
@@ -50,7 +54,7 @@ exports.getOrdini = async (req, res, next) => {
       data_a,
       parseInt(page, 10),
       parseInt(pageSize, 10),
-      orderBy,
+      sanitizedOrderBy,
       sanitizedOrderDir,
     ]);
 
