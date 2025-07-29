@@ -33,7 +33,7 @@ const initialDialogFormData = {
 };
 
 // Definizione colonne per la tabella
-const tableColumns = [
+const allColumns = [
   { key: "id", label: "ID Mov.", cellClassName: "text-center" },
   { key: "data", label: "Data", cellClassName: "text-center" }, // Verrà mostrato come YYYY-MM-DD
   { key: "idart", label: "ID Art.", cellClassName: "text-center" },
@@ -85,6 +85,20 @@ export default function MovimentiTable({
   const [sortKey, setSortKey] = useState("data");
   const [sortOrder, setSortOrder] = useState("desc");
   const [usersList, setUsersList] = useState([]);
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    // Carica le preferenze dal localStorage
+    const saved = localStorage.getItem('movimentiTable_visibleColumns');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.warn('Errore nel parsing delle colonne salvate:', e);
+      }
+    }
+    // Valori di default se non ci sono preferenze salvate
+    return ["id", "data", "idart", "descriptionart", "quantita", "um", "tipo", "descriptioncau", "user", "timestamp", "note"];
+  });
+  
   const toggleSearchPanel = () => {
     setShowSearch((prev) => !prev);
   };
@@ -473,6 +487,26 @@ export default function MovimentiTable({
   //console.log("articoliList:", articoliList);
   //console.log("causaliList:", causaliList);
 
+  // Gestore per il cambio di visibilità delle colonne
+  const handleColumnVisibilityChange = useCallback((columnKey, isVisible) => {
+    setVisibleColumns(prev => {
+      const newColumns = isVisible 
+        ? [...prev, columnKey]
+        : prev.filter(key => key !== columnKey);
+      
+      // Salva le preferenze nel localStorage
+      localStorage.setItem('movimentiTable_visibleColumns', JSON.stringify(newColumns));
+      
+      return newColumns;
+    });
+  }, []);
+
+  // Filtra le colonne in base alla visibilità
+  const tableColumns = useMemo(() => {
+    return allColumns.filter(col => visibleColumns.includes(col.key));
+  }, [allColumns, visibleColumns]);
+
+
   return (
     <>
       <Header
@@ -533,6 +567,9 @@ export default function MovimentiTable({
         currentUser={currentUser}
         currentLocation={currentLocation}
         onLogout={onLogout}
+        onColumnVisibility={handleColumnVisibilityChange}
+        visibleColumns={visibleColumns}
+        columns={allColumns}
       />
       <div className="container">
         {/*  <h1>Gestione Movimenti</h1> */}
@@ -564,11 +601,11 @@ export default function MovimentiTable({
 
         <div className="table-wrapper">
           <div className="table-panel">
-            <TableGrid
-            title="Gestione Movimenti"
-            columns={tableColumns}
-            rows={currentTableData}
-            selectedIds={selectedIds}
+                            <TableGrid
+                  title="Gestione Movimenti"
+                  columns={tableColumns}
+                  rows={currentTableData}
+                  selectedIds={selectedIds}
             onRowSelectionChange={handleRowSelectionChange}
             areAllCurrentPageRowsSelected={areAllCurrentPageRowsSelected}
             onSelectAllCurrentPageRowsChange={

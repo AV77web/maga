@@ -34,13 +34,8 @@ const Header = ({
   const disableEditAndDelete = currentLocation === '/movimenti';
   const [ openDropdown, setOpenDropdown] = useState(false);
   const toggleDropdown = () => {
-    console.log("Toggle dropdown, current state:", openDropdown);
     setOpenDropdown(!openDropdown);
   }
-
-  // Debug per vedere le colonne
-  console.log("Header - Colonne totali:", columns?.length);
-  console.log("Header - Colonne visibili:", visibleColumns?.length);
 
   // Gestore per il cambio di visibilità delle colonne
   const handleColumnToggle = (columnKey, isVisible) => {
@@ -48,6 +43,8 @@ const Header = ({
       onColumnVisibility(columnKey, isVisible);
     }
   };
+
+
 
 
 
@@ -126,10 +123,14 @@ const Header = ({
           <DropdownContent 
             title="Colonne visibili"
             showHeader={true}
+            className={columns.length > 15 ? 'many-columns' : ''}
             style={{
               height: 'auto',
               maxHeight: 'none',
-              overflow: 'visible'
+              overflow: 'visible',
+              minHeight: columns.length > 15 ? '500px' : '300px',
+              minWidth: columns.length > 15 ? '1000px' : '600px',
+              maxWidth: columns.length > 15 ? '1600px' : '800px'
             }}
           >
             <div className="column-visibility-actions">
@@ -150,25 +151,25 @@ const Header = ({
             <DropdownItem type="separator" />
             
             <div 
-              className="column-list"
+              className={`column-list ${columns.length > 12 ? 'many-columns' : ''}`}
               style={{
-                display: 'flex',
-                flexWrap: 'wrap',
+                display: 'grid',
+                gridTemplateColumns: columns.length > 12 ? 'repeat(6, 1fr)' : 'repeat(3, 1fr)',
                 gap: '8px',
                 padding: '8px',
                 maxHeight: 'none',
                 overflowY: 'visible',
-                height: 'auto'
+                height: 'auto',
+                width: '100%',
+                minHeight: columns.length > 15 ? '450px' : '250px'
               }}
             >
-              {console.log("Rendering column list, columns:", columns?.length)}
               {columns && columns.length > 0 ? (
                 columns.map((column, index) => {
                   const isVisible = visibleColumns.includes(column.key);
-                  console.log(`Rendering column ${index + 1}:`, column.key, column.label);
                   return (
                     <DropdownItem
-                      key={column.key}
+                      key={`${column.key}-${isVisible}`}
                       type="checkbox"
                       checked={isVisible}
                       onCheckChange={(checked) => handleColumnToggle(column.key, checked)}
@@ -180,8 +181,8 @@ const Header = ({
                         display: 'flex',
                         alignItems: 'center',
                         borderRadius: '4px',
-                        flex: '0 0 calc(50% - 4px)',
-                        minWidth: '180px'
+                        width: '100%',
+                        minWidth: '120px'
                       }}
                     >
                       {column.label || column.key}

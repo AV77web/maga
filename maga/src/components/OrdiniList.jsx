@@ -9,6 +9,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import { useOrdini } from "../hooks/useOrdini";
 import TableGrid from "./TableGrid";
 import Pagination from "./Pagination1";
+import Header from "./Header";
 import "../css/Ordini.css";
 
 const rowsPerPageOptions = [5, 10, 20, 50];
@@ -37,6 +38,17 @@ const masterColumns = [
   },
   { key: "magazzino_origine", label: "Magazzino Origine", cellClassName: "text-left" },
   { key: "magazzino_destinazione", label: "Magazzino Destinazione", cellClassName: "text-left" },
+  { key: "data_consegna_prevista", label: "Data Consegna Prevista", cellClassName: "text-center" },
+  { key: "priorita", label: "Priorità", cellClassName: "text-center"},
+  { key: "vettore", label: "Vettore", cellClsassName: "text-left"},
+  { key: "tipo_trasprto", label:"Tipo Trasporto", cellClassName: "text-left"},
+  { key: "valuta", label: "Valuta", cellClassName: "text-left"},
+  { key: "listino", label: "Listino", cellClassName: "text-left"},
+  { key: "sconto_totale", label: "Sconto", cellClassName: "text-left"},
+  { key: "condizioni_pagamento", label: "Condizioni Pagamento", cellClassName: "text-left"},
+  { key: "aliquota_iva", label: "IVA", cellClassName: "text-left"},
+  { key: "docuemetno_collegao", label: "Documento  collegato", cellClassName: "text-left"},
+  { key: "utente_creazione" , label: "Utente Creazione", cellClassName: "text-lefts"}
 ];
 
 // Mappatura delle chiavi delle colonne ai valori accettati dalla stored procedure
@@ -66,6 +78,21 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
   // Stati per la ricerca nelle colonne
   const [activeSearchFields, setActiveSearchFields] = useState([]);
   const [searchValues, setSearchValues] = useState({});
+  
+  // Stato per la gestione delle colonne visibili
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    // Carica le preferenze dal localStorage
+    const saved = localStorage.getItem('ordiniList_visibleColumns');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.warn('Errore nel parsing delle colonne salvate:', e);
+      }
+    }
+    // Valori di default se non ci sono preferenze salvate
+    return ["id", "num_ordine", "data_ordine", "rag_soc", "stato", "magazzino_origine", "magazzino_destinazione", "data_consegna_prevista", "priorita", "vettore", "tipo_trasprto", "valuta", "listino", "sconto_totale", "condizioni_pagamento", "aliquota_iva", "docuemetno_collegao", "utente_creazione"];
+  });
 
   // Hook per il recupero dati
   const { data, isLoading, error } = useOrdini({
@@ -94,6 +121,11 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
 
   const totalCount = data?.totalRows || 0;
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Filtra le colonne in base alla visibilità
+  const tableColumns = useMemo(() => {
+    return masterColumns.filter(col => visibleColumns.includes(col.key));
+  }, [masterColumns, visibleColumns]);
 
   const handleSort = useCallback((key) => {
     // Mappa la chiave della colonna al valore accettato dalla stored procedure
@@ -144,6 +176,20 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
     setPage(1); // Reset pagina quando cambiano i filtri di ricerca
   }, []);
 
+  // Gestore per il cambio di visibilità delle colonne
+  const handleColumnVisibilityChange = useCallback((columnKey, isVisible) => {
+    setVisibleColumns(prev => {
+      const newColumns = isVisible 
+        ? [...prev, columnKey]
+        : prev.filter(key => key !== columnKey);
+      
+      // Salva le preferenze nel localStorage
+      localStorage.setItem('ordiniList_visibleColumns', JSON.stringify(newColumns));
+      
+      return newColumns;
+    });
+  }, []);
+
   if (isLoading) return <div className="loader">Caricamento ordini...</div>;
   if (error)
     return (
@@ -153,8 +199,14 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
     );
 
   return (
-    <div className="container">
-      <div className="filter-bar">
+    <>
+      <Header
+        onColumnVisibility={handleColumnVisibilityChange}
+        columns={masterColumns}
+        visibleColumns={visibleColumns}
+      />
+      <div className="container">
+        <div className="filter-bar">
         <input
           type="text"
           name="num_ordine"
@@ -180,7 +232,7 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
           <div className="master-view">
             <TableGrid
               title="Gestione Ordini"
-              columns={masterColumns}
+              columns={tableColumns}
               rows={ordini}
               sortKey={sort.key}
               sortOrder={sort.order}
@@ -221,6 +273,7 @@ const OrdiniList = ({ onOrdineSelect, selectedIds, onSelectionChange }) => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

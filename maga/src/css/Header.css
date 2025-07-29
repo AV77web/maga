@@ -81,11 +81,12 @@ icon-button:active {
   min-height: auto !important;
   overflow-y: visible !important;
   display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important;
+  grid-template-columns: repeat(3, 1fr) !important;
   gap: 8px !important;
-  padding: 8px !important;
+  padding: 12px !important;
   width: 100% !important;
   height: auto !important;
+  min-height: 250px !important;
 }
 
 .header-container .column-list .dropdown-item {
@@ -119,8 +120,9 @@ icon-button:active {
   right: 0;
   margin-top: 4px;
   z-index: 1001;
-  min-width: 280px;
-  max-width: 600px;
+  min-width: 600px;
+  max-width: 800px;
+  min-height: 400px !important;
   max-height: none !important;
   height: auto !important;
   overflow-y: visible !important;
@@ -138,14 +140,14 @@ icon-button:active {
   .header-container .dropdown-content {
     right: 0;
     left: auto;
-    min-width: 250px;
-    max-width: 400px;
+    min-width: 500px;
+    max-width: 700px;
     max-height: none;
   }
   
   .header-container .column-list {
-    grid-template-columns: 1fr;
-    gap: 4px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
   }
 }
 
@@ -154,6 +156,18 @@ icon-button:active {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border: 1px solid #ddd;
   background: white;
+}
+
+/* Stili per quando ci sono molte colonne (es. ordini) */
+.header-container .dropdown-content.many-columns {
+  min-width: 1000px !important;
+  max-width: 1600px !important;
+  min-height: 400px !important;
+}
+
+.header-container .column-list.many-columns {
+  grid-template-columns: repeat(6, 1fr) !important;
+  min-height: 250px !important;
 }
 
 

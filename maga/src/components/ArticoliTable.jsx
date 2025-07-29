@@ -58,9 +58,19 @@ export default function ArticoliTable({
   const [popoverAnchorEl, setPopoverAnchorEl] = useState(null);
   const [popoverLoading, setPopoverLoading] = useState(false);
   // Stato per la gestione delle colonne visibili
-  const [visibleColumns, setVisibleColumns] = useState([
-    "diba_icon", "id", "name", "description", "quantita", "um", "prezzo", "min", "max", "supplier"
-  ]);
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    // Carica le preferenze dal localStorage
+    const saved = localStorage.getItem('articoliTable_visibleColumns');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.warn('Errore nel parsing delle colonne salvate:', e);
+      }
+    }
+    // Valori di default se non ci sono preferenze salvate
+    return ["diba_icon", "id", "name", "description", "quantita", "um", "prezzo", "min", "max", "supplier"];
+  });
 
   const toggleSort = (key) => {
     if (key === sortKey) {
@@ -495,11 +505,14 @@ export default function ArticoliTable({
   // Gestore per il cambio di visibilità delle colonne
   const handleColumnVisibilityChange = useCallback((columnKey, isVisible) => {
     setVisibleColumns(prev => {
-      if (isVisible) {
-        return [...prev, columnKey];
-      } else {
-        return prev.filter(key => key !== columnKey);
-      }
+      const newColumns = isVisible 
+        ? [...prev, columnKey]
+        : prev.filter(key => key !== columnKey);
+      
+      // Salva le preferenze nel localStorage
+      localStorage.setItem('articoliTable_visibleColumns', JSON.stringify(newColumns));
+      
+      return newColumns;
     });
   }, []);
 

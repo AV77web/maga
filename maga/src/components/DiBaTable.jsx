@@ -321,6 +321,10 @@ return (
       }}
     /> */}
 
+    <h2 className="diba-title">
+      Distinta base per: {ricambioPadre ? ricambioPadre.name : 'N/D'} (ID: {ricambioPadre ? ricambioPadre.id : 'N/D'})
+    </h2>
+    
     <Droppable droppableId="diba-components" isDropDisabled={formVisible}>
       {(provided, snapshot) => (
         <div
@@ -343,7 +347,7 @@ return (
 
           <div className="table-wrapper">
             <TableGrid
-              title={`Distinta base per: ${ricambioPadre ? ricambioPadre.name : 'N/D'} (ID: ${ricambioPadre ? ricambioPadre.id : 'N/D'})`}
+              title=""
               columns={tableColumns}
               rows={currentTableData}
               selectedIds={selectedIds}

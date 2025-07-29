@@ -44,7 +44,12 @@ const DropdownItem = ({
         <input 
           type="checkbox" 
           checked={checked} 
-          onChange={() => {}} // Gestito dal click del div
+          onChange={(e) => {
+            e.stopPropagation();
+            if (onCheckChange) {
+              onCheckChange(e.target.checked);
+            }
+          }}
           className="dropdown-checkbox"
         />
       )}
